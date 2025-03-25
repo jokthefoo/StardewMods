@@ -1,0 +1,10 @@
+﻿{
+  "Name": "Fishdew Valley",
+  "Author": "Willy",
+  "Version": "0.0.1",
+  "Description": "Why do other things when fish do trick?",
+  "UniqueID": "willy.Fishdew",
+  "EntryDll": "FishMod.dll",
+  "MinimumApiVersion": "4.0.0",
+  "UpdateKeys": []
+}
