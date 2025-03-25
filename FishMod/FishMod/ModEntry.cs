@@ -40,6 +40,10 @@ namespace FishMod
                 original: AccessTools.Method(typeof(FishingRod), nameof(FishingRod.tickUpdate)),
                 transpiler: new HarmonyMethod(typeof(DeluxeFishingRodTool), nameof(DeluxeFishingRodTool.bobberBar_Transpiler))
             );
+            harmony.Patch(
+                original: AccessTools.Method(typeof(FishingRod), nameof(FishingRod.openTreasureMenuEndFunction)),
+                postfix: new HarmonyMethod(typeof(DeluxeFishingRodTool), nameof(DeluxeFishingRodTool.Post_openTreasureMenuEndFunction))
+            );
         }
 
         private void OnAssetRequested(object? sender, AssetRequestedEventArgs e)

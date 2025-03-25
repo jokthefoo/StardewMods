@@ -5,6 +5,7 @@ using HarmonyLib;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.GameData.Tools;
+using StardewValley.Internal;
 using StardewValley.Menus;
 using StardewValley.Tools;
 
@@ -18,6 +19,7 @@ namespace FishMod
         public const string DeluxeRodId = "Willy.FishMod.DeluxeFishingRod";
         public const string DeluxeRodQiid = ItemRegistry.type_tool + DeluxeRodId;
 
+        public static List<int> randomTreasureNumbers = new();
         public DeluxeFishingRodTool()
         {
             Name = "Bop's Rod";
@@ -97,6 +99,34 @@ namespace FishMod
                 );
 
             return matcher.InstructionEnumeration();
+        }
+        
+        internal static void Post_openTreasureMenuEndFunction(FishingRod __instance, int remainingFish)
+        {
+            if (Game1.activeClickableMenu is not ItemGrabMenu menu)
+            {
+                Monitor.Log("Not item grab menu.", LogLevel.Warn);
+                return;
+            }
+
+            if (menu.source != ItemGrabMenu.source_fishingChest)
+                return;
+
+            foreach (int i in randomTreasureNumbers)
+            {
+                switch (i)
+                {
+                    case 0: // blu chest
+                        menu.ItemsToGrabMenu.actualInventory.Add(ItemRegistry.Create("(O)852", Game1.random.Next(1, 6))); // dragon tooth
+                        break;
+                    case 1: // red chest
+                        menu.ItemsToGrabMenu.actualInventory.Add(ItemRegistry.Create("(O)260", Game1.random.Next(1, 30))); // hot pepper
+                        break;
+                    case 2: // green chest
+                        menu.ItemsToGrabMenu.actualInventory.Add(ItemRegistry.Create("(O)60", Game1.random.Next(1, 2))); // emerald
+                        break;
+                }
+            }
         }
     }
 }

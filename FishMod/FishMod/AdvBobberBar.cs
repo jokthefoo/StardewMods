@@ -43,14 +43,6 @@ namespace FishMod
 
 		public float floaterSinkerAcceleration;
 
-		public float treasurePosition;
-
-		public float treasureCatchLevel;
-
-		public float treasureAppearTimer;
-
-		public float treasureScale;
-
 		public bool bobberInBar;
 
 		public bool buttonPressed;
@@ -61,15 +53,11 @@ namespace FishMod
 
 		public bool fadeOut;
 
-		public int treasure;
-
 		public bool perfect;
 
 		public bool bossFish;
 
 		public bool fromFishPond;
-
-		public bool goldenTreasure;
 
 		public int bobberBarHeight;
 
@@ -92,8 +80,6 @@ namespace FishMod
 		public Vector2 fishShake;
 
 		public Vector2 everythingShake;
-
-		public Vector2 treasureShake;
 
 		public float reelRotation;
 
@@ -122,15 +108,19 @@ namespace FishMod
 			this.bobbers = bobbers;
 			this.setFlagOnCatch = setFlagOnCatch;
 			handledFishResult = false;
-			this.treasure = treasure;
-			this.goldenTreasure = goldenTreasure;
 			
+			DeluxeFishingRodTool.randomTreasureNumbers.Clear();
 			for (int i = 0; i < treasure; i++)
 			{
-				treasures.Add(new TreasureInstance(3, 20,20));
+				DeluxeFishingRodTool.randomTreasureNumbers.Add(Game1.random.Next(-1, 3));
+				treasures.Add(new TreasureInstance(DeluxeFishingRodTool.randomTreasureNumbers[i], 20,20));
+			}
+
+			if (goldenTreasure)
+			{
+				treasures[0].goldenTreasure = true;
 			}
 			
-			treasureAppearTimer = Game1.random.Next(1000, 3000);
 			fadeIn = true;
 			scale = 0f;
 			this.whichFish = whichFish;

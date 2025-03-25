@@ -256,6 +256,8 @@ public class AxeFishing
                 clump.health.Value = 0;
                 location.performToolAction(tool, (int)tileLocation.X, (int)tileLocation.Y);
                 clump.destroy(tool, location, tileLocation);
+                location.resourceClumps.Remove(clump);
+                return;
             }
         }
 
