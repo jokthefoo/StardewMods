@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Xml.Serialization;
 using HarmonyLib;
+using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.GameData.Tools;
@@ -20,6 +21,10 @@ namespace FishMod
         public const string DeluxeRodQiid = ItemRegistry.type_tool + DeluxeRodId;
 
         public static List<int> randomTreasureNumbers = new();
+        public static TimeSpan minigameTimeToClick;
+        public static TimeSpan chargingUpTime;
+        public static bool playerDidChargeUp;
+        public static List<Vector2> tilesAffectedList;
         public DeluxeFishingRodTool()
         {
             Name = "Bop's Rod";
@@ -112,6 +117,7 @@ namespace FishMod
             if (menu.source != ItemGrabMenu.source_fishingChest)
                 return;
 
+            // TODO: different treasure chest rewards
             foreach (int i in randomTreasureNumbers)
             {
                 switch (i)
@@ -127,6 +133,67 @@ namespace FishMod
                         break;
                 }
             }
+        }
+
+        public static void PlayExclamationMark(Farmer who)
+        {
+            who.PlayFishBiteChime();
+            Rumble.rumble(0.75f, 250f);
+
+            minigameTimeToClick = Game1.currentGameTime.TotalGameTime + TimeSpan.FromMilliseconds(800);
+
+            Point standingPixel = who.StandingPixel;
+            Game1.screenOverlayTempSprites.Add(new TemporaryAnimatedSprite("LooseSprites\\Cursors",
+                new Rectangle(395, 497, 3, 8),
+                new Vector2(standingPixel.X - Game1.viewport.X, standingPixel.Y - 128 - 8 - Game1.viewport.Y), false,
+                0.02f, Color.White)
+            {
+                scale = 5f,
+                scaleChange = -0.01f,
+                motion = new Vector2(0.0f, -0.5f),
+                shakeIntensityChange = -0.005f,
+                shakeIntensity = 1f
+            });
+        }
+
+        public static void PlayHitEffectForRandomEncounter(Farmer who)
+        {
+            Game1.screenOverlayTempSprites.Add(new TemporaryAnimatedSprite("LooseSprites\\Cursors", new Rectangle(612, 1913, 74, 30), 1500f, 1, 0, Game1.GlobalToLocal(Game1.viewport, who.getStandingPosition() + new Vector2(-140f, -160f)), false, false, 1f, 0.005f, Color.White, 4f, 0.075f, 0.0f, 0.0f, true)
+            {
+                scaleChangeChange = -0.005f,
+                motion = new Vector2(0.0f, -0.1f),
+                endFunction = (TemporaryAnimatedSprite.endBehavior) (_ =>
+                {
+                    Game1.activeClickableMenu = new AdvBobberBar("734", 100, 3, new List<string>(), "nobait", false, "", true, 3);
+                }),
+                id = 987654321
+            });
+            Game1.player.playNearbySoundLocal("FishHit");
+        }
+
+        static public void Post_tilesAffected(ref List<Vector2> __result, Vector2 tileLocation, int power, Farmer who)
+        {
+            Monitor.Log("water!", LogLevel.Error);
+            tilesAffectedList = __result;
+        }
+        
+        static public void Post_wateringCanReleased(WateringCan __instance, GameLocation location, int x, int y, int power, Farmer who)
+        {
+            chargingUpTime = TimeSpan.Zero;
+            if (playerDidChargeUp)
+            {
+                playerDidChargeUp = false;
+                PlayExclamationMark(who);
+            }
+            else
+            {
+                tilesAffectedList = new List<Vector2>();
+            }
+        }
+        
+        static public void Post_toolCharging(Farmer __instance)
+        {
+            chargingUpTime = Game1.currentGameTime.TotalGameTime + TimeSpan.FromMilliseconds(800);
         }
     }
 }

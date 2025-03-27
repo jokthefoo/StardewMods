@@ -6,11 +6,12 @@ namespace FishMod;
 
 public class TreasureInstance
 {
-	private float treasurePosition;
-	private float treasureCatchLevel;
-	private float treasureAppearTimer;
+	protected float treasurePosition;
+	protected float treasureCatchLevel;
+	protected float treasureAppearTimer;
 	private float treasureScale;
 	public bool treasureCaught;
+	public bool realTreasure;
 	public bool goldenTreasure;
 	private Vector2 treasureShake;
 	private int spriteId;
@@ -21,15 +22,37 @@ public class TreasureInstance
 	public const int minPos = 8;
 	public const int maxPos = 500;
 
-	public TreasureInstance(int spriteId, int treasureAppearMin = 1000, int treasureAppearMax = 3000, bool goldenTreasure = false)
+	public float decreaseRate = 0.01f;
+	public float increaseRate = 0.0135f;
+	public bool canLoseTreasure = false;
+	
+	public bool lostTreasure = false;
+	
+	private Color treasureProgressColor = Color.Yellow;
+
+	public TreasureInstance(int spriteId, bool realTreasure, int treasureAppearMin = 1000, int treasureAppearMax = 3000, bool goldenTreasure = false, bool canLoseTreasure = false)
 	{
+		this.canLoseTreasure = canLoseTreasure;
+		if (canLoseTreasure)
+		{
+			treasureCatchLevel = .6f;
+			increaseRate /= 3;
+			decreaseRate = 0.0025f;
+			treasureProgressColor = Color.Aquamarine;
+		}
 		this.spriteId = spriteId;
 		this.goldenTreasure = goldenTreasure;
+		this.realTreasure = realTreasure;
 		treasureAppearTimer = Game1.random.Next(treasureAppearMin, treasureAppearMax);
 	}
 
-	public bool treasureUpdate(GameTime time, float bobberBarPos, int bobberBarHeight)
+	public virtual bool treasureUpdate(GameTime time, float bobberBarPos, int bobberBarHeight)
 	{
+		if (lostTreasure)
+		{
+			return false;
+		}
+		
 		bool treasureInBar = false;
 		float oldTreasureAppearTimer = treasureAppearTimer;
 		treasureAppearTimer -= time.ElapsedGameTime.Milliseconds;
@@ -67,7 +90,7 @@ public class TreasureInstance
 			                treasurePosition - 16f >= bobberBarPos - 32f;
 			if (treasureInBar && !treasureCaught)
 			{
-				treasureCatchLevel += 0.0135f;
+				treasureCatchLevel += increaseRate;
 				treasureShake = new Vector2(Game1.random.Next(-2, 3), Game1.random.Next(-2, 3));
 				if (treasureCatchLevel >= 1f)
 				{
@@ -82,7 +105,16 @@ public class TreasureInstance
 			else
 			{
 				treasureShake = Vector2.Zero;
-				treasureCatchLevel = Math.Max(0f, treasureCatchLevel - 0.01f);
+				treasureCatchLevel = Math.Max(0f, treasureCatchLevel - decreaseRate);
+				if (canLoseTreasure)
+				{
+					if (treasureCatchLevel == 0f)
+					{
+						lostTreasure = true;
+						treasureScale = 0f;
+						Game1.playSound("fishEscape");
+					}
+				}
 			}
 		}
 		
@@ -117,16 +149,22 @@ public class TreasureInstance
 			    new Rectangle(20*spriteId, 0, 20, 24), Color.White, 0f, new Vector2(10f, 10f), 2f * treasureScale,
 			    SpriteEffects.None, 0.85f);
 	    }
-				
-				
-	    if (treasureCatchLevel > 0f && !treasureCaught) // Treasure catch progress
+	    
+	    if (treasureAppearTimer <= 0f && treasureCatchLevel > 0f && !treasureCaught) // Treasure catch progress
 	    {
+		    if (lostTreasure)
+		    {
+			    // Outline progress bar for specials
+			    b.Draw(Game1.staminaRect,
+				    new Rectangle(xPositionOnScreen + 63, yPositionOnScreen + 11 + (int)treasurePosition, 42, 10),
+				    Color.Black);
+		    }
 		    b.Draw(Game1.staminaRect,
 			    new Rectangle(xPositionOnScreen + 64, yPositionOnScreen + 12 + (int)treasurePosition, 40, 8),
 			    Color.DimGray * 0.5f);
 		    b.Draw(Game1.staminaRect,
 			    new Rectangle(xPositionOnScreen + 64, yPositionOnScreen + 12 + (int)treasurePosition,
-				    (int)(treasureCatchLevel * 40f), 8), Color.Orange);
+				    (int)(treasureCatchLevel * 40f), 8), treasureProgressColor);
 	    }
     }
 }

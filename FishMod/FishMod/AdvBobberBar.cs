@@ -99,21 +99,24 @@ namespace FishMod
 		
 		public List<TreasureInstance> treasures = new ();
 		public bool treasureInBar;
+		public int colorIndex;
+		public Color color = Color.White;
 
 		public AdvBobberBar(string whichFish, float fishSize, int treasure, List<string> bobbers, string setFlagOnCatch,
-			bool isBossFish, string baitID = "", bool goldenTreasure = false)
+			bool isBossFish = false, string baitID = "", bool goldenTreasure = false, int colorIndex = -1)
 			: base(0, 0, 96, 636)
 		{
 			fishObject = ItemRegistry.Create(whichFish);
 			this.bobbers = bobbers;
 			this.setFlagOnCatch = setFlagOnCatch;
 			handledFishResult = false;
+			this.colorIndex = colorIndex;
 			
 			DeluxeFishingRodTool.randomTreasureNumbers.Clear();
 			for (int i = 0; i < treasure; i++)
 			{
 				DeluxeFishingRodTool.randomTreasureNumbers.Add(Game1.random.Next(-1, 3));
-				treasures.Add(new TreasureInstance(DeluxeFishingRodTool.randomTreasureNumbers[i], 20,20));
+				treasures.Add(new TreasureInstance(DeluxeFishingRodTool.randomTreasureNumbers[i], true,20,20));
 			}
 
 			if (goldenTreasure)
@@ -661,30 +664,30 @@ namespace FishMod
 			if (scale == 1f)
 			{
 				// These 3 are bobber bar
-				b.Draw(Game1.mouseCursors,
+				b.Draw(ObjectIds.fishingTextures,
 					new Vector2(xPositionOnScreen + 64, yPositionOnScreen + 12 + (int)bobberBarPos) + barShake +
-					everythingShake, new Rectangle(682, 2078, 9, 2),
+					everythingShake, new Rectangle(216, 447 + 10 * colorIndex, 9, 2),
 					bobberInBar
-						? Color.White
-						: (Color.White * 0.25f *
+						? color
+						: (color * 0.25f *
 						   ((float)Math.Round(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 100.0),
 							   2) + 2f)), 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.89f);
-				b.Draw(Game1.mouseCursors,
+				b.Draw(ObjectIds.fishingTextures,
 					new Vector2(xPositionOnScreen + 64, yPositionOnScreen + 12 + (int)bobberBarPos + 8) + barShake +
-					everythingShake, new Rectangle(682, 2081, 9, 1),
+					everythingShake, new Rectangle(216, 453 + 10 * colorIndex, 9, 1),
 					bobberInBar
-						? Color.White
-						: (Color.White * 0.25f *
+						? color
+						: (color * 0.25f *
 						   ((float)Math.Round(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 100.0),
 							   2) + 2f)), 0f, Vector2.Zero, new Vector2(4f, bobberBarHeight - 16), SpriteEffects.None,
 					0.89f);
-				b.Draw(Game1.mouseCursors,
+				b.Draw(ObjectIds.fishingTextures,
 					new Vector2(xPositionOnScreen + 64,
 						yPositionOnScreen + 12 + (int)bobberBarPos + bobberBarHeight - 8) + barShake + everythingShake,
-					new Rectangle(682, 2085, 9, 2),
+					new Rectangle(216, 454 + 10 * colorIndex, 9, 2),
 					bobberInBar
-						? Color.White
-						: (Color.White * 0.25f *
+						? color
+						: (color * 0.25f *
 						   ((float)Math.Round(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 100.0),
 							   2) + 2f)), 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.89f);
 				

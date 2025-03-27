@@ -4,6 +4,7 @@ using StardewValley;
 using StardewValley.Constants;
 using StardewValley.Enchantments;
 using StardewValley.Locations;
+using StardewValley.Menus;
 using StardewValley.TerrainFeatures;
 using StardewValley.Tools;
 
@@ -39,7 +40,6 @@ public class AxeFishing
                     }
 
                     StartTreeChop(t, tree, tile);
-
                     return false;
                 }
             }
@@ -53,6 +53,7 @@ public class AxeFishing
                         if (clump.parentSheetIndex.Value == 600 || clump.parentSheetIndex.Value == 602)
                         {
                             StartLogChop(clump, t, tile);
+                            return false;
                         }
                     }
                 }
@@ -72,7 +73,6 @@ public class AxeFishing
     {
         float toolStrength = tool.UpgradeLevel + (tool.hasEnchantmentOfType<PowerfulEnchantment>() ? 2 : 0);
         int chopAmountRequired = (int)Math.Ceiling(clump.health.Value / toolStrength);
-        clump.Location.playSound("axchop", tileLocation);
 
         float stamCost = (2 * 1) - tool.lastUser.ForagingLevel * 0.1f;
         if (!tool.isEfficient.Value)
@@ -100,7 +100,9 @@ public class AxeFishing
         clump.shakeTimer = 100f;
 
         // Start minigame
-        Game1.activeClickableMenu = new TreeBobberBar(clump.Location, false, chopAmountRequired, tool, tileLocation);
+        clump.Location.playSound("axchop", tileLocation);
+        bool treasure = Game1.random.NextDouble() < FishingRod.baseChanceForTreasure + tool.lastUser.LuckLevel * 0.005 + tool.lastUser.DailyLuck / 2.0;
+        Game1.activeClickableMenu = new TreeBobberBar(clump.Location, treasure, chopAmountRequired, tool, tileLocation);
     }
 
     private static bool inTownCheck(GameLocation location, Vector2 tileLocation, Tree tree)
@@ -190,10 +192,12 @@ public class AxeFishing
         }
 
         // Start minigame
-        Game1.activeClickableMenu = new TreeBobberBar(tree.Location, false, chopAmountRequired, tool, tileLocation);
+        tree.Location.playSound("axchop", new Vector2?(tileLocation));
+        bool treasure = true;//Game1.random.NextDouble() < FishingRod.baseChanceForTreasure + tool.lastUser.LuckLevel * 0.005 + tool.lastUser.DailyLuck / 2.0;
+        Game1.activeClickableMenu = new TreeBobberBar(tree.Location, treasure, chopAmountRequired, tool, tileLocation);
     }
 
-    internal static void TreeRewards(GameLocation location, Tool tool, Vector2 tileLocation, int chopAmountRequired)
+    internal static void TreeRewards(GameLocation location, Tool tool, Vector2 tileLocation, int chopAmountRequired, bool treasureCaught)
     {
         if (location.terrainFeatures.TryGetValue(tileLocation, out TerrainFeature terrainFeature))
         {
@@ -245,8 +249,6 @@ public class AxeFishing
                         tree.Location, 0.33 * chopAmountRequired, groundLevel: Game1.player.StandingPixel.Y - 32);
                 }
             }
-
-            return;
         }
 
         foreach (ResourceClump? clump in location.resourceClumps)
@@ -257,9 +259,26 @@ public class AxeFishing
                 location.performToolAction(tool, (int)tileLocation.X, (int)tileLocation.Y);
                 clump.destroy(tool, location, tileLocation);
                 location.resourceClumps.Remove(clump);
-                return;
+                break;
             }
         }
 
+        if (treasureCaught)
+        {
+            tool.lastUser.playNearbySoundLocal("openChest");
+            location.temporarySprites.Add(new TemporaryAnimatedSprite("LooseSprites\\Cursors", new Rectangle(64, 1920, 32, 32), 200f, 4, 0, tool.lastUser.Position + new Vector2(-32f, -228f), false, false, (float) ((double) tool.lastUser.StandingPixel.Y / 10000.0 + 1.0 / 1000.0), 0.0f, Color.White, 4f, 0.0f, 0.0f, 0.0f)
+            {
+                endFunction = openWoodTreasureMenu
+            });
+        }
+    }
+
+    public static void openWoodTreasureMenu(int extraInfo)
+    {
+        List<Item> inventory = new List<Item>();
+        inventory.Add(ItemRegistry.Create("(O)PrizeTicket")); // TODO: wood treasures
+        ItemGrabMenu itemGrabMenu = new ItemGrabMenu(inventory).setEssential(true);
+        itemGrabMenu.source = 69;
+        Game1.activeClickableMenu = itemGrabMenu;
     }
 }

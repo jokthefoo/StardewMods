@@ -107,7 +107,7 @@ namespace FishMod
 			treasureCount = treasure;
 			for (int i = 0; i < treasureCount; i++)
 			{
-				treasures.Add(new TreasureInstance(i));
+				treasures.Add(new TreasureInstance(i, true));
 			}
 			
 			handledFishResult = false;

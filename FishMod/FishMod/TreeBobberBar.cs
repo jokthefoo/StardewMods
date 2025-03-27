@@ -83,7 +83,12 @@ namespace FishMod
 			
 			for (int i = 0; i < logCount; i++)
 			{
-				treasures.Add(new TreasureInstance(3, 20,20));
+				treasures.Add(new TreasureInstance(3, false, 20,20));
+			}
+
+			if (treasure)
+			{
+				treasures.Add(new MovingTreasure(2, true, 1000, 1200, canLoseTreasure:true));
 			}
 			
 			handledFishResult = false;
@@ -239,12 +244,12 @@ public override void update(GameTime time)
 				bool treasureCaught = false;
 				foreach (var t in treasures)
 				{
-					if (t.treasureCaught)
+					if (t.realTreasure && t.treasureCaught)
 					{
 						treasureCaught = true;
 					}
 				}
-				AxeFishing.TreeRewards(location, tool, tileLocation, logCount);
+				AxeFishing.TreeRewards(location, tool, tileLocation, logCount, treasureCaught);
 			}
 			else
 			{
@@ -362,7 +367,7 @@ public void fishUpdate(GameTime time)
 			treasureInBar = true;
 		}
 
-		if (t.treasureCaught && !beforeCaught)
+		if (t.treasureCaught && !beforeCaught && !t.realTreasure)
 		{
 			distanceFromCatching += 1f / logCount;
 		}
@@ -447,27 +452,28 @@ public override void draw(SpriteBatch b)
 			if (uiScale == 1f)
 			{
 				// These 3 are bobber bar
-				b.Draw(Game1.mouseCursors,
+				int colorIndex = 2;
+				b.Draw(ObjectIds.fishingTextures,
 					new Vector2(xPositionOnScreen + 64, yPositionOnScreen + 12 + (int)bobberBarPos) + barShake +
-					everythingShake, new Rectangle(682, 2078, 9, 2),
+					everythingShake, new Rectangle(216, 447 + 10 * colorIndex, 9, 2),
 					treasureInBar
 						? Color.White
 						: (Color.White * 0.25f *
 						   ((float)Math.Round(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 100.0),
 							   2) + 2f)), 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.89f);
-				b.Draw(Game1.mouseCursors,
+				b.Draw(ObjectIds.fishingTextures,
 					new Vector2(xPositionOnScreen + 64, yPositionOnScreen + 12 + (int)bobberBarPos + 8) + barShake +
-					everythingShake, new Rectangle(682, 2081, 9, 1),
+					everythingShake, new Rectangle(216, 453 + 10 * colorIndex, 9, 1),
 					treasureInBar
 						? Color.White
 						: (Color.White * 0.25f *
 						   ((float)Math.Round(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 100.0),
 							   2) + 2f)), 0f, Vector2.Zero, new Vector2(4f, bobberBarHeight - 16), SpriteEffects.None,
 					0.89f);
-				b.Draw(Game1.mouseCursors,
+				b.Draw(ObjectIds.fishingTextures,
 					new Vector2(xPositionOnScreen + 64,
 						yPositionOnScreen + 12 + (int)bobberBarPos + bobberBarHeight - 8) + barShake + everythingShake,
-					new Rectangle(682, 2085, 9, 2),
+					new Rectangle(216, 454 + 10 * colorIndex, 9, 2),
 					treasureInBar
 						? Color.White
 						: (Color.White * 0.25f *

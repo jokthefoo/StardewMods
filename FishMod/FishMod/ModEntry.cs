@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using System.Reflection;
+using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
@@ -23,6 +24,7 @@ namespace FishMod
         {
             helper.Events.GameLoop.GameLaunched += OnGameLaunched;
             helper.Events.Content.AssetRequested += OnAssetRequested;
+            helper.Events.GameLoop.UpdateTicked += OnUpdateTicked;
             
             helper.Events.Input.ButtonPressed += OnButtonPressed;
             helper.Events.Display.MenuChanged += OnMenuChanged;
@@ -44,6 +46,39 @@ namespace FishMod
                 original: AccessTools.Method(typeof(FishingRod), nameof(FishingRod.openTreasureMenuEndFunction)),
                 postfix: new HarmonyMethod(typeof(DeluxeFishingRodTool), nameof(DeluxeFishingRodTool.Post_openTreasureMenuEndFunction))
             );
+            
+            Type[] types = { typeof ( Vector2 ), typeof ( int ), typeof ( Farmer ) };
+            MethodInfo originalToolsMethod = typeof ( Tool ).GetMethod ( "tilesAffected", BindingFlags.Instance | BindingFlags.NonPublic, null, types, null );
+            harmony.Patch(
+                original: originalToolsMethod,
+                postfix: new HarmonyMethod(typeof(DeluxeFishingRodTool), nameof(DeluxeFishingRodTool.Post_tilesAffected)) );
+            
+            
+            harmony.Patch(
+                original: AccessTools.Method(typeof(WateringCan), nameof(WateringCan.DoFunction)),
+                postfix: new HarmonyMethod(typeof(DeluxeFishingRodTool), nameof(DeluxeFishingRodTool.Post_wateringCanReleased))
+            );
+            
+            harmony.Patch(
+                original: AccessTools.Method(typeof(Farmer), nameof(Farmer.toolPowerIncrease)),
+                postfix: new HarmonyMethod(typeof(DeluxeFishingRodTool), nameof(DeluxeFishingRodTool.Post_toolCharging))
+            );
+            // 600ms
+        }
+
+        private void OnUpdateTicked(object? sender, UpdateTickedEventArgs e)
+        {
+            if (e.IsMultipleOf(60)) // run every second
+            {
+            }
+            if (DeluxeFishingRodTool.chargingUpTime > Game1.currentGameTime.TotalGameTime && Game1.player.CurrentTool is FishingRod )
+            {
+                DeluxeFishingRodTool.chargingUpTime = TimeSpan.Zero;
+                Game1.playSound("toolCharge",
+                    Utility.CreateRandom(Game1.dayOfMonth, Game1.player.Position.X * 1000.0, Game1.player.Position.Y)
+                        .Next(12, 16) * 100 + (Game1.player.CurrentTool?.UpgradeLevel+1) * 100);
+                DeluxeFishingRodTool.playerDidChargeUp = true;
+            }
         }
 
         private void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
@@ -102,21 +137,6 @@ namespace FishMod
                     Game1.activeClickableMenu = new AdvBobberBar(bobberBar.whichFish, bobberBar.fishSize, 3, bobberBar.bobbers, bobberBar.setFlagOnCatch, bobberBar.bossFish, baitid, bobberBar.goldenTreasure);
                 }
             }
-            else if (e.OldMenu is BobberBar)
-                OnFishingMiniGameEnd();
-
-            if (e.NewMenu is ItemGrabMenu itemGrabMenu && itemGrabMenu.source == ItemGrabMenu.source_fishingChest)
-                OnTreasureMenuOpen(itemGrabMenu);
-        }
-
-        private void OnTreasureMenuOpen(ItemGrabMenu itemGrabMenu)
-        {
-            Monitor.Log($"{Game1.player.Name} Treasure menu open.", LogLevel.Debug);
-        }
-
-        private void OnFishingMiniGameEnd()
-        {
-            Monitor.Log($"{Game1.player.Name} Fish mini-game ended.", LogLevel.Debug);
         }
 
         private void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
@@ -125,6 +145,24 @@ namespace FishMod
             if (!Context.IsWorldReady)
                 return;
 
+            if (e.Button == SButton.MouseLeft && DeluxeFishingRodTool.minigameTimeToClick > Game1.currentGameTime.TotalGameTime)
+            {
+                DeluxeFishingRodTool.minigameTimeToClick = TimeSpan.Zero;
+                DeluxeFishingRodTool.PlayHitEffectForRandomEncounter(Game1.player);
+            }
+
+            if (e.Button == SButton.N)
+            {
+                DeluxeFishingRodTool.PlayExclamationMark(Game1.player);
+            }
+
+            if (e.Button == SButton.H)
+            {
+                Game1.playSound("toolCharge",
+                    Utility.CreateRandom(Game1.dayOfMonth, Game1.player.Position.X * 1000.0, Game1.player.Position.Y)
+                        .Next(12, 16) * 100 + (Game1.player.CurrentTool?.UpgradeLevel+1) * 100); 
+            }
+            
             if (e.Button == SButton.B)
             {
                 FishingRod.minFishingBiteTime = 100;
