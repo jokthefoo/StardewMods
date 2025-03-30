@@ -145,15 +145,34 @@ namespace FishMod
         {
             if (e.NewMenu is BobberBar bobberBar)
             {
-                if (Game1.player.CurrentTool?.QualifiedItemId == DeluxeFishingRodTool.DeluxeRodQiid)
+                //if (Game1.player.CurrentTool?.QualifiedItemId == DeluxeFishingRodTool.DeluxeRodQiid)
+                string baitid = "";
+                List<string> tackles = new List<string>();
+                if (Game1.player.CurrentTool is FishingRod fishingRod)
                 {
-                    string baitid = "";
-                    if (Game1.player.CurrentTool is FishingRod fishingRod)
-                    {
-                        baitid = fishingRod.GetBait()?.QualifiedItemId;
-                    }
-                    e.NewMenu.exitThisMenu(false);
-                    Game1.activeClickableMenu = new AdvBobberBar(bobberBar.whichFish, bobberBar.fishSize, 3, bobberBar.bobbers, bobberBar.setFlagOnCatch, bobberBar.bossFish, baitid, bobberBar.goldenTreasure);
+                    baitid = fishingRod.GetBait()?.QualifiedItemId;
+                    tackles = fishingRod.GetTackleQualifiedItemIDs();
+                }
+
+                e.NewMenu.exitThisMenu(false);
+                if (!bobberBar.bossFish && Game1.random.NextDouble() < DeluxeFishingRodTool.baseFishFrenzyChance)
+                {
+                    Game1.activeClickableMenu = new FishFrenzyBobberBar(bobberBar.whichFish, bobberBar.fishSize,
+                        bobberBar.bobbers, bobberBar.setFlagOnCatch, baitid);
+                }
+                else
+                {
+                    double tackleBoost = Utility.getStringCountInList(tackles, "(O)693") * FishingRod.baseChanceForTreasure / 3.0;
+                    double baitBoost = baitid == "(O)703" ? FishingRod.baseChanceForTreasure : 0.0;
+                    double pirateBoost = Game1.player.professions.Contains(9) ? FishingRod.baseChanceForTreasure : 0.0;
+
+                    bool treasure = Game1.random.NextDouble() < FishingRod.baseChanceForTreasure +
+                        Game1.player.LuckLevel * 0.005 + baitBoost + tackleBoost + Game1.player.DailyLuck / 2.0 +
+                        pirateBoost;
+
+                    // TODO adv bar treasure count
+                    Game1.activeClickableMenu = new AdvBobberBar(bobberBar.whichFish, bobberBar.fishSize, 3,
+                        bobberBar.bobbers, bobberBar.setFlagOnCatch, bobberBar.bossFish, baitid, bobberBar.goldenTreasure);
                 }
             }
         }
@@ -211,7 +230,7 @@ namespace FishMod
                 var num3 = num1 * (Game1.random.Next(num2, Math.Max(6, num2)) / 5f);
                 var fishSize = Math.Max(0.0f, Math.Min(1f, num3 * (float)(1.0 + Game1.random.Next(-10, 11) / 100.0)));
                 
-                Game1.activeClickableMenu = new BasicBobberBar("136", fishSize, 3, bobbers, "nobait");
+                Game1.activeClickableMenu = new FishFrenzyBobberBar("136", fishSize, bobbers, "","nobait");
             }
         }
     }

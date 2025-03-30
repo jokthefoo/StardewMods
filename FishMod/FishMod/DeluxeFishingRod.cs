@@ -21,6 +21,8 @@ namespace FishMod
 
         public static List<int> randomTreasureNumbers = new();
         public static TimeSpan minigameTimeToClick;
+        
+        public static float baseFishFrenzyChance = 0.02f;
         public DeluxeFishingRodTool()
         {
             Name = "Bop's Rod";

@@ -52,7 +52,7 @@ public class TreasureInstance
 
 	public virtual bool treasureUpdate(GameTime time, float bobberBarPos, int bobberBarHeight)
 	{
-		if (lostTreasure)
+		if ((lostTreasure || treasureCaught) && treasureScale == 0f)
 		{
 			return false;
 		}
@@ -131,27 +131,31 @@ public class TreasureInstance
 	    if (goldenTreasure)
 	    {
 		    b.Draw(Game1.mouseCursors_1_6,
-			    new Vector2(xPositionOnScreen + 64 + 18,
-				    (float)(yPositionOnScreen + 12 + 24) + treasurePosition) + treasureShake + everythingShake,
-			    new Rectangle(256, 51, 20, 24), Color.White, 0f, new Vector2(10f, 10f), 2f * treasureScale,
-			    SpriteEffects.None, 0.85f);
+			    new Vector2(xPositionOnScreen + 64 + 18, (yPositionOnScreen + 12 + 24) + treasurePosition) +
+			    treasureShake + everythingShake, new Rectangle(256, 51, 20, 24), Color.White, 0f, 
+			    new Vector2(10f, 10f),2f * treasureScale, SpriteEffects.None, 0.85f);
 	    }
-	    else if(spriteId == -1)
+	    else if (spriteId == -1)
 	    {
 		    b.Draw(Game1.mouseCursors,
-			    new Vector2(xPositionOnScreen + 64 + 18,
-				    (float)(yPositionOnScreen + 12 + 24) + treasurePosition) + treasureShake + everythingShake,
-			    new Rectangle(638, 1865, 20, 24), Color.White, 0f, new Vector2(10f, 10f), 2f * treasureScale,
-			    SpriteEffects.None, 0.85f);
+			    new Vector2(xPositionOnScreen + 64 + 18, (yPositionOnScreen + 12 + 24) + treasurePosition) +
+			    treasureShake + everythingShake, new Rectangle(638, 1865, 20, 24), Color.White, 0f,
+			    new Vector2(10f, 10f), 2f * treasureScale, SpriteEffects.None, 0.85f);
+	    }
+	    else if (spriteId == -2)
+	    {
+		    b.Draw(Game1.mouseCursors,
+			    new Vector2(xPositionOnScreen + 64 + 18, (yPositionOnScreen + 12 + 24) + treasurePosition) +
+			    treasureShake + everythingShake, new Rectangle(614, 1840, 20, 20), Color.White, 0f,
+			    new Vector2(10f, 10f), 2f * treasureScale, SpriteEffects.None, 0.88f);
 	    }
 	    else
 	    {
 		    // draw treasure
 		    b.Draw(ObjectIds.fishingTextures,
-			    new Vector2(xPositionOnScreen + 64 + 18,
-				    (float)(yPositionOnScreen + 12 + 24) + treasurePosition) + treasureShake + everythingShake,
-			    new Rectangle(20*spriteId, 0, 20, 24), Color.White, 0f, new Vector2(10f, 10f), 2f * treasureScale,
-			    SpriteEffects.None, 0.85f);
+			    new Vector2(xPositionOnScreen + 64 + 18, (float)(yPositionOnScreen + 12 + 24) + treasurePosition) +
+			    treasureShake + everythingShake, new Rectangle(20 * spriteId, 0, 20, 24), Color.White, 0f,
+			    new Vector2(10f, 10f), 2f * treasureScale, SpriteEffects.None, 0.85f);
 	    }
 	    
 	    if (showProgressBar && treasureAppearTimer <= 0f && treasureCatchLevel > 0f && !treasureCaught) // Treasure catch progress
