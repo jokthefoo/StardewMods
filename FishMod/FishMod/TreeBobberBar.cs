@@ -82,7 +82,9 @@ namespace FishMod
 
 			if (treasure)
 			{
-				treasures.Add(new MovingTreasure(2, true, 1000, 1200, canLoseTreasure:true));
+				var realTreasure = new MovingTreasure(2, true, 1000, 1200, canLoseTreasure: true);
+				realTreasure.difficulty = t.lastUser.ForagingLevel * 5 + 25;
+				treasures.Add(realTreasure);
 			}
 			
 			handledFishResult = false;

@@ -160,7 +160,7 @@ public class TreasureInstance
 	    
 	    if (showProgressBar && treasureAppearTimer <= 0f && treasureCatchLevel > 0f && !treasureCaught) // Treasure catch progress
 	    {
-		    if (lostTreasure)
+		    if (canLoseTreasure)
 		    {
 			    // Outline progress bar for specials
 			    b.Draw(Game1.staminaRect,

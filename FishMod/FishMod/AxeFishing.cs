@@ -3,10 +3,12 @@ using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Constants;
 using StardewValley.Enchantments;
+using StardewValley.Extensions;
 using StardewValley.Locations;
 using StardewValley.Menus;
 using StardewValley.TerrainFeatures;
 using StardewValley.Tools;
+using Object = StardewValley.Object;
 
 namespace FishMod;
 
@@ -276,7 +278,74 @@ public class AxeFishing
     public static void openWoodTreasureMenu(int extraInfo)
     {
         List<Item> inventory = new List<Item>();
-        inventory.Add(ItemRegistry.Create("(O)PrizeTicket")); // TODO: wood treasures
+        
+        Game1.player.gainExperience(Farmer.foragingSkill, 10);
+        
+        float num2 = 1f;
+        while (Game1.random.NextDouble() <= num2)
+        {
+            num2 *= 0.4f;
+
+            while (Utility.tryRollMysteryBox(0.08 + Game1.player.team.AverageDailyLuck() / 5.0))
+                inventory.Add(ItemRegistry.Create(Game1.player.stats.Get(StatKeys.Mastery(2)) > 0U
+                    ? "(O)GoldenMysteryBox"
+                    : "(O)MysteryBox"));
+
+            if (Game1.player.stats.Get(StatKeys.Mastery(0)) > 0U && Game1.random.NextDouble() < 0.03)
+                inventory.Add(ItemRegistry.Create("(O)GoldenAnimalCracker"));
+
+            switch (Game1.random.Next(1, 4))
+            {
+                case 1:
+                    if (Game1.random.NextDouble() < 0.10)
+                    {
+                        inventory.Add(new Object("709", Game1.random.Next(6, 9)));//709 hardwood
+                    }
+                    else
+                    {
+                        inventory.Add(new Object("709", Game1.random.Next(1, 3)));//709 hardwood
+                    }
+                    break;
+                case 2:
+                    if (Game1.random.NextDouble() < 0.30)
+                    {
+                        var options = new List<int>();
+                        if (Game1.player.ForagingLevel >= 3)
+                            options.Add(292);//292 mahogany seed
+                        if (options.Count == 0 || Game1.random.NextDouble() < 0.6)
+                            options.Add(309);//309 acorn
+                        if (options.Count == 0 || Game1.random.NextDouble() < 0.6)
+                            options.Add(310);//310 maple seed
+                        if (options.Count == 0 || Game1.random.NextDouble() < 0.6)
+                            options.Add(311);//311 pine cone
+                        var obj = ItemRegistry.Create(Game1.random.ChooseFrom(options).ToString(), Game1.random.Next(1, 3));
+                        inventory.Add(obj);
+                        continue;
+                    }
+                    inventory.Add(new Object("388", Game1.random.Next(3, 6) * Game1.random.Next(2,4)));//388 wood
+                    break;
+                case 3:
+                    if (Game1.random.NextDouble() < 0.10)
+                    {
+                        var options = new List<int>();
+                        if (options.Count == 0 || Game1.random.NextDouble() < 0.6)
+                            options.Add(724); //724 maple
+                        if (options.Count == 0 || Game1.random.NextDouble() < 0.6)
+                            options.Add(725); //725 oakresin
+                        if (options.Count == 0 || Game1.random.NextDouble() < 0.6)
+                            options.Add(726); //726 pine tar
+                        var obj = ItemRegistry.Create(Game1.random.ChooseFrom(options).ToString(), 1);
+                        inventory.Add(obj);
+                        continue;
+                    }
+                    inventory.Add(new Object("92", Game1.random.Next(1, 5)));//92 sap
+                    break;
+            }
+        }
+
+        if (inventory.Count == 0)
+          inventory.Add(ItemRegistry.Create("(O)388", Game1.random.Next(1, 4) * 5));
+        
         ItemGrabMenu itemGrabMenu = new ItemGrabMenu(inventory).setEssential(true);
         itemGrabMenu.source = 69;
         Game1.activeClickableMenu = itemGrabMenu;

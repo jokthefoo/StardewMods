@@ -89,7 +89,9 @@ namespace FishMod
 
 			if (treasure)
 			{
-				treasures.Add(new MovingTreasure(6, true, 500, 500, canLoseTreasure:true));
+				var t = new MovingTreasure(6, true, 500, 500, canLoseTreasure: true);
+				t.difficulty = tool.lastUser.FarmingLevel * 4 + 30;
+				treasures.Add(t);
 			}
 			
 			handledFishResult = false;
@@ -459,7 +461,7 @@ public override void draw(SpriteBatch b)
 				b.Draw(Game1.staminaRect,
 					new Rectangle(xPositionOnScreen + 116 + progressBarShakeTop,
 						yPositionOnScreen + 4, 16 + progressBarShakeTop,
-						(int)(290 * distancesFromCatchingTop)), Color.Lerp(Color.DarkGreen, Color.LawnGreen, distancesFromCatchingBot));
+						(int)(290 * distancesFromCatchingTop)), Color.Lerp(Color.DarkGreen, Color.LawnGreen, distancesFromCatchingTop));
 				
 				/*
 				// TODO add watering anim for bar?
