@@ -165,13 +165,12 @@ namespace FishMod
                     double tackleBoost = Utility.getStringCountInList(tackles, "(O)693") * FishingRod.baseChanceForTreasure / 3.0;
                     double baitBoost = baitid == "(O)703" ? FishingRod.baseChanceForTreasure : 0.0;
                     double pirateBoost = Game1.player.professions.Contains(9) ? FishingRod.baseChanceForTreasure : 0.0;
+                    double treasureOdds = FishingRod.baseChanceForTreasure + Game1.player.LuckLevel * 0.005 + baitBoost + tackleBoost + Game1.player.DailyLuck / 2.0 + pirateBoost;
 
-                    bool treasure = Game1.random.NextDouble() < FishingRod.baseChanceForTreasure +
-                        Game1.player.LuckLevel * 0.005 + baitBoost + tackleBoost + Game1.player.DailyLuck / 2.0 +
-                        pirateBoost;
+                    bool treasure1 = Game1.random.NextDouble() < treasureOdds;
+                    bool treasure2 = Game1.random.NextDouble() < treasureOdds;
 
-                    // TODO adv bar treasure count
-                    Game1.activeClickableMenu = new AdvBobberBar(bobberBar.whichFish, bobberBar.fishSize, 3,
+                    Game1.activeClickableMenu = new AdvBobberBar(bobberBar.whichFish, bobberBar.fishSize, (bobberBar.treasure ? 1:0) + (treasure1?1:0)+ (treasure2?1:0),
                         bobberBar.bobbers, bobberBar.setFlagOnCatch, bobberBar.bossFish, baitid, bobberBar.goldenTreasure);
                 }
             }

@@ -65,7 +65,6 @@ namespace FishMod
 
 		public WateringBobberBar(GameLocation location, Tool tool, bool treasure) : base(0, 0, 96, 636)
 		{
-			// TODO Fairy
 			reelRotation = 359;
 			this.tool = tool;
 			this.location = location;
@@ -90,7 +89,7 @@ namespace FishMod
 
 			if (treasure)
 			{
-				treasures.Add(new MovingTreasure(1, true, 500, 500, canLoseTreasure:true));
+				treasures.Add(new MovingTreasure(6, true, 500, 500, canLoseTreasure:true));
 			}
 			
 			handledFishResult = false;
@@ -409,7 +408,7 @@ public override void draw(SpriteBatch b)
 				flipBubble ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0.001f);
 			
 			/*
-			// bar background tree TODO change this?
+			// TODO watering bar background?
 			b.Draw(ObjectIds.fishingTextures, new Vector2(xPositionOnScreen - 36, yPositionOnScreen + 300) + everythingShake,
 				new Rectangle(0, 368, 72, 144), Color.White * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 6f * uiScale,
 				SpriteEffects.None, 0.01f);*/
@@ -463,7 +462,7 @@ public override void draw(SpriteBatch b)
 						(int)(290 * distancesFromCatchingTop)), Color.Lerp(Color.DarkGreen, Color.LawnGreen, distancesFromCatchingBot));
 				
 				/*
-				// AXE TODO change this?
+				// TODO add watering anim for bar?
 				b.Draw(Game1.mouseCursors,
 					new Vector2(xPositionOnScreen - 18, yPositionOnScreen + 514) + everythingShake,
 					new Rectangle(32, 657, 16, 15), Color.White, reelRotation, new Vector2(2f, 10f), 4f,

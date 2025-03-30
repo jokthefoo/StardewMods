@@ -18,9 +18,52 @@ public class WateringCanFishing
     public static List<Vector2> tilesAffectedList;
     public static Dictionary<GameLocation, HashSet<Vector2>> tilesToWaterNextDay = new();
     private static IMonitor Monitor;
+    private static Dictionary<string,int> crops;
 
     public static void WateringRewards(GameLocation location, Tool tool, bool treasureCaught)
     {
+        crops = new  Dictionary<string,int>();
+        int num = 0;
+        foreach (Vector2 tile in tilesAffectedList)
+        {
+            if (location.terrainFeatures.ContainsKey(tile) && location.terrainFeatures[tile] is HoeDirt dirt)
+            {
+                if (tilesToWaterNextDay.ContainsKey(location))
+                {
+                    if (tilesToWaterNextDay[location].Add(tile))
+                    {
+                        if (dirt.crop != null)
+                        {
+                            string key = dirt.crop.indexOfHarvest.Value;
+                            if (!crops.TryAdd(key, 1))
+                            {
+                                crops[key]++;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    tilesToWaterNextDay[location] = new HashSet<Vector2>() { tile };
+                    if (dirt.crop != null)
+                    {
+                        string key = dirt.crop.indexOfHarvest.Value;
+                        if (!crops.TryAdd(key, 1))
+                        {
+                            crops[key]++;
+                        }
+                    }
+                }
+            }
+            
+            Game1.Multiplayer.broadcastSprites(location, new TemporaryAnimatedSprite(13, new Vector2(tile.X * 64f, tile.Y * 64f), Color.White, 10, Game1.random.NextBool(), 70f, sourceRectWidth: 64, layerDepth: (float) (((double) tile.Y * 64.0 + 32.0) / 10000.0 - 0.009999999776482582))
+            {
+                delayBeforeAnimationStart = 250 + num * 10
+            });
+            ++num;
+        }
+        
+        
         if (treasureCaught)
         {
             tool.lastUser.playNearbySoundLocal("openChest");
@@ -33,34 +76,15 @@ public class WateringCanFishing
             });
         }
 
-        int num = 0;
-        foreach (Vector2 tile in tilesAffectedList)
-        {
-            if (location.terrainFeatures.ContainsKey(tile) && location.terrainFeatures[tile] is HoeDirt)
-            {
-                if (tilesToWaterNextDay.ContainsKey(location))
-                {
-                    tilesToWaterNextDay[location].Add(tile);
-                }
-                else
-                {
-                    tilesToWaterNextDay[location] = new HashSet<Vector2>() { tile };
-                }
-            }
-            
-            Game1.Multiplayer.broadcastSprites(location, new TemporaryAnimatedSprite(13, new Vector2(tile.X * 64f, tile.Y * 64f), Color.White, 10, Game1.random.NextBool(), 70f, sourceRectWidth: 64, layerDepth: (float) (((double) tile.Y * 64.0 + 32.0) / 10000.0 - 0.009999999776482582))
-            {
-                delayBeforeAnimationStart = 250 + num * 10
-            });
-            ++num;
-        }
     }
 
     public static void openWateringTreasureMenu(int extraInfo)
     {
         List<Item> inventory = new List<Item>();
-        inventory.Add(ItemRegistry.Create("113"));
-        // TODO watering can treasures
+        foreach (var s in crops)
+        {
+            inventory.Add(ItemRegistry.Create(s.Key, s.Value));
+        }
         ItemGrabMenu itemGrabMenu = new ItemGrabMenu(inventory).setEssential(true);
         itemGrabMenu.source = 70;
         Game1.activeClickableMenu = itemGrabMenu;
