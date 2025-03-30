@@ -7,9 +7,9 @@ namespace FishMod;
 public class TreasureInstance
 {
 	protected float treasurePosition;
-	protected float treasureCatchLevel;
+	public float treasureCatchLevel;
 	protected float treasureAppearTimer;
-	private float treasureScale;
+	public float treasureScale;
 	public bool treasureCaught;
 	public bool realTreasure;
 	public bool goldenTreasure;

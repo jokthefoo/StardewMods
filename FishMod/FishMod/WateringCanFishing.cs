@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Enchantments;
+using StardewValley.Extensions;
 using StardewValley.Menus;
 using StardewValley.TerrainFeatures;
 using StardewValley.Tools;
@@ -32,6 +33,7 @@ public class WateringCanFishing
             });
         }
 
+        int num = 0;
         foreach (Vector2 tile in tilesAffectedList)
         {
             if (location.terrainFeatures.ContainsKey(tile) && location.terrainFeatures[tile] is HoeDirt)
@@ -45,6 +47,12 @@ public class WateringCanFishing
                     tilesToWaterNextDay[location] = new HashSet<Vector2>() { tile };
                 }
             }
+            
+            Game1.Multiplayer.broadcastSprites(location, new TemporaryAnimatedSprite(13, new Vector2(tile.X * 64f, tile.Y * 64f), Color.White, 10, Game1.random.NextBool(), 70f, sourceRectWidth: 64, layerDepth: (float) (((double) tile.Y * 64.0 + 32.0) / 10000.0 - 0.009999999776482582))
+            {
+                delayBeforeAnimationStart = 250 + num * 10
+            });
+            ++num;
         }
     }
 

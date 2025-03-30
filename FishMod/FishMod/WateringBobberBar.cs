@@ -50,10 +50,8 @@ namespace FishMod
 
 		public float distancesFromCatchingTop = 0.01f;
 		public float distancesFromCatchingBot = 0.01f;
-		public int progressBarShakeTop = 0;
-		public int progressBarShakeBot = 0;
-		
-		
+		public int progressBarShakeTop;
+		public int progressBarShakeBot;
 		
 		public static ICue reelSound;
 
@@ -72,19 +70,21 @@ namespace FishMod
 			this.tool = tool;
 			this.location = location;
 			
-			//TODO change this
 			var t1 = new MovingTreasure(4, false, 20, 20);
 			t1.SetMovementBounds(MovingTreasure.defaultMinBound, MovingTreasure.defaultMaxBound / 2f);
 			t1.showProgressBar = false;
 			t1.increaseRate = 0;
 			t1.treasureShakeMultiplier = .5f;
 			t1.difficulty = 35;
+			t1.treasureScale = 1.2f;
+			
 			var t2 = new MovingTreasure(5, false, 20, 20);
 			t2.SetMovementBounds(MovingTreasure.defaultMaxBound / 2f, MovingTreasure.defaultMaxBound);
 			t2.showProgressBar = false;
 			t2.increaseRate = 0;
 			t2.treasureShakeMultiplier = .5f;
 			t2.difficulty = 35;
+			t2.treasureScale = 1.2f;
 			treasures.Add(t1);
 			treasures.Add(t2);
 
@@ -279,8 +279,7 @@ public void fishUpdate(GameTime time)
 	                                                   Game1.oldPadState.IsButtonDown(Buttons.A)));
 	if (!wasPressing && buttonPressed)
 	{
-		//TODO change this?
-		//Game1.playSound("fishingRodBend");
+		Game1.playSound("fishingRodBend");
 	}
 
 	float gravity = buttonPressed ? -0.25f : 0.25f;
@@ -322,17 +321,19 @@ public void fishUpdate(GameTime time)
 			switch (index)
 			{
 				case 0:
-					distancesFromCatchingTop += 0.003f;
-					if (distancesFromCatchingTop >= 1f)
+					distancesFromCatchingTop += 0.0035f;
+					if (distancesFromCatchingTop >= 1f && t.treasureCaught == false)
 					{
 						progressBarShakeTop = Game1.random.Next(-1, 1);
+						t.treasureCatchLevel = 1f;
 					}
 					break;
 				case 1:
-					distancesFromCatchingBot += 0.003f;
-					if (distancesFromCatchingBot >= 1f)
+					distancesFromCatchingBot += 0.0035f;
+					if (distancesFromCatchingBot >= 1f && t.treasureCaught == false)
 					{
 						progressBarShakeBot = Game1.random.Next(-1, 1);
+						t.treasureCatchLevel = 1f;
 					}
 					break;
 			}
@@ -353,7 +354,6 @@ public void fishUpdate(GameTime time)
 		unReelSound?.Stop(AudioStopOptions.Immediate);
 		if (reelSound == null || reelSound.IsStopped || reelSound.IsStopping || !reelSound.IsPlaying)
 		{
-			//TODO change this
 			Game1.playSound("slosh", out reelSound);
 		}
 	}
@@ -401,16 +401,15 @@ public override void draw(SpriteBatch b)
 			// Draw order matters
 			Game1.StartWorldDrawInUI(b);
 			
-			/*	
 			// bar white background transparent
 			b.Draw(Game1.mouseCursors,
 				new Vector2(xPositionOnScreen - (flipBubble ? 44 : 20) + 104, yPositionOnScreen - 16 + 314) +
 				everythingShake, new Rectangle(652, 1685, 52, 157), Color.White * 0.6f * uiScale, 0f,
 				new Vector2(26f, 78.5f) * uiScale, 4f * uiScale,
-				flipBubble ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0.001f);*/
+				flipBubble ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0.001f);
 			
 			/*
-			// bar background tree TODO change this
+			// bar background tree TODO change this?
 			b.Draw(ObjectIds.fishingTextures, new Vector2(xPositionOnScreen - 36, yPositionOnScreen + 300) + everythingShake,
 				new Rectangle(0, 368, 72, 144), Color.White * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 6f * uiScale,
 				SpriteEffects.None, 0.01f);*/
@@ -464,7 +463,7 @@ public override void draw(SpriteBatch b)
 						(int)(290 * distancesFromCatchingTop)), Color.Lerp(Color.DarkGreen, Color.LawnGreen, distancesFromCatchingBot));
 				
 				/*
-				// AXE TODO change this
+				// AXE TODO change this?
 				b.Draw(Game1.mouseCursors,
 					new Vector2(xPositionOnScreen - 18, yPositionOnScreen + 514) + everythingShake,
 					new Rectangle(32, 657, 16, 15), Color.White, reelRotation, new Vector2(2f, 10f), 4f,

@@ -321,7 +321,7 @@ public void fishUpdate(GameTime time)
 	                                                   Game1.oldPadState.IsButtonDown(Buttons.A)));
 	if (!wasPressing && buttonPressed)
 	{
-		//Game1.playSound("fishingRodBend");
+		Game1.playSound("fishingRodBend");
 	}
 
 	float gravity = buttonPressed ? -0.25f : 0.25f;
