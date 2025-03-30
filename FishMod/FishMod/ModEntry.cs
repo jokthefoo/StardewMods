@@ -8,6 +8,7 @@ using StardewValley;
 using StardewValley.GameData.Objects;
 using StardewValley.GameData.Tools;
 using StardewValley.Menus;
+using StardewValley.TerrainFeatures;
 using StardewValley.Tools;
 
 namespace FishMod
@@ -25,6 +26,7 @@ namespace FishMod
             helper.Events.GameLoop.GameLaunched += OnGameLaunched;
             helper.Events.Content.AssetRequested += OnAssetRequested;
             helper.Events.GameLoop.UpdateTicked += OnUpdateTicked;
+            helper.Events.GameLoop.DayStarted += OnDayStarted;
             
             helper.Events.Input.ButtonPressed += OnButtonPressed;
             helper.Events.Display.MenuChanged += OnMenuChanged;
@@ -51,33 +53,50 @@ namespace FishMod
             MethodInfo originalToolsMethod = typeof ( Tool ).GetMethod ( "tilesAffected", BindingFlags.Instance | BindingFlags.NonPublic, null, types, null );
             harmony.Patch(
                 original: originalToolsMethod,
-                postfix: new HarmonyMethod(typeof(DeluxeFishingRodTool), nameof(DeluxeFishingRodTool.Post_tilesAffected)) );
+                postfix: new HarmonyMethod(typeof(WateringCanFishing), nameof(WateringCanFishing.Post_tilesAffected)) );
             
             
             harmony.Patch(
                 original: AccessTools.Method(typeof(WateringCan), nameof(WateringCan.DoFunction)),
-                postfix: new HarmonyMethod(typeof(DeluxeFishingRodTool), nameof(DeluxeFishingRodTool.Post_wateringCanReleased))
+                postfix: new HarmonyMethod(typeof(WateringCanFishing), nameof(WateringCanFishing.Post_wateringCanReleased))
             );
             
             harmony.Patch(
-                original: AccessTools.Method(typeof(Farmer), nameof(Farmer.toolPowerIncrease)),
-                postfix: new HarmonyMethod(typeof(DeluxeFishingRodTool), nameof(DeluxeFishingRodTool.Post_toolCharging))
+                original: AccessTools.Method(typeof(Tool), nameof(Tool.draw)),
+                prefix: new HarmonyMethod(typeof(WateringCanFishing), nameof(WateringCanFishing.Pre_toolDraw))
             );
-            // 600ms
+            
+            harmony.Patch(
+                original: AccessTools.Method(typeof(Farmer), nameof(Farmer.toolPowerIncrease)), // 600ms 
+                postfix: new HarmonyMethod(typeof(WateringCanFishing), nameof(WateringCanFishing.Post_toolCharging))
+            );
+        }
+
+        private void OnDayStarted(object? sender, DayStartedEventArgs e)
+        {
+            foreach (var mapping in WateringCanFishing.tilesToWaterNextDay)
+            {
+                foreach (Vector2 tile in mapping.Value)
+                {
+                    if (mapping.Key.terrainFeatures.ContainsKey(tile) && mapping.Key.terrainFeatures[tile] is HoeDirt)
+                    {
+                        (mapping.Key.terrainFeatures[tile] as HoeDirt).state.Value = 1;
+                    }
+                }
+            }
+            WateringCanFishing.tilesToWaterNextDay.Clear();
         }
 
         private void OnUpdateTicked(object? sender, UpdateTickedEventArgs e)
         {
-            if (e.IsMultipleOf(60)) // run every second
+            if (WateringCanFishing.chargingUpTime.CompareTo(TimeSpan.Zero) != 0 &&
+                Game1.currentGameTime.TotalGameTime > WateringCanFishing.chargingUpTime &&
+                Game1.player.CurrentTool is WateringCan)
             {
-            }
-            if (DeluxeFishingRodTool.chargingUpTime > Game1.currentGameTime.TotalGameTime && Game1.player.CurrentTool is FishingRod )
-            {
-                DeluxeFishingRodTool.chargingUpTime = TimeSpan.Zero;
-                Game1.playSound("toolCharge",
-                    Utility.CreateRandom(Game1.dayOfMonth, Game1.player.Position.X * 1000.0, Game1.player.Position.Y)
-                        .Next(12, 16) * 100 + (Game1.player.CurrentTool?.UpgradeLevel+1) * 100);
-                DeluxeFishingRodTool.playerDidChargeUp = true;
+                WateringCanFishing.chargingUpTime = TimeSpan.Zero;
+
+                WateringCanFishing.PlayToolIncreaseAnimation(Game1.player);
+                WateringCanFishing.playerDidChargeUp = true;
             }
         }
 
@@ -148,19 +167,13 @@ namespace FishMod
             if (e.Button == SButton.MouseLeft && DeluxeFishingRodTool.minigameTimeToClick > Game1.currentGameTime.TotalGameTime)
             {
                 DeluxeFishingRodTool.minigameTimeToClick = TimeSpan.Zero;
-                DeluxeFishingRodTool.PlayHitEffectForRandomEncounter(Game1.player);
+                IClickableMenu menu = new AdvBobberBar("734", 100, 3, new List<string>(), "nobait", false, "", true, 3);
+                DeluxeFishingRodTool.PlayHitEffectForRandomEncounter(Game1.player, menu);
             }
 
             if (e.Button == SButton.N)
             {
                 DeluxeFishingRodTool.PlayExclamationMark(Game1.player);
-            }
-
-            if (e.Button == SButton.H)
-            {
-                Game1.playSound("toolCharge",
-                    Utility.CreateRandom(Game1.dayOfMonth, Game1.player.Position.X * 1000.0, Game1.player.Position.Y)
-                        .Next(12, 16) * 100 + (Game1.player.CurrentTool?.UpgradeLevel+1) * 100); 
             }
             
             if (e.Button == SButton.B)
@@ -168,10 +181,12 @@ namespace FishMod
                 FishingRod.minFishingBiteTime = 100;
                 FishingRod.maxFishingBiteTime = 100;
                 Game1.player.gainExperience(Farmer.fishingSkill, 5000);
+                Game1.player.gainExperience(Farmer.farmingSkill, 5000);
                 
                 var boprod = ItemRegistry.Create(DeluxeFishingRodTool.DeluxeRodQiid);
                 boprod.specialItem = true;
                 Game1.player.addItemByMenuIfNecessary(boprod);
+                FishingRod.baseChanceForTreasure = 2;
             }
             
             if (e.Button == SButton.F)

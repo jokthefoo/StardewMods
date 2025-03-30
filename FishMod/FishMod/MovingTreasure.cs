@@ -12,6 +12,14 @@ public class MovingTreasure : TreasureInstance
 	public int difficulty;
 	public MotionType motionType;
 
+	private float minBound = 16f;
+	private float maxBound = 520f;
+	private float absoluteMinBound = 0f;
+	private float absoluteMaxBound = 548f;
+	
+	public static float defaultMinBound = 16f;
+	public static float defaultMaxBound = 520f;
+
 	public enum MotionType
 	{
 		Mixed,
@@ -22,8 +30,22 @@ public class MovingTreasure : TreasureInstance
     {
 	    difficulty = 50;
 	    motionType = Game1.random.NextBool() ? MotionType.Walk : MotionType.Mixed ;
+	    treasureTargetPosition = (100f - difficulty) / 100f * absoluteMaxBound;
 	    treasureSpeed = 5f;
-	    treasureTargetPosition = (100f - difficulty) / 100f * 548f;
+	    if (treasureTargetPosition - treasurePosition < 0)
+	    {
+		    treasureSpeed = -treasureSpeed;
+	    }
+    }
+
+    public void SetMovementBounds(float min, float max)
+    {
+	    minBound = min;
+	    maxBound = max;
+	    
+	    
+	    absoluteMinBound = min - 9;
+	    absoluteMaxBound = max + 16;
     }
 
     public override bool treasureUpdate(GameTime time, float bobberBarPos, int bobberBarHeight)
@@ -47,26 +69,30 @@ public class MovingTreasure : TreasureInstance
 			    break;
 	    }
 
-	    treasureTargetPosition = Math.Clamp(treasureTargetPosition, -1f, 548f);
+	    treasureTargetPosition = Math.Clamp(treasureTargetPosition, absoluteMinBound, absoluteMaxBound);
 	    treasurePosition += treasureSpeed;
-	    treasurePosition = Math.Clamp(treasurePosition, 0f, 532f);
+	    treasurePosition = Math.Clamp(treasurePosition, minBound, maxBound);
     }
     
     private void MotionWalk()
     {
-	    if (Math.Abs(treasurePosition - treasureTargetPosition) < 5f)
+	    if (Math.Abs(treasurePosition - treasureTargetPosition) < 3f)
 	    {
-		    treasureSpeed = Game1.random.Next(2, difficulty / 4);
-		    treasureTargetPosition += Game1.random.NextBool() ? Game1.random.Next(20, 80) : -Game1.random.Next(20, 80);
-		    treasureTargetPosition = Math.Clamp(treasureTargetPosition, 0f, 532f);
+		    treasureSpeed = Game1.random.Next(2, difficulty / 10);
+		    treasureTargetPosition = treasurePosition + (Game1.random.NextBool() ? Game1.random.Next(-100, -51) : Game1.random.Next(50, 101));
+		    if (treasureTargetPosition - treasurePosition < 0)
+		    {
+			    treasureSpeed = -treasureSpeed;
+		    }
 	    }
+	    treasureTargetPosition = Math.Clamp(treasureTargetPosition, minBound, maxBound);
     }
     
     private void MotionMixed()
     {
 	    if (Game1.random.NextDouble() < difficulty / 4000f)
 	    {
-		    var spaceBelow = 548f - treasurePosition;
+		    var spaceBelow = absoluteMaxBound - treasurePosition;
 		    float spaceAbove = treasurePosition;
 		    var percent = Math.Min(99f, difficulty + Game1.random.Next(10, 45)) / 100f;
 		    treasureTargetPosition = treasurePosition +
@@ -74,7 +100,7 @@ public class MovingTreasure : TreasureInstance
 			                             (int)spaceBelow) * percent;
 	    }
 
-	    if (Math.Abs(treasurePosition - treasureTargetPosition) > 3f && treasureTargetPosition != -1f)
+	    if (Math.Abs(treasurePosition - treasureTargetPosition) > 3f && treasureTargetPosition != absoluteMinBound)
 	    {
 		    treasureAcceleration = (treasureTargetPosition - treasurePosition) /
 		                           (Game1.random.Next(10, 30) + (100f - difficulty));
@@ -88,7 +114,7 @@ public class MovingTreasure : TreasureInstance
 	    }
 	    else
 	    {
-		    treasureTargetPosition = -1f;
+		    treasureTargetPosition = absoluteMinBound;
 	    }
     }
 }

@@ -6,7 +6,6 @@ using Microsoft.Xna.Framework;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.GameData.Tools;
-using StardewValley.Internal;
 using StardewValley.Menus;
 using StardewValley.Tools;
 
@@ -22,9 +21,6 @@ namespace FishMod
 
         public static List<int> randomTreasureNumbers = new();
         public static TimeSpan minigameTimeToClick;
-        public static TimeSpan chargingUpTime;
-        public static bool playerDidChargeUp;
-        public static List<Vector2> tilesAffectedList;
         public DeluxeFishingRodTool()
         {
             Name = "Bop's Rod";
@@ -156,7 +152,7 @@ namespace FishMod
             });
         }
 
-        public static void PlayHitEffectForRandomEncounter(Farmer who)
+        public static void PlayHitEffectForRandomEncounter(Farmer who, IClickableMenu menu)
         {
             Game1.screenOverlayTempSprites.Add(new TemporaryAnimatedSprite("LooseSprites\\Cursors", new Rectangle(612, 1913, 74, 30), 1500f, 1, 0, Game1.GlobalToLocal(Game1.viewport, who.getStandingPosition() + new Vector2(-140f, -160f)), false, false, 1f, 0.005f, Color.White, 4f, 0.075f, 0.0f, 0.0f, true)
             {
@@ -164,36 +160,11 @@ namespace FishMod
                 motion = new Vector2(0.0f, -0.1f),
                 endFunction = (TemporaryAnimatedSprite.endBehavior) (_ =>
                 {
-                    Game1.activeClickableMenu = new AdvBobberBar("734", 100, 3, new List<string>(), "nobait", false, "", true, 3);
+                    Game1.activeClickableMenu = menu;
                 }),
                 id = 987654321
             });
             Game1.player.playNearbySoundLocal("FishHit");
-        }
-
-        static public void Post_tilesAffected(ref List<Vector2> __result, Vector2 tileLocation, int power, Farmer who)
-        {
-            Monitor.Log("water!", LogLevel.Error);
-            tilesAffectedList = __result;
-        }
-        
-        static public void Post_wateringCanReleased(WateringCan __instance, GameLocation location, int x, int y, int power, Farmer who)
-        {
-            chargingUpTime = TimeSpan.Zero;
-            if (playerDidChargeUp)
-            {
-                playerDidChargeUp = false;
-                PlayExclamationMark(who);
-            }
-            else
-            {
-                tilesAffectedList = new List<Vector2>();
-            }
-        }
-        
-        static public void Post_toolCharging(Farmer __instance)
-        {
-            chargingUpTime = Game1.currentGameTime.TotalGameTime + TimeSpan.FromMilliseconds(800);
         }
     }
 }

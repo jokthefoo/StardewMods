@@ -28,6 +28,10 @@ public class TreasureInstance
 	
 	public bool lostTreasure = false;
 	
+	public bool showProgressBar = true;
+	
+	public float treasureShakeMultiplier = 1f;
+	
 	private Color treasureProgressColor = Color.Yellow;
 
 	public TreasureInstance(int spriteId, bool realTreasure, int treasureAppearMin = 1000, int treasureAppearMax = 3000, bool goldenTreasure = false, bool canLoseTreasure = false)
@@ -91,7 +95,7 @@ public class TreasureInstance
 			if (treasureInBar && !treasureCaught)
 			{
 				treasureCatchLevel += increaseRate;
-				treasureShake = new Vector2(Game1.random.Next(-2, 3), Game1.random.Next(-2, 3));
+				treasureShake = new Vector2(Game1.random.Next(-2, 3) * treasureShakeMultiplier, Game1.random.Next(-2, 3) * treasureShakeMultiplier);
 				if (treasureCatchLevel >= 1f)
 				{
 					Game1.playSound("newArtifact");
@@ -150,7 +154,7 @@ public class TreasureInstance
 			    SpriteEffects.None, 0.85f);
 	    }
 	    
-	    if (treasureAppearTimer <= 0f && treasureCatchLevel > 0f && !treasureCaught) // Treasure catch progress
+	    if (showProgressBar && treasureAppearTimer <= 0f && treasureCatchLevel > 0f && !treasureCaught) // Treasure catch progress
 	    {
 		    if (lostTreasure)
 		    {

@@ -192,8 +192,8 @@ public class AxeFishing
         }
 
         // Start minigame
-        tree.Location.playSound("axchop", new Vector2?(tileLocation));
-        bool treasure = true;//Game1.random.NextDouble() < FishingRod.baseChanceForTreasure + tool.lastUser.LuckLevel * 0.005 + tool.lastUser.DailyLuck / 2.0;
+        tree.Location.playSound("axchop", tileLocation);
+        bool treasure = Game1.random.NextDouble() < FishingRod.baseChanceForTreasure + tool.lastUser.LuckLevel * 0.005 + tool.lastUser.DailyLuck / 2.0;
         Game1.activeClickableMenu = new TreeBobberBar(tree.Location, treasure, chopAmountRequired, tool, tileLocation);
     }
 
