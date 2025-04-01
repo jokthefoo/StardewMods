@@ -25,6 +25,9 @@ namespace FishMod
 		public float everythingShakeTimer;
 
 		public bool treasureInBar;
+
+		private bool slimeInBar;
+		private bool rockInBar;
 		
 		public bool buttonPressed;
 
@@ -186,7 +189,7 @@ private void SpawnSlime(int minSpawn = 3000, int maxSpawn = 8000)
 	Slime.treasureScaleMaxScale = 1.4f;
 	
 	Slime.increaseRate /= 2.5f;
-	Slime.decreaseRate = 0.0025f;
+	Slime.decreaseRate = 0;
 	Slime.isSpecial = true;
 	Slime.difficulty = tool.lastUser.MiningLevel * 4 + Game1.random.Next(20, 35);
 	Slime.reverseProgress = true;
@@ -318,8 +321,8 @@ public void fishUpdate(GameTime time)
 	}
 
 	Slime.treasureProgressColor = Color.Lerp(Color.LimeGreen, Color.Red, Slime.treasureCatchLevel);
-	bool slimeInBar = Slime.treasureUpdate(time, bobberBarPos, bobberBarHeight);
-	bool rockInBar = Rock.treasureUpdate(time, bobberBarPos, bobberBarHeight);
+	slimeInBar = Slime.treasureUpdate(time, bobberBarPos, bobberBarHeight);
+	rockInBar = Rock.treasureUpdate(time, bobberBarPos, bobberBarHeight);
 
 	treasureInBar = false;
 	foreach (var t in treasures)
@@ -335,7 +338,7 @@ public void fishUpdate(GameTime time)
 	if (slimeInBar)
 	{
 		cueName = "daggerswipe";
-		distanceFromCatchingSlime += 0.002f;
+		//distanceFromCatchingSlime += 0.002f;
 		if (Slime.treasureCaught)
 		{
 			treasures.Add(Slime);
@@ -354,7 +357,7 @@ public void fishUpdate(GameTime time)
 			tool.lastUser.currentLocation.debris.Add(new Debris(5, new Vector2(tool.lastUser.StandingPixel.X + 8, tool.lastUser.StandingPixel.Y), Color.Red, 1f, tool.lastUser));
 			tool.lastUser.playNearbySoundAll("ow");
 			
-			distanceFromCatchingSlime = .5f;
+			distanceFromCatchingSlime = 1f;
 		}
 	}
 	
@@ -371,10 +374,11 @@ public void fishUpdate(GameTime time)
 				Rock = new TreasureInstance(8, false, 20, 20);
 				Rock.decreaseRate = 0;
 
-				if (TreasureNode.treasureCaught && Game1.random.NextDouble() < 0.34f)
+				if (TreasureNode.treasureCaught && Game1.random.NextDouble() < 0.15f)
 				{
 					TreasureNode = new TreasureInstance(Game1.random.NextBool() ? TreasureSprites.MineralNode : TreasureSprites.OmniGeode, true, 500, 2000);
 					TreasureNode.decreaseRate = 0;
+					TreasureNode.treasureProgressColor = Color.Lavender;
 					treasures.Add(TreasureNode);
 				}
 			}
@@ -462,7 +466,7 @@ public override void draw(SpriteBatch b)
 				b.Draw(ObjectIds.fishingTextures,
 					new Vector2(xPositionOnScreen + 64, yPositionOnScreen + 12 + (int)bobberBarPos) + barShake +
 					everythingShake, new Rectangle(216, 447 + 10 * colorIndex, 9, 2),
-					treasureInBar
+					treasureInBar || slimeInBar || rockInBar
 						? Color.White
 						: (Color.White * 0.25f *
 						   ((float)Math.Round(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 100.0),
@@ -470,7 +474,7 @@ public override void draw(SpriteBatch b)
 				b.Draw(ObjectIds.fishingTextures,
 					new Vector2(xPositionOnScreen + 64, yPositionOnScreen + 12 + (int)bobberBarPos + 8) + barShake +
 					everythingShake, new Rectangle(216, 453 + 10 * colorIndex, 9, 1),
-					treasureInBar
+					treasureInBar || slimeInBar || rockInBar
 						? Color.White
 						: (Color.White * 0.25f *
 						   ((float)Math.Round(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 100.0),
@@ -480,7 +484,7 @@ public override void draw(SpriteBatch b)
 					new Vector2(xPositionOnScreen + 64,
 						yPositionOnScreen + 12 + (int)bobberBarPos + bobberBarHeight - 8) + barShake + everythingShake,
 					new Rectangle(216, 454 + 10 * colorIndex, 9, 2),
-					treasureInBar
+					treasureInBar || slimeInBar || rockInBar
 						? Color.White
 						: (Color.White * 0.25f *
 						   ((float)Math.Round(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 100.0),

@@ -9,6 +9,19 @@ namespace FishMod;
 public class MiningFishing
 {
     private static int[] rewards = new int[4];
+    
+    
+    // TODO: create big rock for mining game to start
+    // TODO: Detect and start mining game
+    // TODO: spawn big rock in mines
+    
+    
+    // TODO: mining/watering UI improvements
+    // TODO: Fishing: new boss fish 3x progress bars --- first is hard but not crazy hard -- second is two fish same time --- last is hard fish but bar only goes up with treasures
+    
+    
+    // TODO: maybe animals? they would be so cute on the bar
+    
     public static void MiningRewards(GameLocation location, Tool tool, int slimeCount, int rockCount, int mineralCount,
         int omniCount)
     {
@@ -81,25 +94,34 @@ public class MiningFishing
                             specialCount++;
                         }
                     }
-                    inventory.Add(ItemRegistry.Create("766", slimeCount)); // slime
-                    inventory.Add(ItemRegistry.Create("92", sapCount)); // sap
 
-                    switch (slimeRewardInfo)
+                    if (slimeCount > 0)
                     {
-                        case 0:
-                            inventory.Add(ItemRegistry.Create("66", specialCount)); // amethyst
-                            break;
-                        case 1:
-                            inventory.Add(ItemRegistry.Create("70", specialCount)); // jade
-                            break;
-                        case 2:
-                            inventory.Add(ItemRegistry.Create("72", specialCount)); // diamond
-                            break;
-                        case 3:
-                            inventory.Add(ItemRegistry.Create("337", specialCount)); // iridium bar
-                            break;
+                        inventory.Add(ItemRegistry.Create("766", slimeCount)); // slime
                     }
-                    
+                    if (sapCount > 0)
+                    {
+                        inventory.Add(ItemRegistry.Create("92", sapCount)); // sap
+                    }
+
+                    if (specialCount > 0)
+                    {
+                        switch (slimeRewardInfo)
+                        {
+                            case 0:
+                                inventory.Add(ItemRegistry.Create("66", specialCount)); // amethyst
+                                break;
+                            case 1:
+                                inventory.Add(ItemRegistry.Create("70", specialCount)); // jade
+                                break;
+                            case 2:
+                                inventory.Add(ItemRegistry.Create("72", specialCount)); // diamond
+                                break;
+                            case 3:
+                                inventory.Add(ItemRegistry.Create("337", specialCount)); // iridium bar
+                                break;
+                        }
+                    }
                     break;
                 case 1: // rock rewards
                     int coalCount = 0;
@@ -124,6 +146,10 @@ public class MiningFishing
 
                     for (int j = 0; j < mineralCounts.Length; j++)
                     {
+                        if (mineralCounts[j] == 0)
+                        {
+                            continue;
+                        }
                         switch (j)
                         {
                             case 0:
@@ -192,7 +218,10 @@ public class MiningFishing
 
                     foreach (var pair in omniCounts)
                     {
-                        inventory.Add(ItemRegistry.Create(pair.Key.ToString(), pair.Value));
+                        if (pair.Value > 0)
+                        {
+                            inventory.Add(ItemRegistry.Create(pair.Key.ToString(), pair.Value));
+                        }
                     }
                     break;
             }
