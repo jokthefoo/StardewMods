@@ -77,12 +77,12 @@ namespace FishMod
 			
 			for (int i = 0; i < logCount; i++)
 			{
-				treasures.Add(new TreasureInstance(3, false, 20,20));
+				treasures.Add(new TreasureInstance(TreasureSprites.Stick, false, 20,20));
 			}
 
 			if (treasure)
 			{
-				var realTreasure = new MovingTreasure(2, true, 1000, 1200, canLoseTreasure: true);
+				var realTreasure = new MovingTreasure(TreasureSprites.GreenChest, true, 1000, 1200, canLoseTreasure: true);
 				realTreasure.difficulty = t.lastUser.ForagingLevel * 5 + 25;
 				treasures.Add(realTreasure);
 			}
@@ -378,7 +378,7 @@ public void fishUpdate(GameTime time)
 	if (treasureInBar)
 	{
 		barShake = Vector2.Zero;
-		Rumble.rumble(0.1f, 1000f);
+		//Rumble.rumble(0.1f, 1000f);
 		unReelSound?.Stop(AudioStopOptions.Immediate);
 		if (reelSound == null || reelSound.IsStopped || reelSound.IsStopping || !reelSound.IsPlaying)
 		{

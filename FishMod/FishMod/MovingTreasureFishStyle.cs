@@ -28,7 +28,7 @@ public class MovingTreasureFishStyle : TreasureInstance
 	}
 	
     public MovingTreasureFishStyle(int difficulty, MotionType motionType, int treasureAppearMin = 200, int treasureAppearMax = 3000, bool canLoseTreasure = false) 
-	    : base(-2, false, treasureAppearMin, treasureAppearMax, false, canLoseTreasure)
+	    : base(TreasureSprites.Fish, false, treasureAppearMin, treasureAppearMax, false, canLoseTreasure)
     {
 	    this.difficulty = difficulty;
 	    this.motionType = motionType;

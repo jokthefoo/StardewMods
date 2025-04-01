@@ -231,6 +231,11 @@ namespace FishMod
                 
                 Game1.activeClickableMenu = new FishFrenzyBobberBar("136", fishSize, bobbers, "","nobait");
             }
+            
+            if (e.Button == SButton.G)
+            {
+                Game1.activeClickableMenu = new MiningBobberBar(Game1.player.currentLocation, Game1.player.CurrentTool);
+            }
         }
     }
 }

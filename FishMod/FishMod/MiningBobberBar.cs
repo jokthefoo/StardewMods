@@ -16,7 +16,7 @@ using StardewValley.Tools;
 
 namespace FishMod
 {
-	public class WateringBobberBar : IClickableMenu
+	public class MiningBobberBar : IClickableMenu
 	{
 		public bool handledFishResult;
 
@@ -40,18 +40,12 @@ namespace FishMod
 
 		public Vector2 everythingShake;
 
-		public float reelRotation;
-
-		private SparklingText sparkleText;
-
 		public float bobberBarPos;
 
 		public float bobberBarSpeed;
 
-		public float distancesFromCatchingTop = 0.01f;
-		public float distancesFromCatchingBot = 0.01f;
-		public int progressBarShakeTop;
-		public int progressBarShakeBot;
+		public float distanceFromCatchingRock = 0.01f;
+		public float distanceFromCatchingSlime = 1f;
 		
 		public static ICue reelSound;
 
@@ -63,42 +57,28 @@ namespace FishMod
 		
 		public GameLocation location;
 
-		public WateringBobberBar(GameLocation location, Tool tool, bool treasure) : base(0, 0, 96, 636)
+		private TreasureInstance Rock;
+		private TreasureInstance TreasureNode;
+		private MovingTreasure Slime;
+		
+		public MiningBobberBar(GameLocation location, Tool tool) : base(0, 0, 96, 636)
 		{
-			reelRotation = 359;
 			this.tool = tool;
 			this.location = location;
 			
-			var t1 = new MovingTreasure(TreasureSprites.Parsnip, false, 20, 20);
-			t1.SetMovementBounds(MovingTreasure.defaultMinBound, MovingTreasure.defaultMaxBound / 2f);
-			t1.showProgressBar = false;
-			t1.increaseRate = 0;
-			t1.treasureShakeMultiplier = .5f;
-			t1.difficulty = 35;
-			t1.treasureScale = 1.2f;
-			
-			var t2 = new MovingTreasure(TreasureSprites.WaterDrop, false, 20, 20);
-			t2.SetMovementBounds(MovingTreasure.defaultMaxBound / 2f, MovingTreasure.defaultMaxBound);
-			t2.showProgressBar = false;
-			t2.increaseRate = 0;
-			t2.treasureShakeMultiplier = .5f;
-			t2.difficulty = 35;
-			t2.treasureScale = 1.2f;
-			treasures.Add(t1);
-			treasures.Add(t2);
+			Rock = new TreasureInstance(TreasureSprites.Rock, false, 20, 20);
+			Rock.decreaseRate = 0;
+			SpawnSlime(1000, 3000);
 
-			if (treasure)
-			{
-				var t = new MovingTreasure(TreasureSprites.Fairy, true, 500, 500, canLoseTreasure: true);
-				t.difficulty = tool.lastUser.FarmingLevel * 4 + 30;
-				treasures.Add(t);
-			}
+			TreasureNode = new TreasureInstance(Game1.random.NextBool() ? TreasureSprites.MineralNode : TreasureSprites.OmniGeode, true, 500, 2000);
+			TreasureNode.decreaseRate = 0;
+			treasures.Add(TreasureNode);
 			
 			handledFishResult = false;
 			fadeIn = true;
 			uiScale = 0f;
 			
-			bobberBarHeight = 96 + Game1.player.FarmingLevel * 8;
+			bobberBarHeight = 96 + Game1.player.MiningLevel * 8;
 
 			Reposition();
 
@@ -187,9 +167,8 @@ namespace FishMod
 
 			fadeOut = true;
 			everythingShakeTimer = 500f;
-			
-			distancesFromCatchingTop = -1f;
-			distancesFromCatchingBot = -1f;
+			distanceFromCatchingRock = -1f;
+			distanceFromCatchingSlime = -1f;
 		}
 
 		public override void receiveKeyPress(Keys key)
@@ -201,13 +180,22 @@ namespace FishMod
 		}
 #endregion
 
+private void SpawnSlime(int minSpawn = 3000, int maxSpawn = 8000)
+{
+	Slime = new MovingTreasure(TreasureSprites.Slime, false, minSpawn, maxSpawn);
+	Slime.treasureScaleMaxScale = 1.4f;
+	
+	Slime.increaseRate /= 2.5f;
+	Slime.decreaseRate = 0.0025f;
+	Slime.isSpecial = true;
+	Slime.difficulty = tool.lastUser.MiningLevel * 4 + Game1.random.Next(20, 35);
+	Slime.reverseProgress = true;
+	distanceFromCatchingSlime = 1f;
+}
+
 public override void update(GameTime time)
 {
 	Reposition();
-	if (sparkleText != null && sparkleText.update(time))
-	{
-		sparkleText = null;
-	}
 
 	if (everythingShakeTimer > 0f)
 	{
@@ -234,7 +222,7 @@ public override void update(GameTime time)
 
 	if (fadeOut)
 	{
-		if (everythingShakeTimer > 0f || sparkleText != null)
+		if (everythingShakeTimer > 0f)
 		{
 			return;
 		}
@@ -245,17 +233,35 @@ public override void update(GameTime time)
 			uiScale = 0f;
 			fadeOut = false;
 			
-			if (distancesFromCatchingTop > 0.9f && distancesFromCatchingBot > 0.9f)
+			if (distanceFromCatchingRock > 0.9f)
 			{
-				bool treasureCaught = false;
+				int slimeCount = 0;
+				int rockCount = 0;
+				int mineralCount = 0;
+				int omniCount = 0;
+				
 				foreach (var t in treasures)
 				{
-					if (t.realTreasure && t.treasureCaught)
+					if (t.treasureCaught)
 					{
-						treasureCaught = true;
+						switch (t.spriteId)
+						{
+							case TreasureSprites.Slime:
+								slimeCount++;
+								break;
+							case TreasureSprites.Rock:
+								rockCount++;
+								break;
+							case TreasureSprites.MineralNode:
+								mineralCount++;
+								break;
+							case TreasureSprites.OmniGeode:
+								omniCount++;
+								break;
+						}
 					}
 				}
-				WateringCanFishing.WateringRewards(location, tool, treasureCaught);
+				MiningFishing.MiningRewards(location, tool, slimeCount, rockCount, mineralCount, omniCount);
 			}
 			else
 			{
@@ -311,59 +317,74 @@ public void fishUpdate(GameTime time)
 		}
 	}
 
+	Slime.treasureProgressColor = Color.Lerp(Color.LimeGreen, Color.Red, Slime.treasureCatchLevel);
+	bool slimeInBar = Slime.treasureUpdate(time, bobberBarPos, bobberBarHeight);
+	bool rockInBar = Rock.treasureUpdate(time, bobberBarPos, bobberBarHeight);
+
 	treasureInBar = false;
-	int index = 0;
 	foreach (var t in treasures)
 	{
 		if (t.treasureUpdate(time, bobberBarPos, bobberBarHeight))
 		{
 			treasureInBar = true;
+		}
+	}
 
-			switch (index)
+	string cueName = "";
+
+	if (slimeInBar)
+	{
+		cueName = "daggerswipe";
+		distanceFromCatchingSlime += 0.002f;
+		if (Slime.treasureCaught)
+		{
+			treasures.Add(Slime);
+			if (treasures.Count < 30) // prevent infinity
 			{
-				case 0:
-					distancesFromCatchingTop += 0.0035f;
-					if (distancesFromCatchingTop >= 1f && t.treasureCaught == false)
-					{
-						progressBarShakeTop = Game1.random.Next(-1, 1);
-						t.treasureCatchLevel = 1f;
-					}
-					break;
-				case 1:
-					distancesFromCatchingBot += 0.0035f;
-					if (distancesFromCatchingBot >= 1f && t.treasureCaught == false)
-					{
-						progressBarShakeBot = Game1.random.Next(-1, 1);
-						t.treasureCatchLevel = 1f;
-					}
-					break;
+				SpawnSlime();
 			}
 		}
-		index++;
 	}
-
-	reelRotation += (float)Math.PI / 180f;
-	if (reelRotation > 2*Math.PI)
+	else if(Slime.treasureScale >= Slime.treasureScaleMaxScale)
 	{
-		reelRotation = 270f * (float)Math.PI / 180f;
-	}
-	
-	if (treasureInBar)
-	{
-		barShake = Vector2.Zero;
-		//Rumble.rumble(0.1f, 1000f);
-		unReelSound?.Stop(AudioStopOptions.Immediate);
-		if (reelSound == null || reelSound.IsStopped || reelSound.IsStopping || !reelSound.IsPlaying)
+		distanceFromCatchingSlime -= 0.0033f;
+		if (distanceFromCatchingSlime <= 0f)
 		{
-			Game1.playSound("slosh", out reelSound);
+			tool.lastUser.health -= 5;
+			tool.lastUser.currentLocation.debris.Add(new Debris(5, new Vector2(tool.lastUser.StandingPixel.X + 8, tool.lastUser.StandingPixel.Y), Color.Red, 1f, tool.lastUser));
+			tool.lastUser.playNearbySoundAll("ow");
+			
+			distanceFromCatchingSlime = .5f;
 		}
 	}
-	else
+	
+	if (rockInBar)
+	{
+		cueName = "hammer";
+		
+		distanceFromCatchingRock += (float)Game1.random.NextDouble() / 1000f + 0.001f;
+		if (Rock.treasureCaught)
+		{
+			treasures.Add(Rock);
+			if (treasures.Count < 30) // prevent infinity
+			{
+				Rock = new TreasureInstance(8, false, 20, 20);
+				Rock.decreaseRate = 0;
+
+				if (TreasureNode.treasureCaught && Game1.random.NextDouble() < 0.34f)
+				{
+					TreasureNode = new TreasureInstance(Game1.random.NextBool() ? TreasureSprites.MineralNode : TreasureSprites.OmniGeode, true, 500, 2000);
+					TreasureNode.decreaseRate = 0;
+					treasures.Add(TreasureNode);
+				}
+			}
+		}
+	}
+	
+	if (!treasureInBar && !rockInBar && !slimeInBar)
 	{
 		barShake.X = Game1.random.Next(-10, 11) / 10f;
 		barShake.Y = Game1.random.Next(-10, 11) / 10f;
-		progressBarShakeTop = 0;
-		progressBarShakeBot = 0;
 		
 		reelSound?.Stop(AudioStopOptions.Immediate);
 		if (unReelSound == null || unReelSound.IsStopped)
@@ -371,11 +392,24 @@ public void fishUpdate(GameTime time)
 			//Game1.playSound("leafrustle", 600, out unReelSound);
 		}
 	}
+	else
+	{
+		barShake = Vector2.Zero;
+		//Rumble.rumble(0.1f, 1000f);
+		unReelSound?.Stop(AudioStopOptions.Immediate);
+		if (reelSound == null || reelSound.IsStopped || reelSound.IsStopping || !reelSound.IsPlaying)
+		{
+			if (cueName != "")
+			{
+				Game1.playSound(cueName, out reelSound);
+			}
+		}
+	}
 	
-	distancesFromCatchingTop = Math.Max(0f, Math.Min(1f, distancesFromCatchingTop));
-	distancesFromCatchingBot = Math.Max(0f, Math.Min(1f, distancesFromCatchingBot));
+	distanceFromCatchingRock = Math.Max(0f, Math.Min(1f, distanceFromCatchingRock));
+	distanceFromCatchingSlime = Math.Max(0f, Math.Min(1f, distanceFromCatchingSlime));
 	
-	if (distancesFromCatchingTop <= 0f || distancesFromCatchingBot <= 0f)
+	if (distanceFromCatchingRock <= 0f)
 	{
 		fadeOut = true;
 		everythingShakeTimer = 500f;
@@ -386,7 +420,7 @@ public void fishUpdate(GameTime time)
 		return;
 	}
 	
-	if (distancesFromCatchingTop >= 1f && distancesFromCatchingBot >= 1f)
+	if (distanceFromCatchingRock >= 1f)
 	{
 		fadeOut = true;
 		everythingShakeTimer = 500f;
@@ -410,21 +444,21 @@ public override void draw(SpriteBatch b)
 				flipBubble ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0.001f);
 			
 			/*
-			// TODO watering bar background?
+			// TODO mining background?
 			b.Draw(ObjectIds.fishingTextures, new Vector2(xPositionOnScreen - 36, yPositionOnScreen + 300) + everythingShake,
 				new Rectangle(0, 368, 72, 144), Color.White * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 6f * uiScale,
 				SpriteEffects.None, 0.01f);*/
 			
 			// bar background
 			b.Draw(ObjectIds.fishingTextures, new Vector2(xPositionOnScreen + 126, yPositionOnScreen + 296) + everythingShake,
-				new Rectangle(112, 362, 22, 148), Color.White * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 4f * uiScale,
+				new Rectangle(141, 362, 29, 148), Color.White * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 4f * uiScale,
 				SpriteEffects.None, 0.01f);
 			
 			// Gameplay bar
 			if (uiScale == 1f)
 			{
 				// These 3 are bobber bar
-				int colorIndex = 1;
+				int colorIndex = 4;
 				b.Draw(ObjectIds.fishingTextures,
 					new Vector2(xPositionOnScreen + 64, yPositionOnScreen + 12 + (int)bobberBarPos) + barShake +
 					everythingShake, new Rectangle(216, 447 + 10 * colorIndex, 9, 2),
@@ -452,19 +486,20 @@ public override void draw(SpriteBatch b)
 						   ((float)Math.Round(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 100.0),
 							   2) + 2f)), 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.89f);
 				
-				// current level of bottom Success bar
+				// current level of Success bar
 				b.Draw(Game1.staminaRect,
-					new Rectangle(xPositionOnScreen + 116 + progressBarShakeBot,
-						yPositionOnScreen + 4 + 290 + (int)(290f * (1f - distancesFromCatchingBot)) + progressBarShakeBot, 16,
-						(int)(290f * distancesFromCatchingBot)), Color.Lerp(Color.Blue, Color.Aqua, distancesFromCatchingBot));
-				// current level of top Success bar
+					new Rectangle(xPositionOnScreen + 116,
+						yPositionOnScreen + 4 + (int)(580f * (1f - distanceFromCatchingSlime)), 16,
+						(int)(580f * distanceFromCatchingSlime)), Color.Lerp(Color.Red, Color.LimeGreen, distanceFromCatchingSlime));
+				
+				// current level of Success bar 2
 				b.Draw(Game1.staminaRect,
-					new Rectangle(xPositionOnScreen + 116 + progressBarShakeTop,
-						yPositionOnScreen + 4, 16 + progressBarShakeTop,
-						(int)(290 * distancesFromCatchingTop)), Color.Lerp(Color.DarkGreen, Color.LawnGreen, distancesFromCatchingTop));
+					new Rectangle(xPositionOnScreen + 144,
+						yPositionOnScreen + 4 + (int)(580f * (1f - distanceFromCatchingRock)), 16,
+						(int)(580f * distanceFromCatchingRock)), Color.Lerp(Color.Gray, Color.White, distanceFromCatchingRock));
 				
 				/*
-				// TODO add watering anim for bar?
+				// TODO add mining anim for bar?
 				b.Draw(Game1.mouseCursors,
 					new Vector2(xPositionOnScreen - 18, yPositionOnScreen + 514) + everythingShake,
 					new Rectangle(32, 657, 16, 15), Color.White, reelRotation, new Vector2(2f, 10f), 4f,
@@ -476,7 +511,8 @@ public override void draw(SpriteBatch b)
 					t.drawTreasure(b, everythingShake, xPositionOnScreen, yPositionOnScreen);
 				}
 				
-				sparkleText?.draw(b, new Vector2(xPositionOnScreen - 16, yPositionOnScreen - 64)); // "perfect text"
+				Rock.drawTreasure(b, everythingShake, xPositionOnScreen, yPositionOnScreen);
+				Slime.drawTreasure(b, everythingShake, xPositionOnScreen, yPositionOnScreen);
 			}
 			
 			Game1.EndWorldDrawInUI(b);
