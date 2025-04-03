@@ -1,0 +1,92 @@
+﻿{
+  "Changes": [
+    {
+      "Action": "Load",
+      "Target": "Rock",
+      "FromFile": "Assets/{{TargetWithoutPath}}.png"
+    },
+    {
+      "LogName": "SpawnableDefinitions Fishdew",
+      "Action": "EditData",
+      "Target": "spacechase0.SpaceCore/SpawnableDefinitions",
+      "Entries": {
+        "{{ModID}}_SpawnFishingRock": {
+          "Type": "LargeMinable",
+          "Condition": "TRUE", // RANDOM 0.008
+          "LargeMinableTool": "Pickaxe",
+          "LargeMinableRequiredToolTier": 0,
+          "LargeMinableHealth": 25,
+          "LargeMinableSizeX": 2,
+          "LargeMinableSizeY": 2,
+          "LargeMinableTexture": "Rock",
+          "LargeMinableSpriteIndex": 0,
+          "LargeMinableDrops": [
+            [
+              {
+                "Weight": 1.0,
+                "Value": {
+                  "ItemId": "(O)84",
+                  "MinStack": 2,
+                  "MaxStack": 5
+                }
+              }
+            ],
+            [
+              {
+                "Weight": 1.0,
+                "Value": {
+                  "ItemId": "(O)536",
+                  "MinStack": 4,
+                  "MaxStack": 8
+                }
+              }
+            ]
+          ],
+          "LargeMinableExperienceGranted": 1
+        }
+      }
+    },
+    {
+      "Action": "EditData",
+      "Target": "spacechase0.SpaceCore/SpawningGroups",
+      "Entries": {
+        "{{ModID}}_MiningSpawns": {
+          "SpawnablesToSpawn": [
+            {
+              "SpawnableIds": [
+                {
+                  "Weight": 1.0,
+                  "Value": "{{ModID}}_SpawnFishingRock"
+                }
+              ],
+              "Minimum": 1,
+              "Maximum": 10
+            }
+          ]
+        }
+      }
+    },
+    {
+      "LogName": "Fishdew Valley Spawning Trigger Actions",
+      "Action": "EditData",
+      "Target": "Data/TriggerActions",
+      "When": {
+        "HasMod": "spacechase0.SpaceCore"
+      },
+      "Entries": {
+        "{{ModId}}_MiningSpawnsTrigger": {
+          "Id": "{{ModId}}_MiningSpawnsTrigger",
+          "Trigger": "LocationChanged",
+          "Condition": "ANY \"LOCATION_IS_MINES Here\" \"LOCATION_IS_SKULL_CAVE Here\" \"LOCATION_NAME Here Farm\" \"LOCATION_NAME Here FarmHouse\"",
+          "MarkActionApplied": false, // Happens everytime you go to level
+          "HostOnly": true, // Don't repeat during multiplayer
+          "Actions": [
+            "spacechase0.SpaceCore_TriggerSpawnGroup {{ModID}}_MiningSpawns Target", // Target
+            "spacechase0.SpaceCore_TriggerSpawnGroup {{ModID}}_MiningSpawns Farm",
+            "spacechase0.SpaceCore_TriggerSpawnGroup {{ModID}}_MiningSpawns FarmHouse"
+          ]
+        }
+      }
+    }
+  ]
+}

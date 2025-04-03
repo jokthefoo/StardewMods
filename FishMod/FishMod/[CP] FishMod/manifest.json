@@ -3,18 +3,14 @@
   "Author": "Jok",
   "Version": "1.0.0",
   "Description": "Why do other things when fish do trick?",
-  "UniqueID": "Jok.Fishdew",
-  "EntryDll": "FishMod.dll",
-  "MinimumApiVersion": "4.0.0",
+  "UniqueID": "Jok.Fishdew.CP",
   "UpdateKeys": [],
-  "Dependencies": [
+  "ContentPackFor": {
+    "UniqueID": "Pathoschild.ContentPatcher"
+  },"Dependencies": [
   {
     "UniqueID": "spacechase0.SpaceCore",
     "IsRequired": true
-  },
-  {
-    "UniqueID": "Pathoschild.ContentPatcher",
-    "IsRequired": false
   }
-]
+  ]
 }

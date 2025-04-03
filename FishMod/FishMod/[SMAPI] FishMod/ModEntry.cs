@@ -129,7 +129,7 @@ namespace FishMod
         private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
         {
             var spacecore = Helper.ModRegistry.GetApi<ISpaceCoreApi>("spacechase0.SpaceCore");
-
+            
             if (spacecore is null)
             {
                 Monitor.Log("No SpaceCore API found! Mod will not work!", LogLevel.Error);
