@@ -3,6 +3,9 @@ using StardewValley;
 using StardewValley.Extensions;
 using StardewValley.Locations;
 using StardewValley.Menus;
+using StardewValley.TerrainFeatures;
+using StardewValley.Tools;
+using Object = StardewValley.Object;
 
 namespace FishMod;
 
@@ -10,21 +13,51 @@ public class MiningFishing
 {
     private static int[] rewards = new int[4];
     
-    
-    // TODO: create big rock for mining game to start
-    // TODO: Detect and start mining game
-    // TODO: spawn big rock in mines
-    
-    
     // TODO: mining/watering UI improvements
     // TODO: Fishing: new boss fish 3x progress bars --- first is hard but not crazy hard -- second is two fish same time --- last is hard fish but bar only goes up with treasures
     
-    
     // TODO: maybe animals? they would be so cute on the bar
-    
-    public static void MiningRewards(GameLocation location, Tool tool, int slimeCount, int rockCount, int mineralCount,
+
+    public static void Post_PickaxeSwing(Pickaxe __instance, GameLocation location, int x, int y, int power, Farmer who)
+    {
+        if (!ModEntry.Config.MiningMiniGameEnabled)
+        {
+            return;
+        }
+
+        who.Stamina -= Math.Max(1, 4 - __instance.UpgradeLevel) * Math.Max(1,11 - who.MiningLevel) * (2 * (power + 1) - who.MiningLevel * 0.1f);
+        if (location.resourceClumps != null)
+        {
+            foreach (ResourceClump? clump in location.resourceClumps)
+            {
+                if (clump != null && clump.getBoundingBox().Contains(x, y) && clump.health.Value > 0)
+                {
+                    string value;
+                    if (clump.modData.TryGetValue("spacechase0.SpaceCore/LargeMinable", out value) && value == "Jok.Fishdew.CP_SpawnFishingRock")
+                    {
+                        // Start minigame
+                        DeluxeFishingRodTool.PlayHitEffectForRandomEncounter(who, new MiningBobberBar(location, __instance, new Vector2(x / 64, y / 64)));
+                    }
+                }
+            }
+        }
+    }
+
+    public static void MiningRewards(GameLocation location, Tool tool, Vector2 tileLocation, int slimeCount, int rockCount, int mineralCount,
         int omniCount)
     {
+        foreach (ResourceClump? clump in location.resourceClumps)
+        {
+            if (clump != null && clump.getBoundingBox().Contains(tileLocation.X * 64, tileLocation.Y * 64))
+            {
+                clump.health.Value = 0;
+                location.performToolAction(tool, (int)tileLocation.X, (int)tileLocation.Y);
+                clump.destroy(tool, location, tileLocation);
+                location.resourceClumps.Remove(clump);
+                break;
+            }
+        }
+        
         rewards[0] = slimeCount;
         rewards[1] = rockCount;
         rewards[2] = mineralCount;
@@ -33,6 +66,11 @@ public class MiningFishing
         int locForSlimeRewards = 0;
         if (location is MineShaft mine)
         {
+            if (Game1.random.NextDouble() < .15)
+            {
+                mine.createLadderAt(tileLocation, "newArtifact");
+            }
+            
             if (mine.mineLevel < 30)
             {
                 locForSlimeRewards = 0;
@@ -69,6 +107,22 @@ public class MiningFishing
         Game1.player.gainExperience(Farmer.combatSkill, rewards[0] * Math.Max(3, Game1.player.CombatLevel + 1));
         
         List<Item> inventory = new List<Item>();
+
+        var luckLevel = Game1.player.LuckLevel * 0.007 + Game1.player.DailyLuck / 10.0;
+        // Ultra rares
+        if (Game1.player.currentLocation is MineShaft mine && Game1.random.NextDouble() < luckLevel)
+        {
+            inventory.Add(MineShaft.getSpecialItemForThisMineLevel(mine.mineLevel, Game1.player.experiencePoints[3], Game1.player.experiencePoints[4]));
+        } else if (Game1.random.NextDouble() < .005 && Game1.player.timesReachedMineBottom > 0)
+        {
+            inventory.Add(ItemRegistry.Create("74")); // prismatic shard
+        } else if (Game1.random.NextDouble() < .003 && Game1.player.hasCompletedCommunityCenter())
+        {
+            inventory.Add(ItemRegistry.Create("(BC)272")); // auto-petter
+        } else if (Game1.random.NextDouble() < .01)
+        {
+            inventory.Add(ItemRegistry.Create("(O)MysteryBox"));
+        }
 
         for(int i = 0; i < rewards.Length; i++)
         {

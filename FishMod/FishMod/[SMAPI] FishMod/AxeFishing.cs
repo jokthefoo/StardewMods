@@ -18,6 +18,11 @@ public class AxeFishing
 
     internal static bool TreeChopping_prefix(GameLocation location, int x, int y, int power, Farmer who)
     {
+        if (!ModEntry.Config.AxeMiniGameEnabled)
+        {
+            return true;
+        }
+            
         try
         {
             if (who.CurrentTool is not Axe)
@@ -76,7 +81,7 @@ public class AxeFishing
         float toolStrength = tool.UpgradeLevel + (tool.hasEnchantmentOfType<PowerfulEnchantment>() ? 2 : 0);
         int chopAmountRequired = (int)Math.Ceiling(clump.health.Value / toolStrength);
 
-        float stamCost = (2 * 1) - tool.lastUser.ForagingLevel * 0.1f;
+        float stamCost = 2 - tool.lastUser.ForagingLevel * 0.1f;
         if (!tool.isEfficient.Value)
             tool.lastUser.Stamina -= stamCost * chopAmountRequired;
 

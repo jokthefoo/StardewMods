@@ -12,36 +12,15 @@
       "Entries": {
         "{{ModID}}_SpawnFishingRock": {
           "Type": "LargeMinable",
-          "Condition": "TRUE", // RANDOM 0.008
+          "Condition": "RANDOM 0.35",
           "LargeMinableTool": "Pickaxe",
           "LargeMinableRequiredToolTier": 0,
-          "LargeMinableHealth": 25,
+          "LargeMinableHealth": 5,
           "LargeMinableSizeX": 2,
           "LargeMinableSizeY": 2,
           "LargeMinableTexture": "Rock",
           "LargeMinableSpriteIndex": 0,
-          "LargeMinableDrops": [
-            [
-              {
-                "Weight": 1.0,
-                "Value": {
-                  "ItemId": "(O)84",
-                  "MinStack": 2,
-                  "MaxStack": 5
-                }
-              }
-            ],
-            [
-              {
-                "Weight": 1.0,
-                "Value": {
-                  "ItemId": "(O)536",
-                  "MinStack": 4,
-                  "MaxStack": 8
-                }
-              }
-            ]
-          ],
+          "LargeMinableDrops": [],
           "LargeMinableExperienceGranted": 1
         }
       }
@@ -60,7 +39,7 @@
                 }
               ],
               "Minimum": 1,
-              "Maximum": 10
+              "Maximum": 1
             }
           ]
         }
@@ -77,13 +56,11 @@
         "{{ModId}}_MiningSpawnsTrigger": {
           "Id": "{{ModId}}_MiningSpawnsTrigger",
           "Trigger": "LocationChanged",
-          "Condition": "ANY \"LOCATION_IS_MINES Here\" \"LOCATION_IS_SKULL_CAVE Here\" \"LOCATION_NAME Here Farm\" \"LOCATION_NAME Here FarmHouse\"",
+          "Condition": "ANY \"LOCATION_IS_MINES Here\" \"LOCATION_IS_SKULL_CAVE Here\"",
           "MarkActionApplied": false, // Happens everytime you go to level
           "HostOnly": true, // Don't repeat during multiplayer
           "Actions": [
-            "spacechase0.SpaceCore_TriggerSpawnGroup {{ModID}}_MiningSpawns Target", // Target
-            "spacechase0.SpaceCore_TriggerSpawnGroup {{ModID}}_MiningSpawns Farm",
-            "spacechase0.SpaceCore_TriggerSpawnGroup {{ModID}}_MiningSpawns FarmHouse"
+            "spacechase0.SpaceCore_TriggerSpawnGroup {{ModID}}_MiningSpawns Target"
           ]
         }
       }

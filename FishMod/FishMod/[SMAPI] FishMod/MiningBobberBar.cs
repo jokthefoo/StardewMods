@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
@@ -12,6 +13,7 @@ using StardewValley.ItemTypeDefinitions;
 using StardewValley.Menus;
 using StardewValley.TerrainFeatures;
 using StardewValley.Tools;
+using Vector2 = Microsoft.Xna.Framework.Vector2;
 
 
 namespace FishMod
@@ -57,17 +59,18 @@ namespace FishMod
 		public List<TreasureInstance> treasures = new ();
 
 		public Tool tool;
-		
 		public GameLocation location;
+		public Vector2 tileLocation;
 
 		private TreasureInstance Rock;
 		private TreasureInstance TreasureNode;
 		private MovingTreasure Slime;
 		
-		public MiningBobberBar(GameLocation location, Tool tool) : base(0, 0, 96, 636)
+		public MiningBobberBar(GameLocation location, Tool tool, Vector2 tileLocation) : base(0, 0, 96, 636)
 		{
 			this.tool = tool;
 			this.location = location;
+			this.tileLocation = tileLocation;
 			
 			Rock = new TreasureInstance(TreasureSprites.Rock, false, 20, 20);
 			Rock.decreaseRate = 0;
@@ -264,7 +267,7 @@ public override void update(GameTime time)
 						}
 					}
 				}
-				MiningFishing.MiningRewards(location, tool, slimeCount, rockCount, mineralCount, omniCount);
+				MiningFishing.MiningRewards(location, tool, tileLocation, slimeCount, rockCount, mineralCount, omniCount);
 			}
 			else
 			{
@@ -447,11 +450,9 @@ public override void draw(SpriteBatch b)
 				new Vector2(26f, 78.5f) * uiScale, 4f * uiScale,
 				flipBubble ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0.001f);
 			
-			/*
-			// TODO mining background?
 			b.Draw(ObjectIds.fishingTextures, new Vector2(xPositionOnScreen - 36, yPositionOnScreen + 300) + everythingShake,
-				new Rectangle(0, 368, 72, 144), Color.White * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 6f * uiScale,
-				SpriteEffects.None, 0.01f);*/
+				new Rectangle(463, 325, 42, 186), Color.White * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 5f * uiScale,
+				SpriteEffects.None, 0.01f);
 			
 			// bar background
 			b.Draw(ObjectIds.fishingTextures, new Vector2(xPositionOnScreen + 126, yPositionOnScreen + 296) + everythingShake,

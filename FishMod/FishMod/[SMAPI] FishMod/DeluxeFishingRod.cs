@@ -60,13 +60,6 @@ namespace FishMod
                 SetProperties = null,
             };
         }
-
-        private static IMonitor Monitor;
-
-        internal static void Initialize(IMonitor monitor)
-        {
-            Monitor = monitor;
-        }
         
         public static bool CheckIfValidBobberBar(IClickableMenu menu)
         {
@@ -108,7 +101,6 @@ namespace FishMod
         {
             if (Game1.activeClickableMenu is not ItemGrabMenu menu)
             {
-                Monitor.Log("Not item grab menu.", LogLevel.Warn);
                 return;
             }
 

@@ -27,48 +27,60 @@ namespace FishMod
             helper.Events.Content.AssetRequested += OnAssetRequested;
             helper.Events.GameLoop.UpdateTicked += OnUpdateTicked;
             helper.Events.GameLoop.DayStarted += OnDayStarted;
-            
+
             helper.Events.Input.ButtonPressed += OnButtonPressed;
             helper.Events.Display.MenuChanged += OnMenuChanged;
-            
-            ObjectIds.fishingTextures = helper.ModContent.Load<Texture2D>(ObjectIds.FishSpritesPath);
-            
-            var harmony = new Harmony(ModManifest.UniqueID);
 
-            DeluxeFishingRodTool.Initialize(Monitor);
+            ObjectIds.fishingTextures = helper.ModContent.Load<Texture2D>(ObjectIds.FishSpritesPath);
+            Config = helper.ReadConfig<ModConfig>();
+            HarmonyPatches();
+        }
+
+        private void HarmonyPatches()
+        {
+            var harmony = new Harmony(ModManifest.UniqueID);
             harmony.Patch(
                 original: AccessTools.Method(typeof(Axe), nameof(Axe.DoFunction)),
                 prefix: new HarmonyMethod(typeof(AxeFishing), nameof(AxeFishing.TreeChopping_prefix))
             );
             harmony.Patch(
                 original: AccessTools.Method(typeof(FishingRod), nameof(FishingRod.tickUpdate)),
-                transpiler: new HarmonyMethod(typeof(DeluxeFishingRodTool), nameof(DeluxeFishingRodTool.bobberBar_Transpiler))
+                transpiler: new HarmonyMethod(typeof(DeluxeFishingRodTool),
+                    nameof(DeluxeFishingRodTool.bobberBar_Transpiler))
             );
             harmony.Patch(
                 original: AccessTools.Method(typeof(FishingRod), nameof(FishingRod.openTreasureMenuEndFunction)),
-                postfix: new HarmonyMethod(typeof(DeluxeFishingRodTool), nameof(DeluxeFishingRodTool.Post_openTreasureMenuEndFunction))
+                postfix: new HarmonyMethod(typeof(DeluxeFishingRodTool),
+                    nameof(DeluxeFishingRodTool.Post_openTreasureMenuEndFunction))
             );
-            
-            Type[] types = { typeof ( Vector2 ), typeof ( int ), typeof ( Farmer ) };
-            MethodInfo originalToolsMethod = typeof ( Tool ).GetMethod ( "tilesAffected", BindingFlags.Instance | BindingFlags.NonPublic, null, types, null );
+
+            Type[] types = { typeof(Vector2), typeof(int), typeof(Farmer) };
+            MethodInfo originalToolsMethod = typeof(Tool).GetMethod("tilesAffected",
+                BindingFlags.Instance | BindingFlags.NonPublic, null, types, null);
             harmony.Patch(
                 original: originalToolsMethod,
-                postfix: new HarmonyMethod(typeof(WateringCanFishing), nameof(WateringCanFishing.Post_tilesAffected)) );
-            
-            
+                postfix: new HarmonyMethod(typeof(WateringCanFishing), nameof(WateringCanFishing.Post_tilesAffected)));
+
+
             harmony.Patch(
                 original: AccessTools.Method(typeof(WateringCan), nameof(WateringCan.DoFunction)),
-                postfix: new HarmonyMethod(typeof(WateringCanFishing), nameof(WateringCanFishing.Post_wateringCanReleased))
+                postfix: new HarmonyMethod(typeof(WateringCanFishing),
+                    nameof(WateringCanFishing.Post_wateringCanReleased))
             );
-            
+
             harmony.Patch(
                 original: AccessTools.Method(typeof(Tool), nameof(Tool.draw)),
                 prefix: new HarmonyMethod(typeof(WateringCanFishing), nameof(WateringCanFishing.Pre_toolDraw))
             );
-            
+
             harmony.Patch(
                 original: AccessTools.Method(typeof(Farmer), nameof(Farmer.toolPowerIncrease)), // 600ms 
                 postfix: new HarmonyMethod(typeof(WateringCanFishing), nameof(WateringCanFishing.Post_toolCharging))
+            );
+
+            harmony.Patch(
+                original: AccessTools.Method(typeof(Pickaxe), nameof(Pickaxe.DoFunction)),
+                postfix: new HarmonyMethod(typeof(MiningFishing), nameof(MiningFishing.Post_PickaxeSwing))
             );
         }
 
@@ -89,6 +101,10 @@ namespace FishMod
 
         private void OnUpdateTicked(object? sender, UpdateTickedEventArgs e)
         {
+            if (!Config.WateringMiniGameEnabled)
+            {
+                return;
+            }
             if (WateringCanFishing.chargingUpTime.CompareTo(TimeSpan.Zero) != 0 &&
                 Game1.currentGameTime.TotalGameTime > WateringCanFishing.chargingUpTime &&
                 Game1.player.CurrentTool is WateringCan)
@@ -139,12 +155,68 @@ namespace FishMod
                 spacecore.RegisterSerializerType(typeof(DeluxeFishingRodTool));
                 Monitor.Log("Registered subclasses with SpaceCore!", LogLevel.Trace);
             }
+            
+            SetupModConfigs();
         }
+
+        private void SetupModConfigs()
+        {
+            // get Generic Mod Config Menu's API (if it's installed)
+            var configMenu = Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
+            if (configMenu is null)
+                return;
+
+            // register mod
+            configMenu.Register(
+                mod: ModManifest,
+                reset: () => Config = new ModConfig(),
+                save: () => Helper.WriteConfig(Config)
+            );
+
+            // add config options
+            configMenu.AddBoolOption(
+                mod: ModManifest,
+                name: () => "Axe MiniGame Enabled",
+                tooltip: () => "Enables Axe MiniGame on trees and large stumps/logs.",
+                getValue: () => Config.AxeMiniGameEnabled,
+                setValue: value => Config.AxeMiniGameEnabled = value
+            );
+            
+            configMenu.AddBoolOption(
+                mod: ModManifest,
+                name: () => "Watering MiniGame Enabled",
+                tooltip: () => "Enables Watering MiniGame after charging up watering can.",
+                getValue: () => Config.WateringMiniGameEnabled,
+                setValue: value => Config.WateringMiniGameEnabled = value
+            );
+            
+            configMenu.AddBoolOption(
+                mod: ModManifest,
+                name: () => "Mining MiniGame Enabled",
+                tooltip: () => "Enables Mining MiniGame on special rock (still will spawn but doesn't do anything special).",
+                getValue: () => Config.MiningMiniGameEnabled,
+                setValue: value => Config.MiningMiniGameEnabled = value
+            );
+            
+            configMenu.AddBoolOption(
+                mod: ModManifest,
+                name: () => "Fishing Changes Enabled",
+                tooltip: () => "Enables Extra fishing changes.",
+                getValue: () => Config.FishingChangesEnabled,
+                setValue: value => Config.FishingChangesEnabled = value
+            );
+        }
+        public static ModConfig Config { get; set; }
 
         private void OnMenuChanged(object? sender, MenuChangedEventArgs e)
         {
             if (e.NewMenu is BobberBar bobberBar)
             {
+                if (!Config.FishingChangesEnabled)
+                {
+                    return;
+                }
+                
                 //if (Game1.player.CurrentTool?.QualifiedItemId == DeluxeFishingRodTool.DeluxeRodQiid)
                 string baitid = "";
                 List<string> tackles = new List<string>();
@@ -234,7 +306,7 @@ namespace FishMod
             
             if (e.Button == SButton.G)
             {
-                Game1.activeClickableMenu = new MiningBobberBar(Game1.player.currentLocation, Game1.player.CurrentTool);
+                Game1.activeClickableMenu = new MiningBobberBar(Game1.player.currentLocation, Game1.player.CurrentTool, new Vector2(0,0));
             }
         }
     }
