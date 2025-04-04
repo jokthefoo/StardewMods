@@ -450,12 +450,19 @@ public override void draw(SpriteBatch b)
 				new Vector2(26f, 78.5f) * uiScale, 4f * uiScale,
 				flipBubble ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0.001f);
 			
-			b.Draw(ObjectIds.fishingTextures, new Vector2(xPositionOnScreen - 36, yPositionOnScreen + 300) + everythingShake,
-				new Rectangle(463, 325, 42, 186), Color.White * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 5f * uiScale,
+			b.Draw(ObjectIds.fishingTextures, new Vector2(xPositionOnScreen - 0, yPositionOnScreen + 0) + everythingShake,
+				new Rectangle(0, 176, 42, 186), Color.White * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 4f * uiScale,
 				SpriteEffects.None, 0.01f);
-			
+			b.Draw(ObjectIds.fishingTextures, new Vector2(xPositionOnScreen + 50, yPositionOnScreen + 200) + everythingShake,
+				new Rectangle(0, 176, 42, 186), Color.Black * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 4f * uiScale,
+				SpriteEffects.None, 0.01f);
+			b.Draw(ObjectIds.fishingTextures, new Vector2(xPositionOnScreen - 50, yPositionOnScreen + 400) + everythingShake,
+				new Rectangle(0, 176, 42, 186), Color.Red * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 4f * uiScale,
+				SpriteEffects.None, 0.01f);
+
+			int barXPos = xPositionOnScreen + 100;
 			// bar background
-			b.Draw(ObjectIds.fishingTextures, new Vector2(xPositionOnScreen + 126, yPositionOnScreen + 296) + everythingShake,
+			b.Draw(ObjectIds.fishingTextures, new Vector2(barXPos, yPositionOnScreen + 296) + everythingShake,
 				new Rectangle(141, 362, 29, 148), Color.White * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 4f * uiScale,
 				SpriteEffects.None, 0.01f);
 			
@@ -464,8 +471,9 @@ public override void draw(SpriteBatch b)
 			{
 				// These 3 are bobber bar
 				int colorIndex = 4;
+				int bobberXPos = barXPos - 62;
 				b.Draw(ObjectIds.fishingTextures,
-					new Vector2(xPositionOnScreen + 64, yPositionOnScreen + 12 + (int)bobberBarPos) + barShake +
+					new Vector2(bobberXPos, yPositionOnScreen + 12 + (int)bobberBarPos) + barShake +
 					everythingShake, new Rectangle(216, 447 + 10 * colorIndex, 9, 2),
 					treasureInBar || slimeInBar || rockInBar
 						? Color.White
@@ -473,7 +481,7 @@ public override void draw(SpriteBatch b)
 						   ((float)Math.Round(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 100.0),
 							   2) + 2f)), 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.89f);
 				b.Draw(ObjectIds.fishingTextures,
-					new Vector2(xPositionOnScreen + 64, yPositionOnScreen + 12 + (int)bobberBarPos + 8) + barShake +
+					new Vector2(bobberXPos, yPositionOnScreen + 12 + (int)bobberBarPos + 8) + barShake +
 					everythingShake, new Rectangle(216, 453 + 10 * colorIndex, 9, 1),
 					treasureInBar || slimeInBar || rockInBar
 						? Color.White
@@ -482,7 +490,7 @@ public override void draw(SpriteBatch b)
 							   2) + 2f)), 0f, Vector2.Zero, new Vector2(4f, bobberBarHeight - 16), SpriteEffects.None,
 					0.89f);
 				b.Draw(ObjectIds.fishingTextures,
-					new Vector2(xPositionOnScreen + 64,
+					new Vector2(bobberXPos,
 						yPositionOnScreen + 12 + (int)bobberBarPos + bobberBarHeight - 8) + barShake + everythingShake,
 					new Rectangle(216, 454 + 10 * colorIndex, 9, 2),
 					treasureInBar || slimeInBar || rockInBar
@@ -493,13 +501,13 @@ public override void draw(SpriteBatch b)
 				
 				// current level of Success bar
 				b.Draw(Game1.staminaRect,
-					new Rectangle(xPositionOnScreen + 116,
+					new Rectangle(barXPos - 10,
 						yPositionOnScreen + 4 + (int)(580f * (1f - distanceFromCatchingSlime)), 16,
 						(int)(580f * distanceFromCatchingSlime)), Color.Lerp(Color.Red, Color.LimeGreen, distanceFromCatchingSlime));
 				
 				// current level of Success bar 2
 				b.Draw(Game1.staminaRect,
-					new Rectangle(xPositionOnScreen + 144,
+					new Rectangle(barXPos + 18,
 						yPositionOnScreen + 4 + (int)(580f * (1f - distanceFromCatchingRock)), 16,
 						(int)(580f * distanceFromCatchingRock)), Color.Lerp(Color.Gray, Color.White, distanceFromCatchingRock));
 				
@@ -509,15 +517,16 @@ public override void draw(SpriteBatch b)
 					new Vector2(xPositionOnScreen - 18, yPositionOnScreen + 514) + everythingShake,
 					new Rectangle(32, 657, 16, 15), Color.White, reelRotation, new Vector2(2f, 10f), 4f,
 					SpriteEffects.None, 0.9f);*/
-				
+
+				int xTreasureOffset = xPositionOnScreen - 26;
 				//draw treasures
 				foreach (var t in treasures)
 				{
-					t.drawTreasure(b, everythingShake, xPositionOnScreen, yPositionOnScreen);
+					t.drawTreasure(b, everythingShake, xTreasureOffset, yPositionOnScreen);
 				}
 				
-				Rock.drawTreasure(b, everythingShake, xPositionOnScreen, yPositionOnScreen);
-				Slime.drawTreasure(b, everythingShake, xPositionOnScreen, yPositionOnScreen);
+				Rock.drawTreasure(b, everythingShake, xTreasureOffset, yPositionOnScreen);
+				Slime.drawTreasure(b, everythingShake, xTreasureOffset, yPositionOnScreen);
 			}
 			
 			Game1.EndWorldDrawInUI(b);

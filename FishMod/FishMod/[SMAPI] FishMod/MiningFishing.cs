@@ -5,7 +5,6 @@ using StardewValley.Locations;
 using StardewValley.Menus;
 using StardewValley.TerrainFeatures;
 using StardewValley.Tools;
-using Object = StardewValley.Object;
 
 namespace FishMod;
 
