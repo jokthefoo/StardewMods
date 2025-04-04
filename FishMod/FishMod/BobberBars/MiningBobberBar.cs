@@ -356,7 +356,7 @@ public void fishUpdate(GameTime time)
 		distanceFromCatchingSlime -= 0.0033f;
 		if (distanceFromCatchingSlime <= 0f)
 		{
-			tool.lastUser.health -= 5;
+			tool.lastUser.health -= 10;
 			tool.lastUser.currentLocation.debris.Add(new Debris(5, new Vector2(tool.lastUser.StandingPixel.X + 8, tool.lastUser.StandingPixel.Y), Color.Red, 1f, tool.lastUser));
 			tool.lastUser.playNearbySoundAll("ow");
 			
@@ -450,18 +450,13 @@ public override void draw(SpriteBatch b)
 				new Vector2(26f, 78.5f) * uiScale, 4f * uiScale,
 				flipBubble ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0.001f);
 			
-			b.Draw(DeluxeFishingRodTool.fishingTextures, new Vector2(xPositionOnScreen - 0, yPositionOnScreen + 0) + everythingShake,
+			// bar background
+			b.Draw(DeluxeFishingRodTool.fishingTextures, new Vector2(xPositionOnScreen + 50, yPositionOnScreen + 230) + everythingShake,
 				new Rectangle(0, 176, 42, 186), Color.White * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 4f * uiScale,
-				SpriteEffects.None, 0.01f);
-			b.Draw(DeluxeFishingRodTool.fishingTextures, new Vector2(xPositionOnScreen + 50, yPositionOnScreen + 200) + everythingShake,
-				new Rectangle(0, 176, 42, 186), Color.Black * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 4f * uiScale,
-				SpriteEffects.None, 0.01f);
-			b.Draw(DeluxeFishingRodTool.fishingTextures, new Vector2(xPositionOnScreen - 50, yPositionOnScreen + 400) + everythingShake,
-				new Rectangle(0, 176, 42, 186), Color.Red * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 4f * uiScale,
 				SpriteEffects.None, 0.01f);
 
 			int barXPos = xPositionOnScreen + 100;
-			// bar background
+			// bar ui background
 			b.Draw(DeluxeFishingRodTool.fishingTextures, new Vector2(barXPos, yPositionOnScreen + 296) + everythingShake,
 				new Rectangle(141, 362, 29, 148), Color.White * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 4f * uiScale,
 				SpriteEffects.None, 0.01f);
