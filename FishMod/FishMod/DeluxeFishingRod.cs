@@ -3,6 +3,7 @@ using System.Reflection.Emit;
 using System.Xml.Serialization;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewValley;
 using StardewValley.GameData.Tools;
@@ -14,6 +15,9 @@ namespace FishMod
     [XmlType("Mods_spacechase0_DeluxeFishingRod")]
     public class DeluxeFishingRodTool : FishingRod
     {
+        public static Texture2D fishingTextures;
+        
+        public const string FishSpritesPath = "Assets/FishSprites.png";
         public const string ToolSpritesPseudoPath = "Mods/Willy/FishMod/ToolSprites";
 
         public const string DeluxeRodId = "Willy.FishMod.DeluxeFishingRod";

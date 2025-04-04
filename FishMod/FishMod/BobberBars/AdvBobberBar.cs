@@ -664,7 +664,7 @@ namespace FishMod
 			if (scale == 1f)
 			{
 				// These 3 are bobber bar
-				b.Draw(ObjectIds.fishingTextures,
+				b.Draw(DeluxeFishingRodTool.fishingTextures,
 					new Vector2(xPositionOnScreen + 64, yPositionOnScreen + 12 + (int)bobberBarPos) + barShake +
 					everythingShake, new Rectangle(216, 447 + 10 * colorIndex, 9, 2),
 					bobberInBar
@@ -672,7 +672,7 @@ namespace FishMod
 						: (color * 0.25f *
 						   ((float)Math.Round(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 100.0),
 							   2) + 2f)), 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.89f);
-				b.Draw(ObjectIds.fishingTextures,
+				b.Draw(DeluxeFishingRodTool.fishingTextures,
 					new Vector2(xPositionOnScreen + 64, yPositionOnScreen + 12 + (int)bobberBarPos + 8) + barShake +
 					everythingShake, new Rectangle(216, 453 + 10 * colorIndex, 9, 1),
 					bobberInBar
@@ -681,7 +681,7 @@ namespace FishMod
 						   ((float)Math.Round(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 100.0),
 							   2) + 2f)), 0f, Vector2.Zero, new Vector2(4f, bobberBarHeight - 16), SpriteEffects.None,
 					0.89f);
-				b.Draw(ObjectIds.fishingTextures,
+				b.Draw(DeluxeFishingRodTool.fishingTextures,
 					new Vector2(xPositionOnScreen + 64,
 						yPositionOnScreen + 12 + (int)bobberBarPos + bobberBarHeight - 8) + barShake + everythingShake,
 					new Rectangle(216, 454 + 10 * colorIndex, 9, 2),

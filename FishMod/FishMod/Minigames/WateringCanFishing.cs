@@ -140,7 +140,7 @@ public class WateringCanFishing
         
         foreach (var vector2 in tilesAffected(__instance.lastUser.GetToolLocation() / 64f,
                      __instance.lastUser.toolPower.Value, __instance.lastUser))
-            b.Draw(ObjectIds.fishingTextures,
+            b.Draw(DeluxeFishingRodTool.fishingTextures,
                 Game1.GlobalToLocal(new Vector2((int)vector2.X * 64, (int)vector2.Y * 64)),
                 new Rectangle(237, 490, 16, 16), Color.White, 0.0f, Vector2.Zero, 4f, SpriteEffects.None, 0.01f);
 

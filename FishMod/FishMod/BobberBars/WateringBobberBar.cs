@@ -1,15 +1,22 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using StardewValley;
 using StardewValley.BellsAndWhistles;
+using StardewValley.Extensions;
+using StardewValley.ItemTypeDefinitions;
 using StardewValley.Menus;
 using StardewValley.TerrainFeatures;
+using StardewValley.Tools;
+
 
 namespace FishMod
 {
-	public class TreeBobberBar : IClickableMenu
+	public class WateringBobberBar : IClickableMenu
 	{
 		public bool handledFishResult;
 
@@ -17,8 +24,6 @@ namespace FishMod
 
 		public float everythingShakeTimer;
 
-		public int logCount;
-		
 		public bool treasureInBar;
 		
 		public bool buttonPressed;
@@ -35,7 +40,7 @@ namespace FishMod
 
 		public Vector2 everythingShake;
 
-		public float axeChoppingAngle;
+		public float reelRotation;
 
 		private SparklingText sparkleText;
 
@@ -43,55 +48,57 @@ namespace FishMod
 
 		public float bobberBarSpeed;
 
-		public float distanceFromCatching = 0.01f;
-
+		public float distancesFromCatchingTop = 0.01f;
+		public float distancesFromCatchingBot = 0.01f;
+		public int progressBarShakeTop;
+		public int progressBarShakeBot;
+		
 		public static ICue reelSound;
 
 		public static ICue unReelSound;
 		
 		public List<TreasureInstance> treasures = new ();
-		
-		public GameLocation location;
-		
+
 		public Tool tool;
 		
-		public Vector2 tileLocation;
+		public GameLocation location;
 
-		public Tree tree;
-		public bool isTree;
-		
-		public int treeAnimTimer = 800;
-		public int farmerAnimTimer = 100;
-		public int farmerAnimIndex = 0;
-
-		public TreeBobberBar(GameLocation location, bool treasure, int logCount, Tool t, Vector2 tileLocation)
-			: base(0, 0, 96, 636)
+		public WateringBobberBar(GameLocation location, Tool tool, bool treasure) : base(0, 0, 96, 636)
 		{
-			tool = t;
-			this.logCount = logCount;
+			reelRotation = 359;
+			this.tool = tool;
 			this.location = location;
-			this.tileLocation = tileLocation;
-			GetTree();
 			
-			axeChoppingAngle = 359;
+			var t1 = new MovingTreasure(TreasureSprites.Parsnip, false, 20, 20);
+			t1.SetMovementBounds(MovingTreasure.defaultMinBound, MovingTreasure.defaultMaxBound / 2f);
+			t1.showProgressBar = false;
+			t1.increaseRate = 0;
+			t1.treasureShakeMultiplier = .5f;
+			t1.difficulty = 35;
+			t1.treasureScale = 1.2f;
 			
-			for (int i = 0; i < logCount; i++)
-			{
-				treasures.Add(new TreasureInstance(TreasureSprites.Stick, false, 20,20));
-			}
+			var t2 = new MovingTreasure(TreasureSprites.WaterDrop, false, 20, 20);
+			t2.SetMovementBounds(MovingTreasure.defaultMaxBound / 2f, MovingTreasure.defaultMaxBound);
+			t2.showProgressBar = false;
+			t2.increaseRate = 0;
+			t2.treasureShakeMultiplier = .5f;
+			t2.difficulty = 35;
+			t2.treasureScale = 1.2f;
+			treasures.Add(t1);
+			treasures.Add(t2);
 
 			if (treasure)
 			{
-				var realTreasure = new MovingTreasure(TreasureSprites.GreenChest, true, 1000, 1200, canLoseTreasure: true);
-				realTreasure.difficulty = t.lastUser.ForagingLevel * 5 + 25;
-				treasures.Add(realTreasure);
+				var t = new MovingTreasure(TreasureSprites.Fairy, true, 500, 500, canLoseTreasure: true);
+				t.difficulty = tool.lastUser.FarmingLevel * 4 + 30;
+				treasures.Add(t);
 			}
 			
 			handledFishResult = false;
 			fadeIn = true;
 			uiScale = 0f;
 			
-			bobberBarHeight = 96 + Game1.player.ForagingLevel * 8;
+			bobberBarHeight = 96 + Game1.player.FarmingLevel * 8;
 
 			Reposition();
 
@@ -180,7 +187,9 @@ namespace FishMod
 
 			fadeOut = true;
 			everythingShakeTimer = 500f;
-			distanceFromCatching = -1f;
+			
+			distancesFromCatchingTop = -1f;
+			distancesFromCatchingBot = -1f;
 		}
 
 		public override void receiveKeyPress(Keys key)
@@ -203,8 +212,8 @@ public override void update(GameTime time)
 	if (everythingShakeTimer > 0f)
 	{
 		everythingShakeTimer -= time.ElapsedGameTime.Milliseconds;
-		everythingShake = new Vector2((float)Game1.random.Next(-10, 11) / 10f,
-			(float)Game1.random.Next(-10, 11) / 10f);
+		everythingShake = new Vector2(Game1.random.Next(-10, 11) / 10f,
+			Game1.random.Next(-10, 11) / 10f);
 		if (everythingShakeTimer <= 0f)
 		{
 			everythingShake = Vector2.Zero;
@@ -235,7 +244,8 @@ public override void update(GameTime time)
 		{
 			uiScale = 0f;
 			fadeOut = false;
-			if (distanceFromCatching > 0.9f)
+			
+			if (distancesFromCatchingTop > 0.9f && distancesFromCatchingBot > 0.9f)
 			{
 				bool treasureCaught = false;
 				foreach (var t in treasures)
@@ -245,7 +255,7 @@ public override void update(GameTime time)
 						treasureCaught = true;
 					}
 				}
-				AxeFishing.TreeRewards(location, tool, tileLocation, logCount, treasureCaught);
+				WateringCanFishing.WateringRewards(location, tool, treasureCaught);
 			}
 			else
 			{
@@ -258,60 +268,7 @@ public override void update(GameTime time)
 
 		return;
 	}
-
-	
-	treeAnimTimer -= time.ElapsedGameTime.Milliseconds;
-	if (treeAnimTimer <= 0)
-	{
-		if (isTree)
-		{
-			tree.shake(tileLocation, false);
-			treeAnimTimer = 1000;
-		}
-	}
-	
-	/*
-	switch (Game1.player.FacingDirection)
-	{
-		case 0:
-			Game1.player.FarmerSprite.setCurrentFrame(160 + farmerAnimIndex);
-			break;
-		case 1:
-			Game1.player.FarmerSprite.setCurrentFrame(168 + farmerAnimIndex);
-			break;
-		case 2:
-			Game1.player.FarmerSprite.setCurrentFrame(176 + farmerAnimIndex);
-			break;
-		case 3:
-			Game1.player.FarmerSprite.setCurrentFrame(184 + farmerAnimIndex);
-			break;
-	}
-
-	farmerAnimTimer -= time.ElapsedGameTime.Milliseconds;
-	if (farmerAnimTimer <= 0)
-	{
-		farmerAnimIndex++;
-		if (farmerAnimIndex == 8)
-		{
-			farmerAnimIndex = 0;
-		}
-		
-		farmerAnimTimer = 100;
-	}*/
-
 	fishUpdate(time);
-}
-
-public void GetTree()
-{
-	if (location.terrainFeatures.TryGetValue(tileLocation, out TerrainFeature terrainFeature))
-	{
-		if (terrainFeature is Tree t )
-		{
-			tree = t;
-			isTree = true;
-		}
-	}
 }
 
 public void fishUpdate(GameTime time)
@@ -355,24 +312,40 @@ public void fishUpdate(GameTime time)
 	}
 
 	treasureInBar = false;
+	int index = 0;
 	foreach (var t in treasures)
 	{
-		bool beforeCaught = t.treasureCaught;
 		if (t.treasureUpdate(time, bobberBarPos, bobberBarHeight))
 		{
 			treasureInBar = true;
-		}
 
-		if (t.treasureCaught && !beforeCaught && !t.realTreasure)
-		{
-			distanceFromCatching += 1f / logCount;
+			switch (index)
+			{
+				case 0:
+					distancesFromCatchingTop += 0.0035f;
+					if (distancesFromCatchingTop >= 1f && t.treasureCaught == false)
+					{
+						progressBarShakeTop = Game1.random.Next(-1, 1);
+						t.treasureCatchLevel = 1f;
+					}
+					break;
+				case 1:
+					distancesFromCatchingBot += 0.0035f;
+					if (distancesFromCatchingBot >= 1f && t.treasureCaught == false)
+					{
+						progressBarShakeBot = Game1.random.Next(-1, 1);
+						t.treasureCatchLevel = 1f;
+					}
+					break;
+			}
 		}
+		index++;
 	}
 
-	axeChoppingAngle += (float)Math.PI / 180f;
-	if (axeChoppingAngle > 2*Math.PI)
+	reelRotation += (float)Math.PI / 180f;
+	if (reelRotation > 2*Math.PI)
 	{
-		axeChoppingAngle = 270f * (float)Math.PI / 180f;
+		reelRotation = 270f * (float)Math.PI / 180f;
 	}
 	
 	if (treasureInBar)
@@ -382,13 +355,15 @@ public void fishUpdate(GameTime time)
 		unReelSound?.Stop(AudioStopOptions.Immediate);
 		if (reelSound == null || reelSound.IsStopped || reelSound.IsStopping || !reelSound.IsPlaying)
 		{
-			Game1.playSound("axchop", out reelSound);
+			Game1.playSound("slosh", out reelSound);
 		}
 	}
 	else
 	{
 		barShake.X = Game1.random.Next(-10, 11) / 10f;
 		barShake.Y = Game1.random.Next(-10, 11) / 10f;
+		progressBarShakeTop = 0;
+		progressBarShakeBot = 0;
 		
 		reelSound?.Stop(AudioStopOptions.Immediate);
 		if (unReelSound == null || unReelSound.IsStopped)
@@ -397,9 +372,10 @@ public void fishUpdate(GameTime time)
 		}
 	}
 	
-	distanceFromCatching = Math.Max(0f, Math.Min(1f, distanceFromCatching));
+	distancesFromCatchingTop = Math.Max(0f, Math.Min(1f, distancesFromCatchingTop));
+	distancesFromCatchingBot = Math.Max(0f, Math.Min(1f, distancesFromCatchingBot));
 	
-	if (distanceFromCatching <= 0f)
+	if (distancesFromCatchingTop <= 0f || distancesFromCatchingBot <= 0f)
 	{
 		fadeOut = true;
 		everythingShakeTimer = 500f;
@@ -410,7 +386,7 @@ public void fishUpdate(GameTime time)
 		return;
 	}
 	
-	if (distanceFromCatching >= 1f)
+	if (distancesFromCatchingTop >= 1f && distancesFromCatchingBot >= 1f)
 	{
 		fadeOut = true;
 		everythingShakeTimer = 500f;
@@ -433,23 +409,23 @@ public override void draw(SpriteBatch b)
 				new Vector2(26f, 78.5f) * uiScale, 4f * uiScale,
 				flipBubble ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0.001f);
 			
-			
-			// bar background tree attempt
+			/*
+			// TODO watering bar background?
 			b.Draw(ObjectIds.fishingTextures, new Vector2(xPositionOnScreen - 36, yPositionOnScreen + 300) + everythingShake,
 				new Rectangle(0, 368, 72, 144), Color.White * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 6f * uiScale,
-				SpriteEffects.None, 0.01f);
+				SpriteEffects.None, 0.01f);*/
 			
 			// bar background
-			b.Draw(ObjectIds.fishingTextures, new Vector2(xPositionOnScreen + 126, yPositionOnScreen + 296) + everythingShake,
-				new Rectangle(83, 362, 22, 148), Color.White * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 4f * uiScale,
+			b.Draw(DeluxeFishingRodTool.fishingTextures, new Vector2(xPositionOnScreen + 126, yPositionOnScreen + 296) + everythingShake,
+				new Rectangle(112, 362, 22, 148), Color.White * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 4f * uiScale,
 				SpriteEffects.None, 0.01f);
 			
 			// Gameplay bar
 			if (uiScale == 1f)
 			{
 				// These 3 are bobber bar
-				int colorIndex = 2;
-				b.Draw(ObjectIds.fishingTextures,
+				int colorIndex = 1;
+				b.Draw(DeluxeFishingRodTool.fishingTextures,
 					new Vector2(xPositionOnScreen + 64, yPositionOnScreen + 12 + (int)bobberBarPos) + barShake +
 					everythingShake, new Rectangle(216, 447 + 10 * colorIndex, 9, 2),
 					treasureInBar
@@ -457,7 +433,7 @@ public override void draw(SpriteBatch b)
 						: (Color.White * 0.25f *
 						   ((float)Math.Round(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 100.0),
 							   2) + 2f)), 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.89f);
-				b.Draw(ObjectIds.fishingTextures,
+				b.Draw(DeluxeFishingRodTool.fishingTextures,
 					new Vector2(xPositionOnScreen + 64, yPositionOnScreen + 12 + (int)bobberBarPos + 8) + barShake +
 					everythingShake, new Rectangle(216, 453 + 10 * colorIndex, 9, 1),
 					treasureInBar
@@ -466,7 +442,7 @@ public override void draw(SpriteBatch b)
 						   ((float)Math.Round(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 100.0),
 							   2) + 2f)), 0f, Vector2.Zero, new Vector2(4f, bobberBarHeight - 16), SpriteEffects.None,
 					0.89f);
-				b.Draw(ObjectIds.fishingTextures,
+				b.Draw(DeluxeFishingRodTool.fishingTextures,
 					new Vector2(xPositionOnScreen + 64,
 						yPositionOnScreen + 12 + (int)bobberBarPos + bobberBarHeight - 8) + barShake + everythingShake,
 					new Rectangle(216, 454 + 10 * colorIndex, 9, 2),
@@ -476,17 +452,23 @@ public override void draw(SpriteBatch b)
 						   ((float)Math.Round(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 100.0),
 							   2) + 2f)), 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.89f);
 				
-				// current level of Success bar
+				// current level of bottom Success bar
 				b.Draw(Game1.staminaRect,
-					new Rectangle(xPositionOnScreen + 116,
-						yPositionOnScreen + 4 + (int)(580f * (1f - distanceFromCatching)), 16,
-						(int)(580f * distanceFromCatching)), Utility.getRedToGreenLerpColor(distanceFromCatching));
+					new Rectangle(xPositionOnScreen + 116 + progressBarShakeBot,
+						yPositionOnScreen + 4 + 290 + (int)(290f * (1f - distancesFromCatchingBot)) + progressBarShakeBot, 16,
+						(int)(290f * distancesFromCatchingBot)), Color.Lerp(Color.Blue, Color.Aqua, distancesFromCatchingBot));
+				// current level of top Success bar
+				b.Draw(Game1.staminaRect,
+					new Rectangle(xPositionOnScreen + 116 + progressBarShakeTop,
+						yPositionOnScreen + 4, 16 + progressBarShakeTop,
+						(int)(290 * distancesFromCatchingTop)), Color.Lerp(Color.DarkGreen, Color.LawnGreen, distancesFromCatchingTop));
 				
-				// AXE
+				/*
+				// TODO add watering anim for bar?
 				b.Draw(Game1.mouseCursors,
 					new Vector2(xPositionOnScreen - 18, yPositionOnScreen + 514) + everythingShake,
-					new Rectangle(32, 657, 16, 15), Color.White, axeChoppingAngle, new Vector2(2f, 10f), 4f,
-					SpriteEffects.None, 0.9f);
+					new Rectangle(32, 657, 16, 15), Color.White, reelRotation, new Vector2(2f, 10f), 4f,
+					SpriteEffects.None, 0.9f);*/
 				
 				//draw treasures
 				foreach (var t in treasures)

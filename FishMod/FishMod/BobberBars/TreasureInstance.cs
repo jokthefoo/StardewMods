@@ -173,7 +173,7 @@ public class TreasureInstance
 	    else
 	    {
 		    // draw treasure
-		    b.Draw(ObjectIds.fishingTextures,
+		    b.Draw(DeluxeFishingRodTool.fishingTextures,
 			    new Vector2(xPositionOnScreen + 64 + 18, (float)(yPositionOnScreen + 12 + 24) + treasurePosition) +
 			    treasureShake + everythingShake, new Rectangle(20 * spriteId, 0, 20, 24), Color.White, 0f,
 			    new Vector2(10f, 10f), 2f * treasureScale, SpriteEffects.None, 0.85f);

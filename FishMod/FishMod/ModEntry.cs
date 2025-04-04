@@ -31,7 +31,7 @@ namespace FishMod
             helper.Events.Input.ButtonPressed += OnButtonPressed;
             helper.Events.Display.MenuChanged += OnMenuChanged;
 
-            ObjectIds.fishingTextures = helper.ModContent.Load<Texture2D>(ObjectIds.FishSpritesPath);
+            DeluxeFishingRodTool.fishingTextures = helper.ModContent.Load<Texture2D>(DeluxeFishingRodTool.FishSpritesPath);
             Config = helper.ReadConfig<ModConfig>();
             HarmonyPatches();
         }
@@ -118,21 +118,10 @@ namespace FishMod
 
         private void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
         {
-            if (e.NameWithoutLocale.IsEquivalentTo(ObjectIds.SpritesPseudoPath))
-            {
-                e.LoadFromModFile<Texture2D>("assets/Sprites.png", AssetLoadPriority.Exclusive);
-            }  
-            else if (e.NameWithoutLocale.IsEquivalentTo(DeluxeFishingRodTool.ToolSpritesPseudoPath))
+            if (e.NameWithoutLocale.IsEquivalentTo(DeluxeFishingRodTool.ToolSpritesPseudoPath))
             {
                 e.LoadFromModFile<Texture2D>("assets/ToolSprites.png", AssetLoadPriority.Exclusive);
             }
-            else if (e.NameWithoutLocale.IsEquivalentTo("Data/Objects"))
-            {
-                e.Edit(editor =>
-                {
-                    ObjectIds.EditAssets(editor.AsDictionary<string, ObjectData>().Data);
-                });
-            } 
             else if (e.NameWithoutLocale.IsEquivalentTo("Data/Tools"))
             {
                 e.Edit(editor =>

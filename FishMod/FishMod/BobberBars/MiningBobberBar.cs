@@ -450,19 +450,19 @@ public override void draw(SpriteBatch b)
 				new Vector2(26f, 78.5f) * uiScale, 4f * uiScale,
 				flipBubble ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0.001f);
 			
-			b.Draw(ObjectIds.fishingTextures, new Vector2(xPositionOnScreen - 0, yPositionOnScreen + 0) + everythingShake,
+			b.Draw(DeluxeFishingRodTool.fishingTextures, new Vector2(xPositionOnScreen - 0, yPositionOnScreen + 0) + everythingShake,
 				new Rectangle(0, 176, 42, 186), Color.White * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 4f * uiScale,
 				SpriteEffects.None, 0.01f);
-			b.Draw(ObjectIds.fishingTextures, new Vector2(xPositionOnScreen + 50, yPositionOnScreen + 200) + everythingShake,
+			b.Draw(DeluxeFishingRodTool.fishingTextures, new Vector2(xPositionOnScreen + 50, yPositionOnScreen + 200) + everythingShake,
 				new Rectangle(0, 176, 42, 186), Color.Black * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 4f * uiScale,
 				SpriteEffects.None, 0.01f);
-			b.Draw(ObjectIds.fishingTextures, new Vector2(xPositionOnScreen - 50, yPositionOnScreen + 400) + everythingShake,
+			b.Draw(DeluxeFishingRodTool.fishingTextures, new Vector2(xPositionOnScreen - 50, yPositionOnScreen + 400) + everythingShake,
 				new Rectangle(0, 176, 42, 186), Color.Red * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 4f * uiScale,
 				SpriteEffects.None, 0.01f);
 
 			int barXPos = xPositionOnScreen + 100;
 			// bar background
-			b.Draw(ObjectIds.fishingTextures, new Vector2(barXPos, yPositionOnScreen + 296) + everythingShake,
+			b.Draw(DeluxeFishingRodTool.fishingTextures, new Vector2(barXPos, yPositionOnScreen + 296) + everythingShake,
 				new Rectangle(141, 362, 29, 148), Color.White * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 4f * uiScale,
 				SpriteEffects.None, 0.01f);
 			
@@ -472,7 +472,7 @@ public override void draw(SpriteBatch b)
 				// These 3 are bobber bar
 				int colorIndex = 4;
 				int bobberXPos = barXPos - 62;
-				b.Draw(ObjectIds.fishingTextures,
+				b.Draw(DeluxeFishingRodTool.fishingTextures,
 					new Vector2(bobberXPos, yPositionOnScreen + 12 + (int)bobberBarPos) + barShake +
 					everythingShake, new Rectangle(216, 447 + 10 * colorIndex, 9, 2),
 					treasureInBar || slimeInBar || rockInBar
@@ -480,7 +480,7 @@ public override void draw(SpriteBatch b)
 						: (Color.White * 0.25f *
 						   ((float)Math.Round(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 100.0),
 							   2) + 2f)), 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.89f);
-				b.Draw(ObjectIds.fishingTextures,
+				b.Draw(DeluxeFishingRodTool.fishingTextures,
 					new Vector2(bobberXPos, yPositionOnScreen + 12 + (int)bobberBarPos + 8) + barShake +
 					everythingShake, new Rectangle(216, 453 + 10 * colorIndex, 9, 1),
 					treasureInBar || slimeInBar || rockInBar
@@ -489,7 +489,7 @@ public override void draw(SpriteBatch b)
 						   ((float)Math.Round(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 100.0),
 							   2) + 2f)), 0f, Vector2.Zero, new Vector2(4f, bobberBarHeight - 16), SpriteEffects.None,
 					0.89f);
-				b.Draw(ObjectIds.fishingTextures,
+				b.Draw(DeluxeFishingRodTool.fishingTextures,
 					new Vector2(bobberXPos,
 						yPositionOnScreen + 12 + (int)bobberBarPos + bobberBarHeight - 8) + barShake + everythingShake,
 					new Rectangle(216, 454 + 10 * colorIndex, 9, 2),
