@@ -25,7 +25,7 @@
           "Edibility": "-300",
           "Type": "Fish",
           "Category": -4,
-          "Price": "3001", // TODO 9001
+          "Price": "9001",
           "Texture": "Mods\\{{ModId}}\\Fish",
           "SpriteIndex": 0,
           "ContextTags": [
@@ -39,7 +39,7 @@
       "Action": "EditData",
       "Target": "Data/Fish",
       "Entries": {
-        "{{ModId}}.Susebron": "Susebron/120/mixed/67/69/600 2600/spring summer fall winter/sunny/690 .4 685 .1/5/0/.1/0",
+        "{{ModId}}.Susebron": "Susebron/120/mixed/67/70/600 2600/spring summer fall winter/sunny/690 .4 685 .1/5/0/.1/0",
       },
     },
     {

@@ -67,7 +67,7 @@ namespace FishMod
         
         public static bool CheckIfValidBobberBar(IClickableMenu menu)
         {
-            if (menu is BobberBar || menu is AdvBobberBar)
+            if (menu is BobberBar || menu is AdvBobberBar || menu is FishFrenzyBobberBar || menu is BossBobberBar)
             {
                 return true;
             }

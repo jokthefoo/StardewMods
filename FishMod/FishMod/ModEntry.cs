@@ -205,7 +205,7 @@ namespace FishMod
                 {
                     return;
                 }
-                
+
                 //if (Game1.player.CurrentTool?.QualifiedItemId == DeluxeFishingRodTool.DeluxeRodQiid)
                 string baitid = "";
                 List<string> tackles = new List<string>();
@@ -220,31 +220,32 @@ namespace FishMod
                 {
                     Game1.activeClickableMenu = new FishFrenzyBobberBar(bobberBar.whichFish, bobberBar.fishSize,
                         bobberBar.bobbers, bobberBar.setFlagOnCatch, baitid);
+                    return;
                 }
-                else
+
+                double tackleBoost = Utility.getStringCountInList(tackles, "(O)693") *
+                    FishingRod.baseChanceForTreasure / 3.0;
+                double baitBoost = baitid == "(O)703" ? FishingRod.baseChanceForTreasure : 0.0;
+                double pirateBoost = Game1.player.professions.Contains(9) ? FishingRod.baseChanceForTreasure : 0.0;
+                double treasureOdds = FishingRod.baseChanceForTreasure + Game1.player.LuckLevel * 0.005 + baitBoost +
+                                      tackleBoost + Game1.player.DailyLuck / 2.0 + pirateBoost;
+
+                bool treasure1 = Game1.random.NextDouble() < treasureOdds;
+                bool treasure2 = Game1.random.NextDouble() < treasureOdds;
+                int treasure = (bobberBar.treasure ? 1 : 0) + (treasure1 ? 1 : 0) + (treasure2 ? 1 : 0);
+
+                if (bobberBar.whichFish == "Jok.Fishdew.CP.Susebron")
                 {
-                    double tackleBoost = Utility.getStringCountInList(tackles, "(O)693") * FishingRod.baseChanceForTreasure / 3.0;
-                    double baitBoost = baitid == "(O)703" ? FishingRod.baseChanceForTreasure : 0.0;
-                    double pirateBoost = Game1.player.professions.Contains(9) ? FishingRod.baseChanceForTreasure : 0.0;
-                    double treasureOdds = FishingRod.baseChanceForTreasure + Game1.player.LuckLevel * 0.005 + baitBoost + tackleBoost + Game1.player.DailyLuck / 2.0 + pirateBoost;
-
-                    bool treasure1 = Game1.random.NextDouble() < treasureOdds;
-                    bool treasure2 = Game1.random.NextDouble() < treasureOdds;
-                    int treasure = (bobberBar.treasure ? 1 : 0) + (treasure1 ? 1 : 0) + (treasure2 ? 1 : 0);
-                    
-                    if (bobberBar.whichFish == "Jok.Fishdew.CP.Susebron")
-                    {
-                        Game1.activeClickableMenu = new BossBobberBar(bobberBar.whichFish, bobberBar.fishSize, treasure,
-                            bobberBar.bobbers, bobberBar.setFlagOnCatch, bobberBar.bossFish, baitid, bobberBar.goldenTreasure);
-                        
-                        // TODO: watering UI improvements
-                        // TODO: maybe animals? they would be so cute on the bar
-                        // TODO: other fish that have minor changes?
-                    } 
-
-                    Game1.activeClickableMenu = new AdvBobberBar(bobberBar.whichFish, bobberBar.fishSize, treasure,
-                        bobberBar.bobbers, bobberBar.setFlagOnCatch, bobberBar.bossFish, baitid, bobberBar.goldenTreasure);
+                    Game1.activeClickableMenu = new BossBobberBar(bobberBar.whichFish, bobberBar.fishSize, treasure,
+                        bobberBar.bobbers, bobberBar.setFlagOnCatch, bobberBar.bossFish, baitid,
+                        bobberBar.goldenTreasure);
+                    return;
+                    // TODO: maybe animals? they would be so cute on the bar
+                    // TODO: other fish that have minor changes?
                 }
+
+                Game1.activeClickableMenu = new AdvBobberBar(bobberBar.whichFish, bobberBar.fishSize, treasure,
+                    bobberBar.bobbers, bobberBar.setFlagOnCatch, bobberBar.bossFish, baitid, bobberBar.goldenTreasure);
             }
         }
 
