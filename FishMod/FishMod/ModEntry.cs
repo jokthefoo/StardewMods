@@ -230,19 +230,17 @@ namespace FishMod
 
                     bool treasure1 = Game1.random.NextDouble() < treasureOdds;
                     bool treasure2 = Game1.random.NextDouble() < treasureOdds;
-
+                    int treasure = (bobberBar.treasure ? 1 : 0) + (treasure1 ? 1 : 0) + (treasure2 ? 1 : 0);
+                    
                     if (bobberBar.whichFish == "Jok.Fishdew.CP.Susebron")
                     {
-                        bobberBar.goldenTreasure = true;
-                        // TODO boss fish bar
+                        Game1.activeClickableMenu = new BossBobberBar(bobberBar.whichFish, bobberBar.fishSize, treasure,
+                            bobberBar.bobbers, bobberBar.setFlagOnCatch, bobberBar.bossFish, baitid, bobberBar.goldenTreasure);
+                        
                         // TODO: watering UI improvements
-                        // TODO: Fishing: new boss fish 3x progress bars --- first is hard but not crazy hard -- second is two fish same time? --- last is hard fish but bar only goes up with treasures -- maybe end with normal fish?
-    
                         // TODO: maybe animals? they would be so cute on the bar
                     } 
 
-
-                    int treasure = (bobberBar.treasure ? 1 : 0) + (treasure1 ? 1 : 0) + (treasure2 ? 1 : 0);
                     Game1.activeClickableMenu = new AdvBobberBar(bobberBar.whichFish, bobberBar.fishSize, treasure,
                         bobberBar.bobbers, bobberBar.setFlagOnCatch, bobberBar.bossFish, baitid, bobberBar.goldenTreasure);
                 }
@@ -307,7 +305,21 @@ namespace FishMod
             
             if (e.Button == SButton.G)
             {
-                Game1.activeClickableMenu = new MiningBobberBar(Game1.player.currentLocation, Game1.player.CurrentTool, new Vector2(0,0));
+                if (Game1.player.CurrentTool?.QualifiedItemId == DeluxeFishingRodTool.DeluxeRodQiid)
+                {
+                    if (Game1.player.CurrentTool is FishingRod fishingRod)
+                    {
+                        fishingRod.castingPower = 1f;
+                        var num0 = Math.Max(128f, (float)((double)fishingRod.castingPower * (DeluxeFishingRodTool.getAddedDistance(Game1.player) + 4) * 64.0)) - 8f;
+                        fishingRod.bobber.Set(new Vector2(
+                            Game1.player.StandingPixel.X + (Game1.player.FacingDirection == 3 ? -1f : 1f) * num0,
+                            Game1.player.StandingPixel.Y));
+                        
+                        Game1.activeClickableMenu = new BossBobberBar("Jok.Fishdew.CP.Susebron", 69, 1,
+                            fishingRod.GetTackleQualifiedItemIDs(), "", true);
+                    }
+                }
+                //Game1.activeClickableMenu = new MiningBobberBar(Game1.player.currentLocation, Game1.player.CurrentTool, new Vector2(0,0));
             }
         }
     }

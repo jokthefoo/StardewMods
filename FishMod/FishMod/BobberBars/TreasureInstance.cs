@@ -151,21 +151,21 @@ public class TreasureInstance
 	    // Treasures
 	    if (goldenTreasure)
 	    {
-		    b.Draw(Game1.mouseCursors_1_6,
+		    b.Draw(Game1.mouseCursors_1_6, // golden treasure
 			    new Vector2(xPositionOnScreen + 64 + 18, (yPositionOnScreen + 12 + 24) + treasurePosition) +
 			    treasureShake + everythingShake, new Rectangle(256, 51, 20, 24), Color.White, 0f, 
 			    new Vector2(10f, 10f),2f * treasureScale, SpriteEffects.None, 0.85f);
 	    }
 	    else if (spriteId == -1)
 	    {
-		    b.Draw(Game1.mouseCursors,
+		    b.Draw(Game1.mouseCursors, // normal treasure
 			    new Vector2(xPositionOnScreen + 64 + 18, (yPositionOnScreen + 12 + 24) + treasurePosition) +
 			    treasureShake + everythingShake, new Rectangle(638, 1865, 20, 24), Color.White, 0f,
 			    new Vector2(10f, 10f), 2f * treasureScale, SpriteEffects.None, 0.85f);
 	    }
 	    else if (spriteId == -2)
 	    {
-		    b.Draw(Game1.mouseCursors,
+		    b.Draw(Game1.mouseCursors, // normal fish
 			    new Vector2(xPositionOnScreen + 64 + 18, (yPositionOnScreen + 12 + 24) + treasurePosition) +
 			    treasureShake + everythingShake, new Rectangle(614, 1840, 20, 20), Color.White, 0f,
 			    new Vector2(10f, 10f), 2f * treasureScale, SpriteEffects.None, 0.88f);
@@ -174,7 +174,7 @@ public class TreasureInstance
 	    {
 		    // draw treasure
 		    b.Draw(DeluxeFishingRodTool.fishingTextures,
-			    new Vector2(xPositionOnScreen + 64 + 18, (float)(yPositionOnScreen + 12 + 24) + treasurePosition) +
+			    new Vector2(xPositionOnScreen + 64 + 18, yPositionOnScreen + 12 + 24 + treasurePosition) +
 			    treasureShake + everythingShake, new Rectangle(20 * spriteId, 0, 20, 24), Color.White, 0f,
 			    new Vector2(10f, 10f), 2f * treasureScale, SpriteEffects.None, 0.85f);
 	    }
