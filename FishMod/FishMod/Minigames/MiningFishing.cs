@@ -12,11 +12,6 @@ public class MiningFishing
 {
     private static int[] rewards = new int[4];
     
-    // TODO: mining/watering UI improvements
-    // TODO: Fishing: new boss fish 3x progress bars --- first is hard but not crazy hard -- second is two fish same time --- last is hard fish but bar only goes up with treasures
-    
-    // TODO: maybe animals? they would be so cute on the bar
-
     public static void Post_PickaxeSwing(Pickaxe __instance, GameLocation location, int x, int y, int power, Farmer who)
     {
         if (!ModEntry.Config.MiningMiniGameEnabled)
@@ -24,7 +19,7 @@ public class MiningFishing
             return;
         }
 
-        who.Stamina -= Math.Max(1, 4 - __instance.UpgradeLevel) * Math.Max(1,11 - who.MiningLevel) * (2 * (power + 1) - who.MiningLevel * 0.1f);
+        who.Stamina -= 30f / __instance.UpgradeLevel + 1 - who.MiningLevel * 0.1f ;
         if (location.resourceClumps != null)
         {
             foreach (ResourceClump? clump in location.resourceClumps)

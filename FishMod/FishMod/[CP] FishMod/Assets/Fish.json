@@ -1,0 +1,110 @@
+﻿{
+  "Changes": [
+    {
+      "LogName": "Aquarium fish load",
+      "Action": "Load",
+      "Target": "Mods/{{ModId}}/AqFish, Mods/{{ModId}}/Fish",
+      "FromFile": "Assets/{{TargetWithoutPath}}.png"
+    },
+    {
+      "LogName": "Aquarium data",
+      "Action": "EditData",
+      "Target": "Data/AquariumFish",
+      "Entries": { "{{ModId}}.Susebron": "0/fish/////Mods\\{{ModId}}.Susebron\\AqFish" }
+    },
+    {
+      "LogName": "Fish as items",
+      "Action": "EditData",
+      "Target": "Data/Objects",
+      "Entries": {
+        "{{ModId}}.Susebron":
+        {
+          "Name": "Susebron",
+          "DisplayName": "Susebron",
+          "Description": "King of the Sea.",
+          "Edibility": "-300",
+          "Type": "Fish",
+          "Category": -4,
+          "Price": "3001", // TODO 9001
+          "Texture": "Mods\\{{ModId}}\\Fish",
+          "SpriteIndex": 0,
+          "ContextTags": [
+            "color_prismatic",
+            "fish_has_roe"
+          ]
+        },
+      }
+    },
+    {
+      "Action": "EditData",
+      "Target": "Data/Fish",
+      "Entries": {
+        "{{ModId}}.Susebron": "Susebron/120/mixed/67/69/600 2600/spring summer fall winter/sunny/690 .4 685 .1/5/0/.1/0",
+      },
+    },
+    {
+      "Action": "EditData",
+      "Target": "Data/Locations",
+      "TargetField": [
+        "IslandSouthEast",
+        "Fish"
+      ],
+      "Entries": {
+        "{{ModId}}.Susebron": {
+          "Chance": 1, // TODO .1
+          "Id": "{{ModId}}.Susebron",
+          "ItemId": "{{ModId}}.Susebron",
+          "CuriosityLureBuff": 1, // TODO .1
+          "CatchLimit": 1,
+          "IsBossFish": true,
+          "MinDistanceFromShore": 4,
+          "Precedence": -100,
+          "IgnoreFishDataRequirements": true,
+          "Condition": "WEATHER Here Sun",
+          "MinFishingLevel": 10,
+          "PlayerPosition": {
+            "X": 16,
+            "Y": 0,
+            "Width": 100,
+            "Height": 100
+          }
+        }
+      }
+    },
+    {
+      "LogName": "Fish Pond Data",
+      "Action": "EditData",
+      "Target": "Data/FishPondData",
+      "Entries": {
+        "id_(o){{ModId}}.Susebron": {
+          "Id": "{{ModId}}.Susebron",
+          "RequiredTags": [
+            "id_(o){{ModId}}.Susebron"
+          ],
+          "MaxPopulation": 1,
+          "SpawnTime": -1,
+          "BaseMinProduceChance": 0.5,
+          "BaseMaxProduceChance": 0.5,
+          "WaterColor": [
+            {
+              "Id": "Susebron",
+              "Color": "230 70 70"
+            },
+          ],
+          "ProducedItems": [
+            {
+              "RequiredPopulation": 0,
+              "Chance": .3,
+              "Precedence": 0,
+              "Condition": "ITEM_ID Input {{ModId}}.Susebron",
+              "Id": "Susebron",
+              "ItemID": "(O)812",
+              "MinStack": 1,
+              "MaxStack": 1
+            },
+          ],
+        },
+      },
+    }
+  ]
+}

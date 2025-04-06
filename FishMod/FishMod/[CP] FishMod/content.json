@@ -4,6 +4,10 @@
     {
       "Action": "Include",
       "FromFile": "Assets/Spawnables.json"
+    },
+    {
+      "Action": "Include",
+      "FromFile": "Assets/Fish.json"
     }
   ]
 }

@@ -231,7 +231,19 @@ namespace FishMod
                     bool treasure1 = Game1.random.NextDouble() < treasureOdds;
                     bool treasure2 = Game1.random.NextDouble() < treasureOdds;
 
-                    Game1.activeClickableMenu = new AdvBobberBar(bobberBar.whichFish, bobberBar.fishSize, (bobberBar.treasure ? 1:0) + (treasure1?1:0)+ (treasure2?1:0),
+                    if (bobberBar.whichFish == "Jok.Fishdew.CP.Susebron")
+                    {
+                        bobberBar.goldenTreasure = true;
+                        // TODO boss fish bar
+                        // TODO: watering UI improvements
+                        // TODO: Fishing: new boss fish 3x progress bars --- first is hard but not crazy hard -- second is two fish same time? --- last is hard fish but bar only goes up with treasures -- maybe end with normal fish?
+    
+                        // TODO: maybe animals? they would be so cute on the bar
+                    } 
+
+
+                    int treasure = (bobberBar.treasure ? 1 : 0) + (treasure1 ? 1 : 0) + (treasure2 ? 1 : 0);
+                    Game1.activeClickableMenu = new AdvBobberBar(bobberBar.whichFish, bobberBar.fishSize, treasure,
                         bobberBar.bobbers, bobberBar.setFlagOnCatch, bobberBar.bossFish, baitid, bobberBar.goldenTreasure);
                 }
             }

@@ -2,7 +2,7 @@
   "Changes": [
     {
       "Action": "Load",
-      "Target": "Rock",
+      "Target": "Mods/{{ModId}}/Rock",
       "FromFile": "Assets/{{TargetWithoutPath}}.png"
     },
     {
@@ -18,7 +18,7 @@
           "LargeMinableHealth": 5,
           "LargeMinableSizeX": 2,
           "LargeMinableSizeY": 2,
-          "LargeMinableTexture": "Rock",
+          "LargeMinableTexture": "Mods/{{ModId}}/Rock",
           "LargeMinableSpriteIndex": 0,
           "LargeMinableDrops": [],
           "LargeMinableExperienceGranted": 1
