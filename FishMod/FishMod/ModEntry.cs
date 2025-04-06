@@ -239,6 +239,7 @@ namespace FishMod
                         
                         // TODO: watering UI improvements
                         // TODO: maybe animals? they would be so cute on the bar
+                        // TODO: other fish that have minor changes?
                     } 
 
                     Game1.activeClickableMenu = new AdvBobberBar(bobberBar.whichFish, bobberBar.fishSize, treasure,

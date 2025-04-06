@@ -286,9 +286,42 @@ namespace FishMod
 					if (inbetweenStages)
 					{
 						inbetweenStages = false;
+						
+						currentStage += 1;
+
+						if (currentStage == 1)
+						{
+							motionType = 2; //smooth;
+							difficulty = 70;
+						}
+						else if (currentStage == 2)
+						{
+							motionType = 0; //mixed;
+							difficulty = startingDiff;
+						}
+					
+						if (distanceFromCatchPenaltyModifier != 1)
+						{
+							difficulty *= .75f;
+						}
+						
 						if (currentStage == 1)
 						{
 							treasures.Add(new TreasureInstance(-2, false,20,20));
+						}
+						
+						currentDistanceFromCatching = 0.3f;
+						switch (currentStage)
+						{
+							case 1:
+								distanceFromCatching1 = 1f;
+								distanceFromCatching2 = currentDistanceFromCatching;
+								break;
+							case 2:
+								distanceFromCatching1 = 1f;
+								distanceFromCatching2 = 1f;
+								distanceFromCatching3 = currentDistanceFromCatching;
+								break;
 						}
 					}
 				}
@@ -487,11 +520,7 @@ namespace FishMod
 						{
 							currentDistanceFromCatching += 0.2f;
 
-							if (currentDistanceFromCatching > 1f)
-							{
-								inbetweenStages = true;
-							}
-							else
+							if (currentDistanceFromCatching < 1f)
 							{
 								spawnNewTreasure = true;
 							}
@@ -509,7 +538,7 @@ namespace FishMod
 				float stage1TreasureReduction = 0;
 				if (currentStage == 1 && treasureInBar)
 				{
-					stage1TreasureReduction = 0.001f;
+					stage1TreasureReduction = 0.0015f;
 				}
 
 				if (bobberInBar && !inbetweenStages)
@@ -578,58 +607,44 @@ namespace FishMod
 						Game1.playSound("slowReel", 600, out unReelSound);
 					}
 				}
-
+				
 				currentDistanceFromCatching = Math.Max(0f, Math.Min(1f, currentDistanceFromCatching));
 				if (Game1.player.CurrentTool != null)
 				{
 					Game1.player.CurrentTool.tickUpdate(time, Game1.player);
 				}
 
-				if (currentDistanceFromCatching <= 0f)
+				if (!inbetweenStages)
 				{
-					fadeOut = true;
-					everythingShakeTimer = 500f;
-					Game1.playSound("fishEscape");
-					handledFishResult = true;
-					unReelSound?.Stop(AudioStopOptions.Immediate);
-					reelSound?.Stop(AudioStopOptions.Immediate);
-				}
-				else if (currentDistanceFromCatching >= 1f && currentStage == 2)
-				{
-					everythingShakeTimer = 500f;
-					Game1.playSound("jingle1");
-					fadeOut = true;
-					handledFishResult = true;
-					unReelSound?.Stop(AudioStopOptions.Immediate);
-					reelSound?.Stop(AudioStopOptions.Immediate);
-					sparkleText = new SparklingText(Game1.dialogueFont, "Susebron Slumbers!", Color.Yellow, Color.White,
-							rainbow: false, 0.1, 1500);
-				} else if (currentDistanceFromCatching >= 1f)
-				{
-					currentDistanceFromCatching = 0.3f;
-					inbetweenStages = true;
-					currentStage += 1;
+					if (currentDistanceFromCatching <= 0f)
+					{
+						fadeOut = true;
+						everythingShakeTimer = 500f;
+						Game1.playSound("fishEscape");
+						handledFishResult = true;
+						unReelSound?.Stop(AudioStopOptions.Immediate);
+						reelSound?.Stop(AudioStopOptions.Immediate);
+					}
+					else if (currentDistanceFromCatching >= 1f && currentStage == 2)
+					{
+						everythingShakeTimer = 500f;
+						Game1.playSound("jingle1");
+						fadeOut = true;
+						handledFishResult = true;
+						unReelSound?.Stop(AudioStopOptions.Immediate);
+						reelSound?.Stop(AudioStopOptions.Immediate);
+						sparkleText = new SparklingText(Game1.dialogueFont, "Susebron Slumbers!", Color.Yellow, Color.White,
+							rainbow: false, 0.1, 1500, 32, 200);
+					} else if (currentDistanceFromCatching >= 1f)
+					{
+						inbetweenStages = true;
+						everythingShakeTimer = 1500f;
+						Game1.playSound("jingle1");
 
-					if (currentStage == 1)
-					{
-						motionType = 2; //smooth;
-						difficulty = 70;
+						string text = currentStage == 0 ? "Susebron Calls for Aid!" : "Susebron Angers!";
+						sparkleText = new SparklingText(Game1.dialogueFont, text, Color.Yellow, Color.White,
+							rainbow: false, 0.1, 1500, 16, 100);
 					}
-					else if (currentStage == 2)
-					{
-						motionType = 0; //mixed;
-						difficulty = startingDiff;
-					}
-					
-					if (distanceFromCatchPenaltyModifier != 1)
-					{
-						difficulty *= .75f;
-					}
-					
-					everythingShakeTimer = 1500f;
-					Game1.playSound("jingle1");
-					sparkleText = new SparklingText(Game1.dialogueFont, "Susebron Angers", Color.Yellow, Color.White,
-						rainbow: false, 0.1, 1500);
 				}
 			}
 
@@ -698,7 +713,7 @@ namespace FishMod
 				flipBubble ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0.001f);
 			
 			// bar background
-			b.Draw(DeluxeFishingRodTool.fishingTextures, new Vector2(xPositionOnScreen + 70 - 6, yPositionOnScreen + 296) + everythingShake,
+			b.Draw(DeluxeFishingRodTool.fishingTextures, new Vector2(xPositionOnScreen + 74, yPositionOnScreen + 296) + everythingShake,
 				new Rectangle(261, 359, 50, 150), Color.White * scale, 0f, new Vector2(18.5f, 74f) * scale, 4f * scale,
 				SpriteEffects.None, 0.01f);
 			
@@ -770,7 +785,7 @@ namespace FishMod
 						0f, new Vector2(10f, 10f), 2f, SpriteEffects.None, 0.88f);
 				}
 				
-				sparkleText?.draw(b, new Vector2(xPositionOnScreen - 16, yPositionOnScreen + 200));
+				sparkleText?.draw(b, new Vector2(xPositionOnScreen, yPositionOnScreen + 200));
 			}
 
 			Game1.EndWorldDrawInUI(b);
