@@ -14,7 +14,7 @@
           "Edibility": "-300",
           "Category": -22,
           "Price": "1250",
-          "Texture": "Mods\\{{ModId}}\\Fish",
+          "Texture": "Mods\\{{ModId}}\\Objects",
           "SpriteIndex": 1
         }
       }

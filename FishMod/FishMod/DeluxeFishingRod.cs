@@ -116,13 +116,13 @@ namespace FishMod
             {
                 switch (i)
                 {
-                    case 0: // blu chest
+                    case 0: // blu chest  --- fishing specific rewards?
                         menu.ItemsToGrabMenu.actualInventory.Add(ItemRegistry.Create("(O)852", Game1.random.Next(1, 6))); // dragon tooth
                         break;
-                    case 1: // red chest
+                    case 1: // red chest  --- volcano / susebron related rewards?
                         menu.ItemsToGrabMenu.actualInventory.Add(ItemRegistry.Create("(O)260", Game1.random.Next(1, 30))); // hot pepper
                         break;
-                    case 2: // green chest
+                    case 2: // green chest --- radioactive related rewards?
                         menu.ItemsToGrabMenu.actualInventory.Add(ItemRegistry.Create("(O)60", Game1.random.Next(1, 2))); // emerald
                         break;
                 }
