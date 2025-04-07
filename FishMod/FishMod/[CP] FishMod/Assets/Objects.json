@@ -1,0 +1,31 @@
+﻿{
+  "Changes" : [
+    {
+      "LogName": "Adding non fish items",
+      "Action": "EditData",
+      "Target": "Data/Objects",
+      "Entries": {
+        "{{ModId}}.PirateTreasureHunter":
+        {
+          "Name": "{{ModId}}.PirateTreasureHunter",
+          "DisplayName": "Pirate Treasure Hunter",
+          "Description": "With secrets whispered from one pirate to the next, this tackle greatly boosts yer chances of haulin’ up buried treasure.",
+          "Type": "Tackle",
+          "Edibility": "-300",
+          "Category": -22,
+          "Price": "1250",
+          "Texture": "Mods\\{{ModId}}\\Fish",
+          "SpriteIndex": 1
+        }
+      }
+    },
+    {
+      "LogName": "Crafting recipe",
+      "Action": "EditData",
+      "Target": "Data/CraftingRecipes",
+      "Entries": {
+        "{{ModId}}_PirateTreasureHunter": "693 1 337 1 /Home/{{ModId}}.PirateTreasureHunter/false/null/"
+      }
+    }
+  ]
+}

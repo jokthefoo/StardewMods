@@ -8,6 +8,14 @@
     {
       "Action": "Include",
       "FromFile": "Assets/Fish.json"
+    },
+    {
+      "Action": "Include",
+      "FromFile": "Assets/Mail.json"
+    },
+    {
+      "Action": "Include",
+      "FromFile": "Assets/Objects.json"
     }
   ]
 }

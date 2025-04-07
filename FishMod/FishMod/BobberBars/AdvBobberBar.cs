@@ -495,7 +495,7 @@ namespace FishMod
 					}
 				}
 
-				bool treasureBobberSkip = !(treasureInBar && bobbers.Contains("(O)693")); // treasure bobber stops bar
+				bool treasureBobberSkip = !(treasureInBar && bobbers.Contains("(O)693") && bobbers.Contains("(O){{ModId}}.PirateTreasureHunter")); // treasure bobber stops bar
 
 				if (bobberInBar)
 				{

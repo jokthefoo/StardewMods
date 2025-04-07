@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
+using StardewValley.Constants;
 using StardewValley.GameData.Objects;
 using StardewValley.GameData.Tools;
 using StardewValley.Menus;
@@ -223,16 +224,20 @@ namespace FishMod
                     return;
                 }
 
-                double tackleBoost = Utility.getStringCountInList(tackles, "(O)693") *
-                    FishingRod.baseChanceForTreasure / 3.0;
+                double tackleBoost = Utility.getStringCountInList(tackles, "(O)693") * FishingRod.baseChanceForTreasure / 3.0;
+                double pirateTackleBoost = Utility.getStringCountInList(tackles, "(O){{ModId}}.PirateTreasureHunter") * FishingRod.baseChanceForTreasure;
+                
                 double baitBoost = baitid == "(O)703" ? FishingRod.baseChanceForTreasure : 0.0;
                 double pirateBoost = Game1.player.professions.Contains(9) ? FishingRod.baseChanceForTreasure : 0.0;
-                double treasureOdds = FishingRod.baseChanceForTreasure + Game1.player.LuckLevel * 0.005 + baitBoost +
-                                      tackleBoost + Game1.player.DailyLuck / 2.0 + pirateBoost;
+                
+                double treasureOdds = FishingRod.baseChanceForTreasure + Game1.player.LuckLevel * 0.005 + baitBoost + tackleBoost + Game1.player.DailyLuck / 2.0 + pirateBoost + pirateTackleBoost;
 
                 bool treasure1 = Game1.random.NextDouble() < treasureOdds;
                 bool treasure2 = Game1.random.NextDouble() < treasureOdds;
                 int treasure = (bobberBar.treasure ? 1 : 0) + (treasure1 ? 1 : 0) + (treasure2 ? 1 : 0);
+                
+                if (treasure1 && Game1.player.stats.Get(StatKeys.Mastery(1)) > 0U && Game1.random.NextDouble() < 0.25 + Game1.player.team.AverageDailyLuck() + pirateTackleBoost)
+                    bobberBar.goldenTreasure = true;
 
                 if (bobberBar.whichFish == "Jok.Fishdew.CP.Susebron")
                 {
@@ -240,8 +245,11 @@ namespace FishMod
                         bobberBar.bobbers, bobberBar.setFlagOnCatch, bobberBar.bossFish, baitid,
                         bobberBar.goldenTreasure);
                     return;
-                    // TODO: maybe animals? they would be so cute on the bar
+                    
                     // TODO: other fish that have minor changes?
+                    // TODO: bobber bar with hole in middle?
+                    // TODO: maybe animals? they would be so cute on the bar
+                    // TODO: after catching susebron maybe you can keep catching less valuable version? still do boss fight
                 }
 
                 Game1.activeClickableMenu = new AdvBobberBar(bobberBar.whichFish, bobberBar.fishSize, treasure,
@@ -273,6 +281,9 @@ namespace FishMod
                 FishingRod.maxFishingBiteTime = 100;
                 Game1.player.gainExperience(Farmer.fishingSkill, 5000);
                 Game1.player.gainExperience(Farmer.farmingSkill, 5000);
+                Game1.player.gainExperience(Farmer.combatSkill, 5000);
+                Game1.player.gainExperience(Farmer.foragingSkill, 5000);
+                Game1.player.gainExperience(Farmer.miningSkill, 5000);
                 
                 var boprod = ItemRegistry.Create(DeluxeFishingRodTool.DeluxeRodQiid);
                 boprod.specialItem = true;

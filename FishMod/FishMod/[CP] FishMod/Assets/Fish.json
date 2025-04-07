@@ -51,10 +51,10 @@
       ],
       "Entries": {
         "{{ModId}}.Susebron": {
-          "Chance": 1, // TODO .1
+          "Chance": .1,
           "Id": "{{ModId}}.Susebron",
           "ItemId": "{{ModId}}.Susebron",
-          "CuriosityLureBuff": 1, // TODO .1
+          "CuriosityLureBuff": .1,
           "CatchLimit": 1,
           "IsBossFish": true,
           "MinDistanceFromShore": 4,

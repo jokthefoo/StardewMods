@@ -533,7 +533,7 @@ namespace FishMod
 					treasures.Add(new TreasureInstance(-2, false,20,20));
 				}
 
-				bool treasureBobberSkip = treasureInBar && bobbers.Contains("(O)693"); // treasure bobber stops bar
+				bool treasureBobberSkip = treasureInBar && bobbers.Contains("(O)693") && bobbers.Contains("(O){{ModId}}.PirateTreasureHunter"); // treasure bobber stops bar
 
 				float stage1TreasureReduction = 0;
 				if (currentStage == 1 && treasureInBar)

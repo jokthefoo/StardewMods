@@ -1,0 +1,23 @@
+﻿{
+  "Changes": [
+    {
+      "Action": "EditData",
+      "Target": "data/mail",
+
+      "Entries": {
+        "jok_fishdew_legendary": "@,^^Word's reached me o' a strange tale. I ran into an old sailor I knew back from my younger days on the southeast shore of Ginger Island.^^They spun a tale of a legendary fish -- said it shimmered bright as the sun itself!^^Claimed they followed a mermaids song and the biggest fish they'd ever laid eyes on jump straight out of the water!^ ^^-Willy %item id (O){{ModId}}.PirateTreasureHunter %%[#]Legendary Fish",
+       
+        "jok_fishdew_pirateTreasure": "@,^^ I've been talked with some sailors I used to ship with, they taught me how to make a new tackle! Try it out and let me know how it goes! ^^-Willy %item craftingRecipe {{ModId}}_PirateTreasureHunter %%[#]Pirate Treasure Hunter"
+      }
+    },
+    {
+      "Action": "EditData",
+      "Target": "Data/Events/Farm",
+
+      "Entries": {
+        "012344667/GameStateQuery PLAYER_VISITED_LOCATION Current IslandSouthEast/Skill Fishing 10/GameStateQuery PLAYER_HAS_CAUGHT_FISH Current (O)163/x jok_fishdew_legendary": "null",
+        "012344668/Skill Fishing 10/GameStateQuery PLAYER_STAT Current mastery_1 1/x jok_fishdew_pirateTreasure": "null",
+      }
+    }
+  ]
+}
