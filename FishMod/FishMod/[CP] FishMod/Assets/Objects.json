@@ -24,7 +24,8 @@
       "Action": "EditData",
       "Target": "Data/CraftingRecipes",
       "Entries": {
-        "{{ModId}}_PirateTreasureHunter": "693 1 337 1 /Home/{{ModId}}.PirateTreasureHunter/false/null/"
+        "{{ModId}}_PirateTreasureHunter": "693 1 337 1 /Home/{{ModId}}.PirateTreasureHunter/false/null/",
+        "Jok_FishMod_DeluxeFishingRod": "(T)AdvancedIridiumRod 1 578 1 /Home/(T)Willy.FishMod.DeluxeFishingRod/false/null/"
       }
     }
   ]

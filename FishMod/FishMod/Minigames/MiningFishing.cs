@@ -280,6 +280,7 @@ public class MiningFishing
         Game1.activeClickableMenu = itemGrabMenu;
     }
     
+    // Defaults to first if nothing chosen
     public static T WeightedChoice<T>(T[] items, double[] weights)
     {
         double totalWeight = weights.Sum();

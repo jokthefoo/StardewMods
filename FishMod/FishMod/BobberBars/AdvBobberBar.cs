@@ -112,14 +112,12 @@ namespace FishMod
 			handledFishResult = false;
 			this.colorIndex = colorIndex;
 			
-			DeluxeFishingRodTool.randomTreasureNumbers.Clear();
 			for (int i = 0; i < treasure; i++)
 			{
-				DeluxeFishingRodTool.randomTreasureNumbers.Add(Game1.random.Next(-1, 3));
-				treasures.Add(new TreasureInstance(DeluxeFishingRodTool.randomTreasureNumbers[i], true,20,20));
+				treasures.Add(new TreasureInstance(i-1, true,1000,3000));
 			}
 
-			if (goldenTreasure)
+			if (goldenTreasure && treasures.Count > 0)
 			{
 				treasures[0].goldenTreasure = true;
 			}
@@ -334,11 +332,13 @@ namespace FishMod
 					if (distanceFromCatching > 0.9f && rod != null)
 					{
 						bool treasureCaught = false;
+						DeluxeFishingRodTool.treasureCaughtCount = 0;
 						foreach (var t in treasures)
 						{
 							if (t.treasureCaught)
 							{
 								treasureCaught = true;
+								DeluxeFishingRodTool.treasureCaughtCount++;
 							}
 						}
 						

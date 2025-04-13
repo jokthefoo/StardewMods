@@ -13,7 +13,7 @@ using StardewValley.Tools;
 
 namespace FishMod
 {
-	public class BossBobberBar : IClickableMenu
+	public class SplitBobberBar : IClickableMenu
 	{
 		public bool handledFishResult;
 
@@ -29,13 +29,13 @@ namespace FishMod
 		/// <summary>The mail flag to set for the current player when the current <see cref="F:StardewValley.Menus.BobberBar.whichFish" /> is successfully caught.</summary>
 		public string setFlagOnCatch;
 
-		public float bobberPosition = 548f;
+		public float fishPosition = 548f;
 
-		public float bobberSpeed;
+		public float fishSpeed;
 
-		public float bobberAcceleration;
+		public float fishAcceleration;
 
-		public float bobberTargetPosition;
+		public float fishTargetPosition;
 
 		public float scale;
 
@@ -43,7 +43,7 @@ namespace FishMod
 
 		public float floaterSinkerAcceleration;
 
-		public bool bobberInBar;
+		public bool fishInBar;
 
 		public bool buttonPressed;
 
@@ -60,7 +60,9 @@ namespace FishMod
 		public bool fromFishPond;
 
 		public int bobberBarHeight;
-
+		public int bobberBarHeightBase;
+		public int bobberBarGap;
+		
 		public int fishSize;
 
 		public int fishQuality;
@@ -70,7 +72,9 @@ namespace FishMod
 		public int maxFishSize;
 
 		public int fishSizeReductionTimer;
-		
+
+		public int challengeBaitFishes = -1;
+
 		public List<string> bobbers;
 
 		public Vector2 barShake;
@@ -87,14 +91,7 @@ namespace FishMod
 
 		public float bobberBarSpeed;
 
-		public float distanceFromCatching1 = 0.3f;
-		public float distanceFromCatching2 = 0.01f;
-		public float distanceFromCatching3 = 0.01f;
-		
-		public float currentDistanceFromCatching = 0.3f;
-		private int currentStage = 0;
-		private bool inbetweenStages = false;
-		private int startingDiff = 0;
+		public float distanceFromCatching = 0.3f;
 
 		public static ICue reelSound;
 
@@ -107,7 +104,7 @@ namespace FishMod
 		public int colorIndex;
 		public Color color = Color.White;
 
-		public BossBobberBar(string whichFish, float fishSize, int treasure, List<string> bobbers, string setFlagOnCatch,
+		public SplitBobberBar(string whichFish, float fishSize, int treasure, List<string> bobbers, string setFlagOnCatch,
 			bool isBossFish = false, string baitID = "", bool goldenTreasure = false, int colorIndex = -1)
 			: base(0, 0, 96, 636)
 		{
@@ -122,7 +119,7 @@ namespace FishMod
 				treasures.Add(new TreasureInstance(i-1, true,1000,3000));
 			}
 
-			if (goldenTreasure && treasures.Count > 0)
+			if (goldenTreasure &&  treasures.Count > 0)
 			{
 				treasures[0].goldenTreasure = true;
 			}
@@ -133,13 +130,21 @@ namespace FishMod
 			Dictionary<string, string> dictionary = DataLoader.Fish(Game1.content);
 			
 			bobberBarHeight = 96 + Game1.player.FishingLevel * 8;
+			bobberBarHeightBase = bobberBarHeight;
+			bobberBarGap = 48;
+			bobberBarHeight += bobberBarGap;
 
 			bossFish = isBossFish;
+			NetStringIntArrayDictionary fishCaught = Game1.player.fishCaught;
+			if (fishCaught != null && fishCaught.Length == 0)
+			{
+				distanceFromCatching = 0.1f;
+			}
 
 			if (dictionary.TryGetValue(whichFish, out var rawData))
 			{
 				string[] fields = rawData.Split('/');
-				startingDiff = Convert.ToInt32(fields[1]);
+				difficulty = Convert.ToInt32(fields[1]);
 				switch (fields[2].ToLower())
 				{
 					case "mixed":
@@ -159,15 +164,12 @@ namespace FishMod
 						break;
 				}
 
-				motionType = 1; // Set first stage to be a dart
-				difficulty = 80; // Set first stage to be difficulty 80
-
 				minFishSize = Convert.ToInt32(fields[3]);
 				maxFishSize = Convert.ToInt32(fields[4]);
-				this.fishSize = (int)(minFishSize + (maxFishSize - minFishSize) * fishSize);
+				this.fishSize = (int)((float)minFishSize + (float)(maxFishSize - minFishSize) * fishSize);
 				this.fishSize++;
 				perfect = true;
-				fishQuality = !(fishSize < 0.33) ? fishSize < 0.66 ? 1 : 2 : 0;
+				fishQuality = ((!((double)fishSize < 0.33)) ? (((double)fishSize < 0.66) ? 1 : 2) : 0);
 				fishSizeReductionTimer = 800;
 				for (int i = 0; i < Utility.getStringCountInList(bobbers, "(O)877"); i++) // quality bobber
 				{
@@ -180,7 +182,18 @@ namespace FishMod
 
 				if (Game1.player.stats.Get("blessingOfWaters") != 0)
 				{
-					difficulty *= 0.75f;
+					if (difficulty > 20f)
+					{
+						if (isBossFish)
+						{
+							difficulty *= 0.75f;
+						}
+						else
+						{
+							difficulty /= 2f;
+						}
+					}
+
 					distanceFromCatchPenaltyModifier = 0.5f;
 					Game1.player.stats.Decrement("blessingOfWaters");
 					if (Game1.player.stats.Get("blessingOfWaters") == 0)
@@ -198,8 +211,12 @@ namespace FishMod
 			}
 
 			bobberBarPos = 568 - bobberBarHeight;
-			bobberPosition = 508f;
-			bobberTargetPosition = (100f - difficulty) / 100f * 548f;
+			fishPosition = 508f;
+			fishTargetPosition = (100f - difficulty) / 100f * 548f;
+			if (baitID == "(O)ChallengeBait")
+			{
+				challengeBaitFishes = 3;
+			}
 
 			Game1.setRichPresence("fishing", Game1.currentLocation.Name);
 		}
@@ -277,51 +294,11 @@ namespace FishMod
 			if (everythingShakeTimer > 0f)
 			{
 				everythingShakeTimer -= time.ElapsedGameTime.Milliseconds;
-				everythingShake = new Vector2(Game1.random.Next(-10, 11) / 10f, Game1.random.Next(-10, 11) / 10f);
+				everythingShake = new Vector2((float)Game1.random.Next(-10, 11) / 10f,
+					(float)Game1.random.Next(-10, 11) / 10f);
 				if (everythingShakeTimer <= 0f)
 				{
 					everythingShake = Vector2.Zero;
-					if (inbetweenStages)
-					{
-						inbetweenStages = false;
-						
-						currentStage += 1;
-
-						if (currentStage == 1)
-						{
-							motionType = 2; //smooth;
-							difficulty = 70;
-						}
-						else if (currentStage == 2)
-						{
-							motionType = 0; //mixed;
-							difficulty = startingDiff;
-						}
-					
-						if (distanceFromCatchPenaltyModifier != 1)
-						{
-							difficulty *= .75f;
-						}
-						
-						if (currentStage == 1)
-						{
-							treasures.Add(new TreasureInstance(-2, false,20,20));
-						}
-						
-						currentDistanceFromCatching = 0.3f;
-						switch (currentStage)
-						{
-							case 1:
-								distanceFromCatching1 = 1f;
-								distanceFromCatching2 = currentDistanceFromCatching;
-								break;
-							case 2:
-								distanceFromCatching1 = 1f;
-								distanceFromCatching2 = 1f;
-								distanceFromCatching3 = currentDistanceFromCatching;
-								break;
-						}
-					}
 				}
 			}
 
@@ -347,9 +324,17 @@ namespace FishMod
 					scale = 0f;
 					fadeOut = false;
 					FishingRod rod = Game1.player.CurrentTool as FishingRod;
-					int numCaught = 1;
+					string baitId = rod?.GetBait()?.QualifiedItemId;
+					int numCaught = ((bossFish || !(baitId == "(O)774") ||
+					                  !(Game1.random.NextDouble() < 0.25 + Game1.player.DailyLuck / 2.0))
+						? 1
+						: 2);
+					if (challengeBaitFishes > 0)
+					{
+						numCaught = challengeBaitFishes;
+					}
 
-					if (distanceFromCatching1 > 0.9f && distanceFromCatching2 > 0.9f && distanceFromCatching3 > 0.9f && rod != null)
+					if (distanceFromCatching > 0.9f && rod != null)
 					{
 						bool treasureCaught = false;
 						DeluxeFishingRodTool.treasureCaughtCount = 0;
@@ -377,13 +362,15 @@ namespace FishMod
 			}
 			else
 			{
-				if (Game1.random.NextDouble() < (difficulty * ((motionType != 2) ? 1 : 20) / 4000f) &&
-				    (motionType != 2 || bobberTargetPosition == -1f))
+				if (Game1.random.NextDouble() < (double)(difficulty * (float)((motionType != 2) ? 1 : 20) / 4000f) &&
+				    (motionType != 2 || fishTargetPosition == -1f))
 				{
-					float spaceBelow = 548f - bobberPosition;
-					float spaceAbove = bobberPosition;
-					float percent = Math.Min(99f, difficulty + Game1.random.Next(10, 45)) / 100f;
-					bobberTargetPosition = bobberPosition + Game1.random.Next((int)Math.Min(0f - spaceAbove, spaceBelow), (int)spaceBelow) * percent;
+					float spaceBelow = 548f - fishPosition;
+					float spaceAbove = fishPosition;
+					float percent = Math.Min(99f, difficulty + (float)Game1.random.Next(10, 45)) / 100f;
+					fishTargetPosition = fishPosition +
+					                       (float)Game1.random.Next((int)Math.Min(0f - spaceAbove, spaceBelow),
+						                       (int)spaceBelow) * percent;
 				}
 
 				switch (motionType)
@@ -396,47 +383,55 @@ namespace FishMod
 						break;
 				}
 
-				if (Math.Abs(bobberPosition - bobberTargetPosition) > 3f && bobberTargetPosition != -1f)
+				if (Math.Abs(fishPosition - fishTargetPosition) > 3f && fishTargetPosition != -1f)
 				{
-					bobberAcceleration = (bobberTargetPosition - bobberPosition) /
+					fishAcceleration = (fishTargetPosition - fishPosition) /
 					                     (Game1.random.Next(10, 30) + (100f - Math.Min(100f, difficulty)));
-					bobberSpeed += (bobberAcceleration - bobberSpeed) / 5f;
+					fishSpeed += (fishAcceleration - fishSpeed) / 5f;
 				}
 				else if (motionType != 2 && Game1.random.NextDouble() < difficulty / 2000f)
 				{
-					bobberTargetPosition = bobberPosition + (Game1.random.NextBool()
+					fishTargetPosition = fishPosition + (Game1.random.NextBool()
 						? Game1.random.Next(-100, -51)
 						: Game1.random.Next(50, 101));
 				}
 				else
 				{
-					bobberTargetPosition = -1f;
+					fishTargetPosition = -1f;
 				}
 
 				if (motionType == 1 && Game1.random.NextDouble() < difficulty / 1000f)
 				{
-					bobberTargetPosition = bobberPosition + (Game1.random.NextBool()
+					fishTargetPosition = fishPosition + (Game1.random.NextBool()
 						? Game1.random.Next(-100 - (int)difficulty * 2, -51)
 						: Game1.random.Next(50, 101 + (int)difficulty * 2));
 				}
 
-				bobberTargetPosition = Math.Max(-1f, Math.Min(bobberTargetPosition, 548f));
-				bobberPosition += bobberSpeed + floaterSinkerAcceleration;
-				if (bobberPosition > 532f)
+				fishTargetPosition = Math.Max(-1f, Math.Min(fishTargetPosition, 548f));
+				fishPosition += fishSpeed + floaterSinkerAcceleration;
+				if (fishPosition > 532f)
 				{
-					bobberPosition = 532f;
+					fishPosition = 532f;
 				}
-				else if (bobberPosition < 0f)
+				else if (fishPosition < 0f)
 				{
-					bobberPosition = 0f;
+					fishPosition = 0f;
 				}
 
-				bobberInBar = bobberPosition + 12f <= bobberBarPos - 32f + bobberBarHeight &&
-				              bobberPosition - 16f >= bobberBarPos - 32f;
-				if (bobberPosition >= 548 - bobberBarHeight &&
-				    bobberBarPos >= 568 - bobberBarHeight - 4)
+				// Check top bobber bar
+				fishInBar = fishPosition + 12f <= bobberBarPos - 32f + bobberBarHeightBase / 2f + 4f && fishPosition - 16f >= bobberBarPos - 32f;
+				
+				// Check bottom bobber bar
+				if (!fishInBar)
 				{
-					bobberInBar = true;
+					float bobberBarPosStart = bobberBarPos - 32f + bobberBarHeightBase / 2f + bobberBarGap;
+					fishInBar = fishPosition + 12f <= bobberBarPosStart + bobberBarHeightBase / 2f + 4f && fishPosition - 16f >= bobberBarPosStart;
+				}
+				
+				// Floor check
+				if (fishPosition >= 548 - bobberBarHeight && bobberBarPos >= 568 - bobberBarHeight - 4)
+				{
+					fishInBar = true;
 				}
 
 				bool num = buttonPressed;
@@ -449,21 +444,21 @@ namespace FishMod
 					Game1.playSound("fishingRodBend");
 				}
 
-				float gravity = (buttonPressed ? (-0.25f) : 0.25f);
+				float gravity = buttonPressed ? -0.25f : 0.25f;
 				if (buttonPressed && gravity < 0f &&
 				    (bobberBarPos == 0f || bobberBarPos == 568 - bobberBarHeight))
 				{
 					bobberBarSpeed = 0f;
 				}
 
-				if (bobberInBar)
+				if (fishInBar)
 				{
 					gravity *= (bobbers.Contains("(O)691") ? 0.3f : 0.6f); // barbed hook bobber (garbage that messes you up)
 					if (bobbers.Contains("(O)691"))
 					{
 						for (int i = 0; i < Utility.getStringCountInList(bobbers, "(O)691"); i++)
 						{
-							if (bobberPosition + 16f < bobberBarPos + bobberBarHeight / 2)
+							if (fishPosition + 16f < bobberBarPos + bobberBarHeight / 2)
 							{
 								bobberBarSpeed -= i > 0 ? 0.05f : 0.2f;
 							}
@@ -505,51 +500,26 @@ namespace FishMod
 				}
 
 				treasureInBar = false;
-				bool spawnNewTreasure = false;
 				foreach (var t in treasures)
 				{
-					bool beforeCaught = t.treasureCaught;
-					if (t.treasureUpdate(time, bobberBarPos, bobberBarHeight))
+					if (t.treasureUpdate(time, bobberBarPos, bobberBarHeightBase / 2))
 					{
 						treasureInBar = true;
 					}
-
-					if (currentStage == 1)
+					else if (t.treasureUpdate(time, bobberBarPos + bobberBarHeightBase / 2f + bobberBarGap, bobberBarHeightBase / 2))
 					{
-						if (t.treasureCaught && !beforeCaught && !t.realTreasure)
-						{
-							currentDistanceFromCatching += 0.2f;
-
-							if (currentDistanceFromCatching < 1f)
-							{
-								spawnNewTreasure = true;
-							}
-						}
+						treasureInBar = true;
 					}
 				}
 
-				if (spawnNewTreasure)
-				{
-					treasures.Add(new TreasureInstance(-2, false,20,20));
-				}
+				bool treasureBobberSkip = !(treasureInBar && bobbers.Contains("(O)693") && bobbers.Contains("(O){{ModId}}.PirateTreasureHunter")); // treasure bobber stops bar
 
-				bool treasureBobberSkip = treasureInBar && bobbers.Contains("(O)693") && bobbers.Contains("(O){{ModId}}.PirateTreasureHunter"); // treasure bobber stops bar
-
-				float stage1TreasureReduction = 0;
-				if (currentStage == 1 && treasureInBar)
+				if (fishInBar)
 				{
-					stage1TreasureReduction = 0.0015f;
-				}
-
-				if (bobberInBar && !inbetweenStages)
-				{
-					if (currentStage != 1)
-					{
-						currentDistanceFromCatching += 0.002f;
-					}
+					distanceFromCatching += 0.002f;
 					reelRotation += (float)Math.PI / 8f;
-					fishShake.X = Game1.random.Next(-10, 11) / 10f;
-					fishShake.Y = Game1.random.Next(-10, 11) / 10f;
+					fishShake.X = (float)Game1.random.Next(-10, 11) / 10f;
+					fishShake.Y = (float)Game1.random.Next(-10, 11) / 10f;
 					barShake = Vector2.Zero;
 					Rumble.rumble(0.1f, 1000f);
 					unReelSound?.Stop(AudioStopOptions.Immediate);
@@ -558,13 +528,21 @@ namespace FishMod
 						Game1.playSound("fastReel", out reelSound);
 					}
 				}
-				else if (!treasureBobberSkip && !inbetweenStages)
+				else if (treasureBobberSkip)
 				{
 					if (!fishShake.Equals(Vector2.Zero))
 					{
 						Game1.playSound("tinyWhip");
 						perfect = false;
 						Rumble.stopRumbling();
+						if (challengeBaitFishes > 0)
+						{
+							challengeBaitFishes--;
+							if (challengeBaitFishes <= 0)
+							{
+								distanceFromCatching = 0f;
+							}
+						}
 					}
 
 					fishSizeReductionTimer -= time.ElapsedGameTime.Milliseconds;
@@ -588,15 +566,15 @@ namespace FishMod
 							}
 
 							reduction = Math.Max(0.001f, reduction);
-							currentDistanceFromCatching -= reduction * distanceFromCatchPenaltyModifier;
+							distanceFromCatching -= reduction * distanceFromCatchPenaltyModifier;
 						}
 						else
 						{
-							currentDistanceFromCatching -= (.003f - stage1TreasureReduction) * distanceFromCatchPenaltyModifier;
+							distanceFromCatching -= 0.003f * distanceFromCatchPenaltyModifier;
 						}
 					}
 
-					float distanceAway = Math.Abs(bobberPosition - (bobberBarPos + bobberBarHeight / 2));
+					float distanceAway = Math.Abs(fishPosition - (bobberBarPos + bobberBarHeight / 2));
 					reelRotation -= (float)Math.PI / Math.Max(10f, 200f - distanceAway);
 					barShake.X = Game1.random.Next(-10, 11) / 10f;
 					barShake.Y = Game1.random.Next(-10, 11) / 10f;
@@ -607,68 +585,55 @@ namespace FishMod
 						Game1.playSound("slowReel", 600, out unReelSound);
 					}
 				}
-				
-				currentDistanceFromCatching = Math.Max(0f, Math.Min(1f, currentDistanceFromCatching));
+
+				distanceFromCatching = Math.Max(0f, Math.Min(1f, distanceFromCatching));
 				if (Game1.player.CurrentTool != null)
 				{
 					Game1.player.CurrentTool.tickUpdate(time, Game1.player);
 				}
 
-				if (!inbetweenStages)
+				if (distanceFromCatching <= 0f)
 				{
-					if (currentDistanceFromCatching <= 0f)
+					fadeOut = true;
+					everythingShakeTimer = 500f;
+					Game1.playSound("fishEscape");
+					handledFishResult = true;
+					unReelSound?.Stop(AudioStopOptions.Immediate);
+					reelSound?.Stop(AudioStopOptions.Immediate);
+				}
+				else if (distanceFromCatching >= 1f)
+				{
+					everythingShakeTimer = 500f;
+					Game1.playSound("jingle1");
+					fadeOut = true;
+					handledFishResult = true;
+					unReelSound?.Stop(AudioStopOptions.Immediate);
+					reelSound?.Stop(AudioStopOptions.Immediate);
+					if (perfect)
 					{
-						fadeOut = true;
-						everythingShakeTimer = 500f;
-						Game1.playSound("fishEscape");
-						handledFishResult = true;
-						unReelSound?.Stop(AudioStopOptions.Immediate);
-						reelSound?.Stop(AudioStopOptions.Immediate);
+						sparkleText = new SparklingText(Game1.dialogueFont,
+							Game1.content.LoadString("Strings\\UI:BobberBar_Perfect"), Color.Yellow, Color.White,
+							rainbow: false, 0.1, 1500);
+						if (Game1.isFestival())
+						{
+							Game1.CurrentEvent.perfectFishing();
+						}
 					}
-					else if (currentDistanceFromCatching >= 1f && currentStage == 2)
+					else if (fishSize == maxFishSize)
 					{
-						everythingShakeTimer = 500f;
-						Game1.playSound("jingle1");
-						fadeOut = true;
-						handledFishResult = true;
-						unReelSound?.Stop(AudioStopOptions.Immediate);
-						reelSound?.Stop(AudioStopOptions.Immediate);
-						sparkleText = new SparklingText(Game1.dialogueFont, "Susebron Slumbers!", Color.Yellow, Color.White,
-							rainbow: false, 0.1, 1500, 32, 200);
-					} else if (currentDistanceFromCatching >= 1f)
-					{
-						inbetweenStages = true;
-						everythingShakeTimer = 1500f;
-						Game1.playSound("jingle1");
-
-						string text = currentStage == 0 ? "Susebron Calls for Aid!" : "Susebron Angers!";
-						sparkleText = new SparklingText(Game1.dialogueFont, text, Color.Yellow, Color.White,
-							rainbow: false, 0.1, 1500, 16, 100);
+						fishSize--;
 					}
 				}
 			}
 
-			switch (currentStage)
+			if (fishPosition < 0f)
 			{
-				case 0:
-					distanceFromCatching1 = currentDistanceFromCatching;
-					break;
-				case 1:
-					distanceFromCatching2 = currentDistanceFromCatching;
-					break;
-				case 2:
-					distanceFromCatching3 = currentDistanceFromCatching;
-					break;
+				fishPosition = 0f;
 			}
 
-			if (bobberPosition < 0f)
+			if (fishPosition > 548f)
 			{
-				bobberPosition = 0f;
-			}
-
-			if (bobberPosition > 548f)
-			{
-				bobberPosition = 548f;
+				fishPosition = 548f;
 			}
 		}
 
@@ -689,9 +654,7 @@ namespace FishMod
 
 			fadeOut = true;
 			everythingShakeTimer = 500f;
-			distanceFromCatching1 = -1f;
-			distanceFromCatching2 = -1f;
-			distanceFromCatching3 = -1f;
+			distanceFromCatching = -1f;
 		}
 
 		public override void receiveKeyPress(Keys key)
@@ -711,59 +674,40 @@ namespace FishMod
 				everythingShake, new Rectangle(652, 1685, 52, 157), Color.White * 0.6f * scale, 0f,
 				new Vector2(26f, 78.5f) * scale, 4f * scale,
 				flipBubble ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0.001f);
-			
 			// bar background
-			b.Draw(DeluxeFishingRodTool.fishingTextures, new Vector2(xPositionOnScreen + 74, yPositionOnScreen + 296) + everythingShake,
-				new Rectangle(261, 359, 50, 150), Color.White * scale, 0f, new Vector2(18.5f, 74f) * scale, 4f * scale,
+			b.Draw(Game1.mouseCursors, new Vector2(xPositionOnScreen + 70, yPositionOnScreen + 296) + everythingShake,
+				new Rectangle(644, 1999, 38, 150), Color.White * scale, 0f, new Vector2(18.5f, 74f) * scale, 4f * scale,
 				SpriteEffects.None, 0.01f);
-			
 			if (scale == 1f)
 			{
-				// These 3 are bobber bar
+				Color bobberBarColor = fishInBar ? color : color * 0.25f * ((float)Math.Round(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 100.0), 2) + 2f);
+				Vector2 bobberShake = barShake + everythingShake;
+				int bobberXpos = xPositionOnScreen + 64;
+				int bobberYposBase = yPositionOnScreen + 12 + (int)bobberBarPos;
+				// These 3 are bobber bar top
 				b.Draw(DeluxeFishingRodTool.fishingTextures,
-					new Vector2(xPositionOnScreen + 64, yPositionOnScreen + 12 + (int)bobberBarPos) + barShake +
-					everythingShake, new Rectangle(216, 447 + 10 * colorIndex, 9, 2),
-					bobberInBar
-						? color
-						: (color * 0.25f *
-						   ((float)Math.Round(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 100.0),
-							   2) + 2f)), 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.89f);
+					new Vector2(bobberXpos, bobberYposBase) + bobberShake, new Rectangle(216, 447 + 10 * colorIndex, 9, 2), bobberBarColor, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.89f);
 				b.Draw(DeluxeFishingRodTool.fishingTextures,
-					new Vector2(xPositionOnScreen + 64, yPositionOnScreen + 12 + (int)bobberBarPos + 8) + barShake +
-					everythingShake, new Rectangle(216, 453 + 10 * colorIndex, 9, 1),
-					bobberInBar
-						? color
-						: (color * 0.25f *
-						   ((float)Math.Round(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 100.0),
-							   2) + 2f)), 0f, Vector2.Zero, new Vector2(4f, bobberBarHeight - 16), SpriteEffects.None,
-					0.89f);
+					new Vector2(bobberXpos, bobberYposBase + 8) + bobberShake, new Rectangle(216, 453 + 10 * colorIndex, 9, 1), bobberBarColor, 0f, Vector2.Zero, new Vector2(4f, bobberBarHeightBase / 2 - 16), SpriteEffects.None, 0.89f);
 				b.Draw(DeluxeFishingRodTool.fishingTextures,
-					new Vector2(xPositionOnScreen + 64,
-						yPositionOnScreen + 12 + (int)bobberBarPos + bobberBarHeight - 8) + barShake + everythingShake,
-					new Rectangle(216, 454 + 10 * colorIndex, 9, 2),
-					bobberInBar
-						? color
-						: (color * 0.25f *
-						   ((float)Math.Round(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 100.0),
-							   2) + 2f)), 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.89f);
+					new Vector2(bobberXpos, bobberYposBase + bobberBarHeightBase / 2 - 8) + bobberShake, new Rectangle(216, 454 + 10 * colorIndex, 9, 2), bobberBarColor, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.89f);
+
+				int bobberYPosOffset = bobberBarGap + bobberBarHeightBase / 2;
+				b.Draw(DeluxeFishingRodTool.fishingTextures,
+					new Vector2(bobberXpos, bobberYposBase + bobberYPosOffset) + bobberShake, new Rectangle(216, 447 + 10 * colorIndex, 9, 2), bobberBarColor, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.89f);
+				b.Draw(DeluxeFishingRodTool.fishingTextures,
+					new Vector2(bobberXpos, bobberYposBase + 8 + bobberYPosOffset) + bobberShake, new Rectangle(216, 453 + 10 * colorIndex, 9, 1), bobberBarColor, 0f, Vector2.Zero, new Vector2(4f, bobberBarHeightBase / 2 - 16), SpriteEffects.None, 0.89f);
+				b.Draw(DeluxeFishingRodTool.fishingTextures,
+					new Vector2(bobberXpos, bobberYposBase + bobberYPosOffset + bobberBarHeightBase / 2 - 8) + bobberShake, new Rectangle(216, 454 + 10 * colorIndex, 9, 2), bobberBarColor, 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.89f);
+
 				
 				// current level of Success bar
 				b.Draw(Game1.staminaRect,
 					new Rectangle(xPositionOnScreen + 124,
-						yPositionOnScreen + 4 + (int)(580f * (1f - distanceFromCatching1)), 16,
-						(int)(580f * distanceFromCatching1)), Utility.getRedToGreenLerpColor(distanceFromCatching1));
-				b.Draw(Game1.staminaRect,
-					new Rectangle(xPositionOnScreen + 124 + 28,
-						yPositionOnScreen + 4 + (int)(580f * (1f - distanceFromCatching2)), 16,
-						(int)(580f * distanceFromCatching2)),
-					Color.Lerp(new Color(0xff930f), new Color(0xfff95b), distanceFromCatching2));
-				b.Draw(Game1.staminaRect,
-					new Rectangle(xPositionOnScreen + 124 + 56,
-						yPositionOnScreen + 4 + (int)(580f * (1f - distanceFromCatching3)), 16,
-						(int)(580f * distanceFromCatching3)),
-					Color.Lerp(new Color(0xff0f7b), new Color(0xf89b29), distanceFromCatching3));
+						yPositionOnScreen + 4 + (int)(580f * (1f - distanceFromCatching)), 16,
+						(int)(580f * distanceFromCatching)), Utility.getRedToGreenLerpColor(distanceFromCatching));
 				
-				// reel rotation
+				// reel rotation (basically useless)
 				b.Draw(Game1.mouseCursors,
 					new Vector2(xPositionOnScreen + 18, yPositionOnScreen + 514) + everythingShake,
 					new Rectangle(257, 1990, 5, 10), Color.White, reelRotation, new Vector2(2f, 10f), 4f,
@@ -776,16 +720,76 @@ namespace FishMod
 				}
 
 				// The Fish
-				if (!inbetweenStages)
-				{
-					int spriteId = 11;
-					b.Draw(DeluxeFishingRodTool.fishingTextures,
-						new Vector2(xPositionOnScreen + 82, yPositionOnScreen + 36 + bobberPosition) +
-						fishShake + everythingShake,  new Rectangle(20 * spriteId, 0, 20, 24), Color.White,
-						0f, new Vector2(10f, 10f), 2f, SpriteEffects.None, 0.88f);
-				}
+				b.Draw(Game1.mouseCursors,
+					new Vector2(xPositionOnScreen + 64 + 18, (float)(yPositionOnScreen + 12 + 24) + fishPosition) +
+					fishShake + everythingShake, new Rectangle(614 + (bossFish ? 20 : 0), 1840, 20, 20), Color.White,
+					0f, new Vector2(10f, 10f), 2f, SpriteEffects.None, 0.88f);
 				
-				sparkleText?.draw(b, new Vector2(xPositionOnScreen, yPositionOnScreen + 200));
+				sparkleText?.draw(b, new Vector2(xPositionOnScreen - 16, yPositionOnScreen - 64));
+				
+				if (bobbers.Contains("(O)SonarBobber"))
+				{
+					int xPosition = (((float)xPositionOnScreen > (float)Game1.viewport.Width * 0.75f)
+						? (xPositionOnScreen - 80)
+						: (xPositionOnScreen + 216));
+					bool flip = xPosition < xPositionOnScreen;
+					b.Draw(Game1.mouseCursors_1_6,
+						new Vector2(xPosition - 12, yPositionOnScreen + 40) + everythingShake,
+						new Rectangle(227, 6, 29, 24), Color.White, 0f, new Vector2(10f, 10f), 4f,
+						flip ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0.88f);
+					fishObject.drawInMenu(b,
+						new Vector2(xPosition, yPositionOnScreen) + new Vector2(flip ? (-8) : (-4), 4f) * 4f +
+						everythingShake, 1f);
+				}
+
+				if (challengeBaitFishes > -1)
+				{
+					int xPosition = (((float)xPositionOnScreen > (float)Game1.viewport.Width * 0.75f)
+						? (xPositionOnScreen - 80)
+						: (xPositionOnScreen + 216));
+					int yPos = (bobbers.Contains("(O)SonarBobber")
+						? (yPositionOnScreen + 136)
+						: (yPositionOnScreen + 40));
+					Utility.drawWithShadow(b, Game1.mouseCursors_1_6,
+						new Vector2((float)(xPosition - 24) + everythingShake.X,
+							(float)(yPos - 16) + everythingShake.Y), new Rectangle(240, 31, 15, 38), Color.White, 0f,
+						Vector2.Zero, 4f);
+					for (int y = 0; y < 3; y++)
+					{
+						if (y < challengeBaitFishes)
+						{
+							Utility.drawWithShadow(b, Game1.mouseCursors_1_6,
+								new Vector2(xPosition - 12, (float)yPos + (float)(y * 20) * 2f) + everythingShake,
+								new Rectangle(236, 205, 19, 19), Color.White, 0f, new Vector2(0f, 0f), 2f,
+								flipped: false, 0.88f);
+						}
+						else
+						{
+							b.Draw(Game1.mouseCursors_1_6,
+								new Vector2(xPosition - 12, (float)yPos + (float)(y * 20) * 2f) + everythingShake,
+								new Rectangle(217, 205, 19, 19), Color.White, 0f, new Vector2(0f, 0f), 2f,
+								SpriteEffects.None, 0.88f);
+						}
+					}
+				}
+			}
+
+			// Tutorial
+			NetStringIntArrayDictionary fishCaught = Game1.player.fishCaught;
+			if (fishCaught != null && fishCaught.Length == 0)
+			{
+				Vector2 pos = new Vector2(xPositionOnScreen + (flipBubble ? (width + 64 + 8) : (-200)),
+					yPositionOnScreen + 192);
+				if (!Game1.options.gamepadControls)
+				{
+					b.Draw(Game1.mouseCursors, pos, new Rectangle(644, 1330, 48, 69), Color.White, 0f, Vector2.Zero, 4f,
+						SpriteEffects.None, 0.88f);
+				}
+				else
+				{
+					b.Draw(Game1.controllerMaps, pos, Utility.controllerMapSourceRect(new Rectangle(681, 0, 96, 138)),
+						Color.White, 0f, Vector2.Zero, 2f, SpriteEffects.None, 0.88f);
+				}
 			}
 
 			Game1.EndWorldDrawInUI(b);

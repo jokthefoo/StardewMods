@@ -23,14 +23,14 @@ namespace FishMod
         public const string DeluxeRodId = "Willy.FishMod.DeluxeFishingRod";
         public const string DeluxeRodQiid = ItemRegistry.type_tool + DeluxeRodId;
 
-        public static List<int> randomTreasureNumbers = new();
+        public static int treasureCaughtCount;
         public static TimeSpan minigameTimeToClick;
         
         public static float baseFishFrenzyChance = 0.03f;
         public DeluxeFishingRodTool()
         {
-            Name = "Bop's Rod";
-            displayName = "Bop's Rod";
+            Name = "Pirate Fishing Rod";
+            displayName = "Pirate Fishing Rod";
         }
 
         public static int getAddedDistance(Farmer who)
@@ -46,28 +46,25 @@ namespace FishMod
 
         internal static void EditToolAssets(IDictionary<string, ToolData> data)
         {
+            // Pirate rod has built in 15% treasure boost,
+            // also enables the ability to get up to 3 treasure chests
             data[DeluxeRodId] = new ToolData
             {
                 ClassName = "FishingRod",
-                Name = "Bop's Rod",
-                AttachmentSlots = 5,
-                SalePrice = 0,
-                DisplayName = "Bop's Rod",
-                Description = "Bina boo is a big silly",
+                Name = "Pirate Fishing Rod",
+                AttachmentSlots = 3,
+                SalePrice = 25000,
+                DisplayName = "Pirate Fishing Rod",
+                Description = "Somehow this rod seems to find a lot more treasure.",
                 Texture = ToolSpritesPseudoPath,
                 SpriteIndex = 0,
-                MenuSpriteIndex = -1,
-                UpgradeLevel = 0,
-                ConventionalUpgradeFrom = null,
-                UpgradeFrom = null,
-                CanBeLostOnDeath = false,
-                SetProperties = null,
+                UpgradeLevel = 0
             };
         }
         
         public static bool CheckIfValidBobberBar(IClickableMenu menu)
         {
-            if (menu is BobberBar || menu is AdvBobberBar || menu is FishFrenzyBobberBar || menu is BossBobberBar)
+            if (menu is BobberBar || menu is AdvBobberBar || menu is FishFrenzyBobberBar || menu is BossBobberBar|| menu is SplitBobberBar)
             {
                 return true;
             }
@@ -111,19 +108,62 @@ namespace FishMod
             if (menu.source != ItemGrabMenu.source_fishingChest)
                 return;
 
-            // TODO: different treasure chest rewards
-            foreach (int i in randomTreasureNumbers)
+
+            for(int i = 0; i < treasureCaughtCount; i++)
             {
                 switch (i)
                 {
-                    case 0: // blu chest  --- fishing specific rewards?
-                        menu.ItemsToGrabMenu.actualInventory.Add(ItemRegistry.Create("(O)852", Game1.random.Next(1, 6))); // dragon tooth
+                    case 1: // blue chest
+                        menu.ItemsToGrabMenu.actualInventory.Add(ItemRegistry.Create("(O)MysteryBox",
+                            Game1.random.Next(1, 3)));
+
+                        if (Game1.random.NextDouble() < .7) // tackles
+                        {
+                            string[] tackles = { "(O)691", "(O)692", "(O)693", "(O)694", "(O)695", "(O)687"};
+                            double[] probs = { 1/28f, 1/7f, 1/7f, 1/7f, 1/7f, 1/7f, 1/7f, 1/28f };
+                            var tackle = MiningFishing.WeightedChoice(tackles, probs);
+                            menu.ItemsToGrabMenu.actualInventory.Add(ItemRegistry.Create(tackle));
+                        }
+                        
+                        // aquamarine // ancient fruit // blue slime egg // rainbow shell // quality bobber // battery // seafoam pudding // solar panel
+                        string[] objects = { "(O)62", "(O)454", "(O)413", "(O)394", "(O)877", "(O)787", "(O)265", "(BC)231" };
+                        double[] probabilities = { 1/28f, 1/7f, 1/7f, 1/7f, 1/7f, 1/7f, 1/7f, 1/28f };
+                        var winner = MiningFishing.WeightedChoice(objects, probabilities);
+                        menu.ItemsToGrabMenu.actualInventory.Add(ItemRegistry.Create(winner));
+                        
+                        if (Game1.random.NextDouble() < .05) // tackles
+                        {
+                            menu.ItemsToGrabMenu.actualInventory.Add(ItemRegistry.Create("(O)167", 100)); // joja cola
+                        }
+
                         break;
-                    case 1: // red chest  --- volcano / susebron related rewards?
-                        menu.ItemsToGrabMenu.actualInventory.Add(ItemRegistry.Create("(O)260", Game1.random.Next(1, 30))); // hot pepper
+                    case 2: // red chest
+                        menu.ItemsToGrabMenu.actualInventory.Add(ItemRegistry.Create("(O)791")); // golden coconut
+                        
+                        // curiosity lure // dragon tooth // cinder shard // island warp totem // pina colada // tiger slime egg // treasure chest // deluxe fish tank
+                        string[] redObjects = { "(O)856", "(O)852", "(O)848", "(O)886", "(O)873", "(O)857", "(O)166", "(F)2312" };
+                        double[] redProbs = { 1/7f, 1/7f, 1/7f, 1/7f, 1/7f, 1/7f, 1/28f, 1/28f };
+                        var redWinner = MiningFishing.WeightedChoice(redObjects, redProbs);
+                        int amount = 1;
+                        if (redWinner == redObjects[2]) // cinder shard
+                        {
+                            amount = 10;
+                        }
+                        if (redWinner == redObjects[4]) // warp totem
+                        {
+                            amount = 3;
+                        }
+                        menu.ItemsToGrabMenu.actualInventory.Add(ItemRegistry.Create(redWinner, amount));
                         break;
-                    case 2: // green chest --- radioactive related rewards?
-                        menu.ItemsToGrabMenu.actualInventory.Add(ItemRegistry.Create("(O)60", Game1.random.Next(1, 2))); // emerald
+                    case 3: // green chest
+                        menu.ItemsToGrabMenu.actualInventory.Add(ItemRegistry.Create("(O)60", Game1.random.Next(1, 5))); // emerald
+                        menu.ItemsToGrabMenu.actualInventory.Add(ItemRegistry.Create("(O)909", Game1.random.Next(1, 5))); // radioactive ore
+                        
+                        // pearl // radioactive carp // galaxy soul // purple shorts // tea set // magic rock candy // prismatic shard // auto petter // coffee maker
+                        string[] greenObjects = { "(O)797", "(O)901", "(O)896", "(O)789", "(O)341", "(O)279", "(O)74", "(BC)272", "(BC)246" };
+                        double[] greenProb = { 1/9f, 1/9f, 1/9f, 1/18f, 1/28f, 1/9f, 1/9f, 1/18f, 1/9f };
+                        var greenWinner = MiningFishing.WeightedChoice(greenObjects, greenProb);
+                        menu.ItemsToGrabMenu.actualInventory.Add(ItemRegistry.Create(greenWinner));
                         break;
                 }
             }

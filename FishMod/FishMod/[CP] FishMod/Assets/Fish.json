@@ -3,14 +3,19 @@
     {
       "LogName": "Aquarium fish load",
       "Action": "Load",
-      "Target": "Mods/{{ModId}}/AqFish, Mods/{{ModId}}/Fish",
+      "Target": "Mods/{{ModId}}/AqFish, Mods/{{ModId}}/Objects",
       "FromFile": "Assets/{{TargetWithoutPath}}.png"
     },
     {
       "LogName": "Aquarium data",
       "Action": "EditData",
       "Target": "Data/AquariumFish",
-      "Entries": { "{{ModId}}.Susebron": "0/fish/////Mods\\{{ModId}}.Susebron\\AqFish" }
+      "Entries": { 
+        "{{ModId}}.Susebron": "0/fish/////Mods\\{{ModId}}.Susebron\\AqFish",
+        "{{ModId}}.MidnightPufferfish": "1/ground/////Mods\\{{ModId}}.MidnightPufferfish\\AqFish",
+        "{{ModId}}.RedDiscus": "2/fish/////Mods\\{{ModId}}.RedDiscus\\AqFish",
+        "{{ModId}}.BlackDorado": "3/fish/////Mods\\{{ModId}}.BlackDorado\\AqFish",
+        "{{ModId}}.TealEel": "4/eel/////Mods\\{{ModId}}.TealEel\\AqFish" } 
     },
     {
       "LogName": "Fish as items",
@@ -32,7 +37,78 @@
             "color_prismatic",
             "fish_has_roe"
           ]
-        },
+        },"{{ModId}}.MidnightPufferfish":
+        {
+          "Name": "Midnight Pufferfish",
+          "DisplayName": "Midnight Pufferfish",
+          "Description": "Inflates when threatened, or when hunting.",
+          "Edibility": "-40",
+          "Type": "Fish",
+          "Category": -4,
+          "Price": "400",
+          "Texture": "Mods\\{{ModId}}\\Objects",
+          "SpriteIndex": 2,
+          "ContextTags": [
+            "color_purple",
+            "fish_has_roe",
+            "fish_ocean",
+            "fish_upright",
+            "{{ModId}}_NonLegendary"
+          ]
+        },"{{ModId}}.RedDiscus":
+        {
+          "Name": "Red Discus",
+          "DisplayName": "Red Discus",
+          "Description": "A brightly colored tropical fish that is popular in aquariums.",
+          "Edibility": "15",
+          "Type": "Fish",
+          "Category": -4,
+          "Price": "250",
+          "Texture": "Mods\\{{ModId}}\\Objects",
+          "SpriteIndex": 3,
+          "ContextTags": [
+            "color_red",
+            "fish_has_roe",
+            "fish_ocean",
+            "{{ModId}}_NonLegendary"
+          ]
+        },"{{ModId}}.BlackDorado":
+        {
+          "Name": "Black Dorado",
+          "DisplayName": "Black Dorado",
+          "Description": "A fierce carnivore with brilliant orange scales.",
+          "Edibility": "10",
+          "Type": "Fish",
+          "Category": -4,
+          "Price": "800",
+          "Texture": "Mods\\{{ModId}}\\Objects",
+          "SpriteIndex": 4,
+          "ContextTags": [
+            "color_black",
+            "fish_carnivorous",
+            "fish_has_roe",
+            "fish_semi_rare",
+            "{{ModId}}_NonLegendary"
+          ]
+        },"{{ModId}}.BlueEel":
+        {
+          "Name": "Blue Eel",
+          "DisplayName": "Blue Eel",
+          "Description": "A long, slippery little fish.",
+          "Edibility": "20",
+          "Type": "Fish",
+          "Category": -4,
+          "Price": "300",
+          "Texture": "Mods\\{{ModId}}\\Objects",
+          "SpriteIndex": 5,
+          "ContextTags": [
+            "color_cyan",
+            "fish_has_roe",
+            "fish_semi_rare",
+            "fish_upright",
+            "{{ModId}}_NonLegendary"
+          ]
+        }
       }
     },
     {
@@ -40,6 +116,10 @@
       "Target": "Data/Fish",
       "Entries": {
         "{{ModId}}.Susebron": "Susebron/120/mixed/67/70/600 2600/spring summer fall winter/sunny/690 .4 685 .1/5/0/.1/0",
+        "{{ModId}}.MidnightPufferfish": "Midnight Pufferfish/90/floater/1/36/2200 2600/spring summer fall winter/sunny/690 .4 685 .1/4/.1/0/0/0",
+        "{{ModId}}.RedDiscus": "Red Discus/80/dart/2/9/600 2600/spring summer fall winter/both/685 .35/4/.25/.1/0/0",
+        "{{ModId}}.BlackDorado": "Black Dorado/100/mixed/24/32/600 1900/spring summer fall winter/both/689 .35 681 .1/4/.15/.1/0/0",
+        "{{ModId}}.BlueEel": "Blue Eel/90/sinker/32/32/600 1200/spring summer fall winter/rainy/684 .1/4/.05/.1/4/0"
       },
     },
     {
@@ -57,7 +137,7 @@
           "CuriosityLureBuff": .1,
           "CatchLimit": 1,
           "IsBossFish": true,
-          "MinDistanceFromShore": 4,
+          "MinDistanceFromShore": 5,
           "Precedence": -100,
           "IgnoreFishDataRequirements": true,
           "Condition": "WEATHER Here Sun",
@@ -68,7 +148,120 @@
             "Width": 100,
             "Height": 100
           }
+        },
+        "{{ModId}}.MidnightPufferfish": {
+          "Chance": .7,
+          "Id": "{{ModId}}.MidnightPufferfish",
+          "ItemId": "{{ModId}}.MidnightPufferfish",
+          "CuriosityLureBuff": .2,
+          "MinDistanceFromShore": 4,
+          "Precedence": -1,
+          "Condition": "WEATHER Here Sun"
+        },
+        "{{ModId}}.RedDiscus": {
+          "Chance": .7,
+          "Id": "{{ModId}}.RedDiscus",
+          "ItemId": "{{ModId}}.RedDiscus",
+          "CuriosityLureBuff": .2,
+          "MinDistanceFromShore": 4,
+          "Precedence": -1,
+        },
+        "{{ModId}}.BlueEel": {
+          "Chance": .7,
+          "Id": "{{ModId}}.BlueEel",
+          "ItemId": "{{ModId}}.BlueEel",
+          "CuriosityLureBuff": .2,
+          "MinDistanceFromShore": 4,
+          "Precedence": -1,
+          "Condition": "WEATHER Here Rain"
         }
+      }
+    },{
+      "Action": "EditData",
+      "Target": "Data/Locations",
+      "TargetField": [
+        "IslandSouth",
+        "Fish"
+      ],
+      "Entries": {
+        "{{ModId}}.MidnightPufferfish": {
+          "Chance": .7,
+          "Id": "{{ModId}}.MidnightPufferfish",
+          "ItemId": "{{ModId}}.MidnightPufferfish",
+          "CuriosityLureBuff": .2,
+          "MinDistanceFromShore": 4,
+          "Precedence": -1,
+          "Condition": "WEATHER Here Sun"
+        },
+        "{{ModId}}.RedDiscus": {
+          "Chance": .7,
+          "Id": "{{ModId}}.RedDiscus",
+          "ItemId": "{{ModId}}.RedDiscus",
+          "CuriosityLureBuff": .2,
+          "MinDistanceFromShore": 4,
+          "Precedence": -1,
+        },
+        "{{ModId}}.BlueEel": {
+          "Chance": .7,
+          "Id": "{{ModId}}.BlueEel",
+          "ItemId": "{{ModId}}.BlueEel",
+          "CuriosityLureBuff": .2,
+          "MinDistanceFromShore": 4,
+          "Precedence": -1,
+          "Condition": "WEATHER Here Rain"
+        }
+      }
+    },{
+      "Action": "EditData",
+      "Target": "Data/Locations",
+      "TargetField": [
+        "IslandWest",
+        "Fish"
+      ],
+      "Entries": {
+        "{{ModId}}.MidnightPufferfish": {
+          "Chance": .7,
+          "Id": "{{ModId}}.MidnightPufferfish",
+          "ItemId": "{{ModId}}.MidnightPufferfish",
+          "CuriosityLureBuff": .2,
+          "MinDistanceFromShore": 4,
+          "Precedence": -1,
+          "Condition": "WEATHER Here Sun"
+        },
+        "{{ModId}}.RedDiscus": {
+          "Chance": .7,
+          "Id": "{{ModId}}.RedDiscus",
+          "ItemId": "{{ModId}}.RedDiscus",
+          "CuriosityLureBuff": .2,
+          "MinDistanceFromShore": 4,
+          "Precedence": -1,
+        },
+        "{{ModId}}.BlueEel": {
+          "Chance": .7,
+          "Id": "{{ModId}}.BlueEel",
+          "ItemId": "{{ModId}}.BlueEel",
+          "CuriosityLureBuff": .2,
+          "MinDistanceFromShore": 4,
+          "Precedence": -1,
+          "Condition": "WEATHER Here Rain"
+        }
+      }
+    },{
+      "Action": "EditData",
+      "Target": "Data/Locations",
+      "TargetField": [
+        "IslandSouthEastCave",
+        "Fish"
+      ],
+      "Entries": {
+        "{{ModId}}.BlackDorado": {
+          "Chance": .5,
+          "Id": "{{ModId}}.BlackDorado",
+          "ItemId": "{{ModId}}.BlackDorado",
+          "CuriosityLureBuff": .3,
+          "MinDistanceFromShore": 4,
+          "Precedence": -1,
+        },
       }
     },
     {
@@ -104,6 +297,107 @@
             },
           ],
         },
+        "id_(o){{ModId}}.NonLegendary": {
+          "Id": "{{ModId}}.NonLegendary",
+          "RequiredTags": [
+            "{{ModId}}_NonLegendary"
+          ],
+          "MaxPopulation": 10,    
+          "BaseMinProduceChance": 0.15,
+          "BaseMaxProduceChance": 0.95,
+          "WaterColor": [
+            {
+              "Id": "Default",
+              "Color": "CopyFromInput",
+              "MinPopulation": 5
+            },
+          ],
+          "PopulationGates": {
+            "2": [
+              "(O)128", // pufferfish
+              "(O)704", // dorado
+              "(O)838", // blue discus
+              "(O)162" // lava eel
+            ],
+            "4": [
+              "(O)242 2", // dish o the sea
+              "(O)454 2 5", // ancient fruit
+              "(O)807 4" // dino mayo
+            ],
+            "6": [
+              "(O)702 5 7", // chub
+              "(O)142 5 7", // carp
+              "(O)132 5 7" // bream
+            ],
+            "8": [
+              "{{ModId}}.PirateTreasureHunter"
+            ]
+          },
+          "ProducedItems": [
+            {
+              "RequiredPopulation": 10,
+              "Chance": 0.001,
+              "Id": "(O)74",
+              "ItemId": "(O)74" // prismatic shard
+            },
+            {
+              "RequiredPopulation": 10,
+              "Chance": 0.04,
+              "Id": "(O)791", // golden coconut
+              "ItemId": "(O)791"
+            },
+            {
+              "RequiredPopulation": 8,
+              "Chance": 0.03,
+              "Id": "(O)852",
+              "ItemId": "(O)852", //dragon tooth
+            },
+            {
+              "RequiredPopulation": 10,
+              "Chance": 0.033,
+              "Id": "(O)812",
+              "ItemId": "(O)812", // roe
+              "MinStack": 3,
+              "MaxStack": 3
+            },
+            {
+              "RequiredPopulation": 10,
+              "Chance": 0.15,
+              "Id": "(O)812",
+              "ItemId": "(O)812", // roe
+              "MinStack": 2,
+              "MaxStack": 2
+            },
+            {
+              "RequiredPopulation": 7,
+              "Chance": 0.07,
+              "Id": "(O)848",
+              "ItemId": "(O)848", // cinder shard
+              "MinStack": 2,
+              "MaxStack": 5
+            },
+            {
+              "RequiredPopulation": 3,
+              "Chance": 0.1,
+              "Id": "(O)ChallengeBait",
+              "ItemId": "(O)ChallengeBait",
+              "MinStack": 2,
+              "MaxStack": 5
+            },
+            {
+              "RequiredPopulation": 6,
+              "Chance": 1.0,
+              "Id": "(O)812",
+              "ItemId": "(O)812", // roe
+            },
+            {
+              "RequiredPopulation": 0,
+              "Chance": 0.8,
+              "Id": "(O)812",
+              "ItemId": "(O)812", // roe
+            }
+          ],
+        }
       },
     }
   ]
