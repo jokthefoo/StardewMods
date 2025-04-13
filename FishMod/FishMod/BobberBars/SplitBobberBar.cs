@@ -105,7 +105,7 @@ namespace FishMod
 		public Color color = Color.White;
 
 		public SplitBobberBar(string whichFish, float fishSize, int treasure, List<string> bobbers, string setFlagOnCatch,
-			bool isBossFish = false, string baitID = "", bool goldenTreasure = false, int colorIndex = -1)
+			bool isBossFish = false, string? baitID = "", bool goldenTreasure = false, int colorIndex = -1)
 			: base(0, 0, 96, 636)
 		{
 			fishObject = ItemRegistry.Create(whichFish);

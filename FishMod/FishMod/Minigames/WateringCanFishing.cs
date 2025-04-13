@@ -107,7 +107,7 @@ public class WateringCanFishing
             if (!__instance.IsBottomless)
                 __instance.WaterLeft -= power + 1;
 
-            bool treasure = Game1.random.NextDouble() < FishingRod.baseChanceForTreasure + who.LuckLevel * 0.005 + who.DailyLuck / 2.0;
+            bool treasure = Game1.random.NextDouble() < DeluxeFishingRodTool.baseChanceForTreasure + who.LuckLevel * 0.005 + who.DailyLuck / 2.0;
             DeluxeFishingRodTool.PlayHitEffectForRandomEncounter(who, new WateringBobberBar(location, __instance, treasure));
         }
         else

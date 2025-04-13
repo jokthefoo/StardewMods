@@ -78,7 +78,7 @@ namespace FishMod
 		private MovingTreasureFishStyle.MotionType motionType = MovingTreasureFishStyle.MotionType.Mixed;
 
 		public FishFrenzyBobberBar(string whichFish, float fishSize, List<string> bobbers, string setFlagOnCatch,
-			string baitID = "")
+			string? baitID = "")
 			: base(0, 0, 96, 636)
 		{
 			fishObject = ItemRegistry.Create(whichFish);

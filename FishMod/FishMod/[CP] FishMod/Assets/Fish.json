@@ -342,13 +342,13 @@
             },
             {
               "RequiredPopulation": 10,
-              "Chance": 0.04,
+              "Chance": 0.01,
               "Id": "(O)791", // golden coconut
               "ItemId": "(O)791"
             },
             {
               "RequiredPopulation": 8,
-              "Chance": 0.03,
+              "Chance": 0.02,
               "Id": "(O)852",
               "ItemId": "(O)852", //dragon tooth
             },

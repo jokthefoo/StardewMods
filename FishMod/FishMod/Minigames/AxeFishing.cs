@@ -108,7 +108,7 @@ public class AxeFishing
 
         // Start minigame
         clump.Location.playSound("axchop", tileLocation);
-        bool treasure = Game1.random.NextDouble() < FishingRod.baseChanceForTreasure + tool.lastUser.LuckLevel * 0.005 + tool.lastUser.DailyLuck / 2.0;
+        bool treasure = Game1.random.NextDouble() < DeluxeFishingRodTool.baseChanceForTreasure + tool.lastUser.LuckLevel * 0.005 + tool.lastUser.DailyLuck / 2.0;
         Game1.activeClickableMenu = new TreeBobberBar(clump.Location, treasure, chopAmountRequired, tool, tileLocation);
     }
 
@@ -200,7 +200,7 @@ public class AxeFishing
 
         // Start minigame
         tree.Location.playSound("axchop", tileLocation);
-        bool treasure = Game1.random.NextDouble() < FishingRod.baseChanceForTreasure + 0.10f + tool.lastUser.LuckLevel * 0.005 + tool.lastUser.DailyLuck / 2.0;
+        bool treasure = Game1.random.NextDouble() < DeluxeFishingRodTool.baseChanceForTreasure + 0.10f + tool.lastUser.LuckLevel * 0.005 + tool.lastUser.DailyLuck / 2.0;
         Game1.activeClickableMenu = new TreeBobberBar(tree.Location, treasure, chopAmountRequired, tool, tileLocation);
     }
 

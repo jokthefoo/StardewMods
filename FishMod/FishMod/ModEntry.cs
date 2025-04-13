@@ -6,7 +6,6 @@ using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Constants;
-using StardewValley.GameData.Objects;
 using StardewValley.GameData.Tools;
 using StardewValley.Menus;
 using StardewValley.TerrainFeatures;
@@ -56,7 +55,7 @@ namespace FishMod
             );
 
             Type[] types = { typeof(Vector2), typeof(int), typeof(Farmer) };
-            MethodInfo originalToolsMethod = typeof(Tool).GetMethod("tilesAffected",
+            var originalToolsMethod = typeof(Tool).GetMethod("tilesAffected",
                 BindingFlags.Instance | BindingFlags.NonPublic, null, types, null);
             harmony.Patch(
                 original: originalToolsMethod,
@@ -143,7 +142,7 @@ namespace FishMod
             else
             {
                 spacecore.RegisterSerializerType(typeof(DeluxeFishingRodTool));
-                Monitor.Log("Registered subclasses with SpaceCore!", LogLevel.Trace);
+                Monitor.Log("Registered subclasses with SpaceCore!");
             }
             
             SetupModConfigs();
@@ -207,13 +206,16 @@ namespace FishMod
                     return;
                 }
 
-                //if (Game1.player.CurrentTool?.QualifiedItemId == DeluxeFishingRodTool.DeluxeRodQiid)
-                string baitid = "";
+                string? baitid = "";
                 List<string> tackles = new List<string>();
                 if (Game1.player.CurrentTool is FishingRod fishingRod)
                 {
                     baitid = fishingRod.GetBait()?.QualifiedItemId;
                     tackles = fishingRod.GetTackleQualifiedItemIDs();
+                }
+                else
+                {
+                    return;
                 }
 
                 e.NewMenu.exitThisMenu(false);
@@ -224,35 +226,42 @@ namespace FishMod
                     return;
                 }
 
-                double tackleBoost = Utility.getStringCountInList(tackles, "(O)693") * FishingRod.baseChanceForTreasure / 3.0;
-                double pirateTackleBoost = Utility.getStringCountInList(tackles, "(O){{ModId}}.PirateTreasureHunter") * FishingRod.baseChanceForTreasure;
+                double tackleBoost = Utility.getStringCountInList(tackles, "(O)693") * DeluxeFishingRodTool.baseChanceForTreasure / 3.0;
+                double pirateTackleBoost = Utility.getStringCountInList(tackles, "(O){{ModId}}.PirateTreasureHunter") * DeluxeFishingRodTool.baseChanceForTreasure;
 
                 double pirateRodBoost = 0;
                 if (Game1.player.CurrentTool?.QualifiedItemId == DeluxeFishingRodTool.DeluxeRodQiid)
                 {
-                    pirateRodBoost = FishingRod.baseChanceForTreasure;
+                    pirateRodBoost = DeluxeFishingRodTool.baseChanceForTreasure;
                 }
 
-                double baitBoost = baitid == "(O)703" ? FishingRod.baseChanceForTreasure : 0.0;
-                double pirateBoost = Game1.player.professions.Contains(9) ? FishingRod.baseChanceForTreasure : 0.0;
+                double baitBoost = baitid == "(O)703" ? DeluxeFishingRodTool.baseChanceForTreasure : 0.0;
+                double pirateBoost = Game1.player.professions.Contains(9) ? DeluxeFishingRodTool.baseChanceForTreasure : 0.0;
                 
-                double treasureOdds = FishingRod.baseChanceForTreasure + Game1.player.LuckLevel * 0.005 + baitBoost + tackleBoost + Game1.player.DailyLuck / 2.0 + pirateBoost + pirateTackleBoost + pirateRodBoost;
+                double treasureOdds = DeluxeFishingRodTool.baseChanceForTreasure + Game1.player.LuckLevel * 0.005 + baitBoost + tackleBoost + Game1.player.DailyLuck / 2.0 + pirateBoost + pirateTackleBoost + pirateRodBoost;
 
-                bool treasure1 = Game1.random.NextDouble() < treasureOdds;
-                bool treasure2 = Game1.random.NextDouble() < treasureOdds;
-                int treasure = (bobberBar.treasure ? 1 : 0) + (treasure1 ? 1 : 0) + (treasure2 ? 1 : 0);
-
-                if (Game1.random.NextDouble() < pirateRodBoost)
+                bool blueTreasure = Game1.random.NextDouble() < treasureOdds;
+                bool redTreasure = Game1.random.NextDouble() < treasureOdds;
+                bool greenTreasure = false;
+                if (pirateRodBoost > 0)
                 {
-                    treasure++;
+                    greenTreasure = Game1.random.NextDouble() < treasureOdds;
+                }
+
+                int treasureCount = (bobberBar.treasure ? 1 : 0) + (blueTreasure ? 1 : 0) + (redTreasure ? 1 : 0) +
+                                    (greenTreasure ? 1 : 0);
+                    
+                if (treasureCount < 4 && Game1.random.NextDouble() < pirateRodBoost)
+                {
+                    treasureCount++;
                 }
                 
-                if (treasure1 && Game1.player.stats.Get(StatKeys.Mastery(1)) > 0U && Game1.random.NextDouble() < 0.25 + Game1.player.team.AverageDailyLuck() + pirateTackleBoost)
+                if (bobberBar.treasure && Game1.player.stats.Get(StatKeys.Mastery(1)) > 0U && Game1.random.NextDouble() < 0.25 + Game1.player.team.AverageDailyLuck() + pirateTackleBoost)
                     bobberBar.goldenTreasure = true;
 
                 if (bobberBar.whichFish == "Jok.Fishdew.CP.Susebron")
                 {
-                    Game1.activeClickableMenu = new BossBobberBar(bobberBar.whichFish, bobberBar.fishSize, treasure,
+                    Game1.activeClickableMenu = new BossBobberBar(bobberBar.whichFish, bobberBar.fishSize, treasureCount,
                         bobberBar.bobbers, bobberBar.setFlagOnCatch, bobberBar.bossFish, baitid,
                         bobberBar.goldenTreasure);
                     return;
@@ -260,20 +269,19 @@ namespace FishMod
                 
                 if (bobberBar.whichFish == "Jok.Fishdew.CP.BlueEel")
                 {
-                    Game1.activeClickableMenu = new SplitBobberBar(bobberBar.whichFish, bobberBar.fishSize, treasure,
+                    Game1.activeClickableMenu = new SplitBobberBar(bobberBar.whichFish, bobberBar.fishSize, treasureCount,
                         bobberBar.bobbers, bobberBar.setFlagOnCatch, bobberBar.bossFish, baitid,
                         bobberBar.goldenTreasure);
                     return;
                 }
-                //Jok.Fishdew.CP.BlackDorado -- rarer
-                //Jok.Fishdew.CP.RedDiscus
-                //Jok.Fishdew.CP.MidnightPufferfish
+                //TODO: Jok.Fishdew.CP.BlackDorado -- rarer
+                //TODO: Jok.Fishdew.CP.RedDiscus
+                //TODO: Jok.Fishdew.CP.MidnightPufferfish
                     
-                // TODO: other fish that have minor changes?
                 // TODO: maybe animals? they would be so cute on the bar
                 // TODO: after catching susebron maybe you can keep catching less valuable version? still do boss fight
 
-                Game1.activeClickableMenu = new AdvBobberBar(bobberBar.whichFish, bobberBar.fishSize, treasure,
+                Game1.activeClickableMenu = new AdvBobberBar(bobberBar.whichFish, bobberBar.fishSize, treasureCount,
                     bobberBar.bobbers, bobberBar.setFlagOnCatch, bobberBar.bossFish, baitid, bobberBar.goldenTreasure);
             }
         }
@@ -309,7 +317,7 @@ namespace FishMod
                 var boprod = ItemRegistry.Create(DeluxeFishingRodTool.DeluxeRodQiid);
                 boprod.specialItem = true;
                 Game1.player.addItemByMenuIfNecessary(boprod);
-                FishingRod.baseChanceForTreasure = 2;
+                DeluxeFishingRodTool.baseChanceForTreasure = 2;
             }
             
             if (e.Button == SButton.F)

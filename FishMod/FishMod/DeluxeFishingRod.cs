@@ -4,7 +4,6 @@ using System.Xml.Serialization;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using StardewModdingAPI;
 using StardewValley;
 using StardewValley.GameData.Tools;
 using StardewValley.Menus;
@@ -24,7 +23,8 @@ namespace FishMod
         public const string DeluxeRodQiid = ItemRegistry.type_tool + DeluxeRodId;
 
         public static int treasureCaughtCount;
-        public static TimeSpan minigameTimeToClick;
+        public static TimeSpan minigameTimeToClick;   
+        public new static double baseChanceForTreasure = 0.15;
         
         public static float baseFishFrenzyChance = 0.03f;
         public DeluxeFishingRodTool()
@@ -131,7 +131,7 @@ namespace FishMod
                         var winner = MiningFishing.WeightedChoice(objects, probabilities);
                         menu.ItemsToGrabMenu.actualInventory.Add(ItemRegistry.Create(winner));
                         
-                        if (Game1.random.NextDouble() < .05) // tackles
+                        if (Game1.random.NextDouble() < .05)
                         {
                             menu.ItemsToGrabMenu.actualInventory.Add(ItemRegistry.Create("(O)167", 100)); // joja cola
                         }
