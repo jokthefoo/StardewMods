@@ -274,8 +274,15 @@ namespace FishMod
                         bobberBar.goldenTreasure);
                     return;
                 }
+                
+                if (bobberBar.whichFish == "Jok.Fishdew.CP.RedDiscus")
+                {
+                    Game1.activeClickableMenu = new DoubleFishBobberBar(bobberBar.whichFish, bobberBar.fishSize, treasureCount,
+                        bobberBar.bobbers, bobberBar.setFlagOnCatch, bobberBar.bossFish, baitid,
+                        bobberBar.goldenTreasure);
+                    return;
+                }
                 //TODO: Jok.Fishdew.CP.BlackDorado -- rarer
-                //TODO: Jok.Fishdew.CP.RedDiscus
                 //TODO: Jok.Fishdew.CP.MidnightPufferfish
                     
                 // TODO: dyeable fish ponds?
@@ -345,7 +352,7 @@ namespace FishMod
                 
                 //Game1.activeClickableMenu = new FishFrenzyBobberBar("136", fishSize, bobbers, "","nobait");
                 //Game1.activeClickableMenu = new SplitBobberBar("136", fishSize, 3, bobbers, "");
-                Game1.activeClickableMenu = new DoubleFishBobberBar("136", fishSize, 3, bobbers, "");
+                Game1.activeClickableMenu = new DoubleFishBobberBar("Jok.Fishdew.CP.RedDiscus", fishSize, 3, bobbers, "");
             }
             
             if (e.Button == SButton.G)

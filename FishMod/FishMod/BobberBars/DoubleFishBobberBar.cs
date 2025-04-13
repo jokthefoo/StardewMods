@@ -27,7 +27,7 @@ public class DoubleFishBobberBar : AdvBobberBar
             int diff = (int)difficulty + Game1.random.Next((int)(-difficulty / 2), (int)(difficulty / 2 + 1));
             secondFish = new MovingTreasureFishStyle(diff, (MovingTreasureFishStyle.MotionType)motionType, 10, 10);
             secondFish.initTreasurePosition = fishPosition;
-            secondFish.treasureProgressColor = Color.Red;
+            secondFish.treasureProgressColor = Color.Coral;
             secondFish.waitForScaling = true;
             secondFish.isSpecial = true;
             secondFish.decreaseRate /= 4;
