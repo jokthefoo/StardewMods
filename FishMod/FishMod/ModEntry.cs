@@ -278,6 +278,7 @@ namespace FishMod
                 //TODO: Jok.Fishdew.CP.RedDiscus
                 //TODO: Jok.Fishdew.CP.MidnightPufferfish
                     
+                // TODO: dyeable fish ponds?
                 // TODO: maybe animals? they would be so cute on the bar
                 // TODO: after catching susebron maybe you can keep catching less valuable version? still do boss fight
 
@@ -343,7 +344,8 @@ namespace FishMod
                 var fishSize = Math.Max(0.0f, Math.Min(1f, num3 * (float)(1.0 + Game1.random.Next(-10, 11) / 100.0)));
                 
                 //Game1.activeClickableMenu = new FishFrenzyBobberBar("136", fishSize, bobbers, "","nobait");
-                Game1.activeClickableMenu = new SplitBobberBar("136", fishSize, 3, bobbers, "");
+                //Game1.activeClickableMenu = new SplitBobberBar("136", fishSize, 3, bobbers, "");
+                Game1.activeClickableMenu = new DoubleFishBobberBar("136", fishSize, 3, bobbers, "");
             }
             
             if (e.Button == SButton.G)

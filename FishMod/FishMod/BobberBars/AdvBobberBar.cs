@@ -165,11 +165,11 @@ public class AdvBobberBar : IClickableMenu
                 case "smooth":
                     motionType = 2;
                     break;
-                case "floater":
-                    motionType = 4;
-                    break;
                 case "sinker":
                     motionType = 3;
+                    break;
+                case "floater":
+                    motionType = 4;
                     break;
             }
 
@@ -449,13 +449,12 @@ public class AdvBobberBar : IClickableMenu
             }
     }
 
-    private void TreasureUpdate(GameTime time)
+    protected virtual void TreasureUpdate(GameTime time)
     {
         treasureInBar = false;
         foreach (var t in treasures)
             if (t.treasureUpdate(time, bobberBarPos, bobberBarHeight))
                 treasureInBar = true;
-
     }
     
     // Update progress, stop bar shake, start fish shake, play sound
@@ -472,7 +471,7 @@ public class AdvBobberBar : IClickableMenu
             Game1.playSound("fastReel", out reelSound);
     }
 
-    private void DecreaseProgress()
+    protected virtual void DecreaseProgress()
     {
         if (bobbers.Contains("(O)694")) // Trap bobber makes it easier
         {
@@ -531,7 +530,8 @@ public class AdvBobberBar : IClickableMenu
         if (unReelSound == null || unReelSound.IsStopped) Game1.playSound("slowReel", 600, out unReelSound);
     }
 
-    private void CheckVictoryOrLoss()
+
+    private void CheckLoss()
     {
         if (distanceFromCatching <= 0f)
         {
@@ -542,25 +542,33 @@ public class AdvBobberBar : IClickableMenu
             unReelSound?.Stop(AudioStopOptions.Immediate);
             reelSound?.Stop(AudioStopOptions.Immediate);
         }
-        else if (distanceFromCatching >= 1f)
+    }
+
+    protected void VictoryEffects()
+    {
+        everythingShakeTimer = 500f;
+        Game1.playSound("jingle1");
+        gameEnding = true;
+        handledFishResult = true;
+        unReelSound?.Stop(AudioStopOptions.Immediate);
+        reelSound?.Stop(AudioStopOptions.Immediate);
+        if (perfect)
         {
-            everythingShakeTimer = 500f;
-            Game1.playSound("jingle1");
-            gameEnding = true;
-            handledFishResult = true;
-            unReelSound?.Stop(AudioStopOptions.Immediate);
-            reelSound?.Stop(AudioStopOptions.Immediate);
-            if (perfect)
-            {
-                sparkleText = new SparklingText(Game1.dialogueFont,
-                    Game1.content.LoadString("Strings\\UI:BobberBar_Perfect"), Color.Yellow, Color.White,
-                    false, 0.1, 1500);
-                if (Game1.isFestival()) Game1.CurrentEvent.perfectFishing();
-            }
-            else if (fishSize == maxFishSize)
-            {
-                fishSize--;
-            }
+            sparkleText = new SparklingText(Game1.dialogueFont,
+                Game1.content.LoadString("Strings\\UI:BobberBar_Perfect"), Color.Yellow, Color.White,
+                false, 0.1, 1500);
+            if (Game1.isFestival()) Game1.CurrentEvent.perfectFishing();
+        }
+        else if (fishSize == maxFishSize)
+        {
+            fishSize--;
+        }
+    }
+    public virtual void CheckVictory()
+    {
+        if (distanceFromCatching >= 1f)
+        {
+            VictoryEffects();
         }
     }
 
@@ -588,7 +596,7 @@ public class AdvBobberBar : IClickableMenu
             TreasureUpdate(time);
 
             bool hasTreasureBobber = bobbers.Contains("(O)693") || bobbers.Contains("(O){{ModId}}.PirateTreasureHunter"); // treasure bobber stops bar
-            bool collectingTreasureWithTreasureBobber = !(hasTreasureBobber && treasureInBar);
+            bool collectingTreasureWithTreasureBobber = hasTreasureBobber && treasureInBar;
             
             if (fishInBar)
             {
@@ -615,7 +623,8 @@ public class AdvBobberBar : IClickableMenu
             distanceFromCatching = Math.Max(0f, Math.Min(1f, distanceFromCatching));
             if (Game1.player.CurrentTool != null) Game1.player.CurrentTool.tickUpdate(time, Game1.player);
 
-            CheckVictoryOrLoss();
+            CheckLoss();
+            CheckVictory();
         }
 
         fishPosition = Math.Clamp(fishPosition, 0, 548f);
@@ -632,9 +641,8 @@ public class AdvBobberBar : IClickableMenu
             DrawBobberBar(b);
             DrawProgressBar(b);
 
-            //draw treasures
-            foreach (var t in treasures) t.drawTreasure(b, everythingShake, xPositionOnScreen, yPositionOnScreen);
-
+            DrawTreasures(b);
+            
             DrawFish(b);
 
             sparkleText?.draw(b, new Vector2(xPositionOnScreen - 16, yPositionOnScreen - 64));
@@ -646,6 +654,11 @@ public class AdvBobberBar : IClickableMenu
         DrawTutorial(b);
         
         Game1.EndWorldDrawInUI(b);
+    }
+
+    protected virtual void DrawTreasures(SpriteBatch b)
+    {
+        foreach (var t in treasures) t.drawTreasure(b, everythingShake, xPositionOnScreen, yPositionOnScreen);
     }
 
     void DrawSpeechBubble(SpriteBatch b)

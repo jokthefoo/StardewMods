@@ -53,6 +53,7 @@ public class TreasureInstance
 	public Color treasureProgressColor = Color.Yellow;
 	public bool isSpecial = false;
 	public bool reverseProgress = false;
+	public bool waitForScaling = false;
 
 	public TreasureInstance(int spriteId, bool realTreasure, int treasureAppearMin = 1000, int treasureAppearMax = 3000, bool goldenTreasure = false, bool canLoseTreasure = false)
 	{
@@ -109,6 +110,11 @@ public class TreasureInstance
 				}
 
 				treasureScale = Math.Min(treasureScaleMaxScale, treasureScale + 0.1f);
+
+				if (waitForScaling && treasureScale < treasureScaleMaxScale)
+				{
+					return false;
+				}
 			}
 
 			treasureInBar = treasurePosition + 12f <= bobberBarPos - 32f + bobberBarHeight &&

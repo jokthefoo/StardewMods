@@ -23,8 +23,8 @@ public class MovingTreasureFishStyle : TreasureInstance
 		Mixed,
 		Dart,
 		Smooth,
-		Floater,
-		Sinker
+		Sinker,
+		Floater
 	}
 	
     public MovingTreasureFishStyle(int difficulty, MotionType motionType, int treasureAppearMin = 200, int treasureAppearMax = 3000, bool canLoseTreasure = false) 
