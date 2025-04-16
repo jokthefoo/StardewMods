@@ -1,0 +1,10 @@
+{
+  "Name": "Colorful Ponds",
+  "Author": "Jok",
+  "Version": "1.0.0",
+  "Description": "Colorful ponds",
+  "UniqueID": "Jok.ColorfulPonds",
+  "EntryDll": "FishPondColoring.dll",
+  "MinimumApiVersion": "4.0.0",
+  "UpdateKeys": []
+}
