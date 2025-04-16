@@ -282,12 +282,26 @@ namespace FishMod
                         bobberBar.goldenTreasure);
                     return;
                 }
-                //TODO: Jok.Fishdew.CP.BlackDorado -- rarer
-                //TODO: Jok.Fishdew.CP.MidnightPufferfish
+                
+                var fishCaught = Game1.player.fishCaught;
+                if (fishCaught != null && fishCaught.ContainsKey("Jok.Fishdew.CP.Susebron") && bobberBar.whichFish == "Jok.Fishdew.CP.BlackDorado")
+                {
+                    Game1.activeClickableMenu = new BossBobberBar(bobberBar.whichFish, bobberBar.fishSize, treasureCount,
+                        bobberBar.bobbers, bobberBar.setFlagOnCatch, bobberBar.bossFish, baitid,
+                        bobberBar.goldenTreasure);
+                    return;
+                }
+                
+                if (bobberBar.whichFish == "Jok.Fishdew.CP.MidnightPufferfish")
+                {
+                    Game1.activeClickableMenu = new DoubleFishBobberBar(bobberBar.whichFish, bobberBar.fishSize, treasureCount,
+                        bobberBar.bobbers, bobberBar.setFlagOnCatch, bobberBar.bossFish, baitid,
+                        bobberBar.goldenTreasure);
+                    return;
+                }
                     
                 // TODO: dyeable fish ponds?
                 // TODO: maybe animals? they would be so cute on the bar
-                // TODO: after catching susebron maybe you can keep catching less valuable version? still do boss fight
 
                 Game1.activeClickableMenu = new AdvBobberBar(bobberBar.whichFish, bobberBar.fishSize, treasureCount,
                     bobberBar.bobbers, bobberBar.setFlagOnCatch, bobberBar.bossFish, baitid, bobberBar.goldenTreasure);
@@ -352,7 +366,8 @@ namespace FishMod
                 
                 //Game1.activeClickableMenu = new FishFrenzyBobberBar("136", fishSize, bobbers, "","nobait");
                 //Game1.activeClickableMenu = new SplitBobberBar("136", fishSize, 3, bobbers, "");
-                Game1.activeClickableMenu = new DoubleFishBobberBar("Jok.Fishdew.CP.RedDiscus", fishSize, 3, bobbers, "");
+                //Game1.activeClickableMenu = new DoubleFishBobberBar("Jok.Fishdew.CP.RedDiscus", fishSize, 3, bobbers, "");
+                Game1.activeClickableMenu = new ShrinkingBobberBar("Jok.Fishdew.CP.MidnightPufferfish", fishSize, 0, bobbers, "");
             }
             
             if (e.Button == SButton.G)

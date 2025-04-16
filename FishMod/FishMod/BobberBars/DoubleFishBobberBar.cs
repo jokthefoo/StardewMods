@@ -14,7 +14,7 @@ public class DoubleFishBobberBar : AdvBobberBar
     
     public DoubleFishBobberBar(string whichFish, float fishSize, int treasure, List<string> bobbers, string setFlagOnCatch,
         bool isBossFish = false, string? baitID = "", bool goldenTreasure = false, int colorIndex = -1)
-        : base(whichFish, fishSize, 0, bobbers, setFlagOnCatch, isBossFish, baitID, goldenTreasure, colorIndex)
+        : base(whichFish, fishSize, treasure, bobbers, setFlagOnCatch, isBossFish, baitID, goldenTreasure, colorIndex)
     {
     }
 
@@ -24,7 +24,7 @@ public class DoubleFishBobberBar : AdvBobberBar
         if (distanceFromCatching > .5f && !spawnedSecond)
         {
             spawnedSecond = true;
-            int diff = (int)difficulty + Game1.random.Next((int)(-difficulty / 2), (int)(difficulty / 2 + 1));
+            int diff = (int)difficulty + Game1.random.Next(-20, -10);
             secondFish = new MovingTreasureFishStyle(diff, (MovingTreasureFishStyle.MotionType)motionType, 10, 10);
             secondFish.initTreasurePosition = fishPosition;
             secondFish.treasureProgressColor = Color.Coral;

@@ -80,7 +80,7 @@
           "Edibility": "10",
           "Type": "Fish",
           "Category": -4,
-          "Price": "800",
+          "Price": "1000",
           "Texture": "Mods\\{{ModId}}\\Objects",
           "SpriteIndex": 4,
           "ContextTags": [
