@@ -8,12 +8,25 @@
 
     <ItemGroup>
       <PackageReference Include="Pathoschild.Stardew.ModBuildConfig" Version="4.4.0" />
+      <PackageReference Include="PropertyChanged.SourceGenerator" Version="1.1.1">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
     </ItemGroup>
 
     <ItemGroup>
       <Reference Include="0Harmony">
         <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Stardew Valley\smapi-internal\0Harmony.dll</HintPath>
       </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="assets\views\ColorPicker.sml">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="assets\sprites\UISprites.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>

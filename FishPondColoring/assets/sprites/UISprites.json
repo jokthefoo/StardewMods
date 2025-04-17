@@ -1,0 +1,13 @@
+{
+  "Texture": "Buildings/Fish Pond",
+  "Sprites": {
+    "FishPond": {
+      "SourceRect": "0, 0, 80, 80",
+      "Scale": 4
+    },
+    "FishPondWater": {
+      "SourceRect": "0, 80, 80, 80",
+      "Scale": 4
+    }
+  }
+}

@@ -1,22 +1,21 @@
-﻿using System;
-using System.Reflection;
+﻿using System.ComponentModel;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Netcode;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
-using StardewModdingAPI.Utilities;
 using StardewValley;
 using StardewValley.Buildings;
-using StardewValley.GameData.FishPonds;
 using StardewValley.Menus;
+using StardewUI.Framework;
 
 namespace FishPondColoring
 {
     /// <summary>The mod entry point.</summary>
     internal sealed class ModEntry : Mod
     {
+        private static IViewEngine viewEngine;
+        public static IModHelper Helper;
         /*********
          ** Public methods
          *********/
@@ -24,18 +23,30 @@ namespace FishPondColoring
         /// <param name="helper">Provides simplified APIs for writing mods.</param>
         public override void Entry(IModHelper helper)
         {
+            Helper = helper;
+            Helper.Events.GameLoop.GameLaunched += OnGameLaunched;
+            Helper.Events.Input.ButtonPressed += OnButtonPressed;
             HarmonyPatches();
-            
-            Utility.ForEachBuilding(building =>
-            {
-                if (building is FishPond)
-                {
-                }
-                return true;
-            });
         }
 
-         private void HarmonyPatches()
+        private void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
+        {
+            if (e.Button == SButton.C)
+            {
+                FishPond pond = new FishPond();
+                ShowColorPicker(pond);
+            }
+        }
+
+        private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
+        {
+            viewEngine = Helper.ModRegistry.GetApi<IViewEngine>("focustense.StardewUI");
+            viewEngine.RegisterViews("Mods/Jok.ColorfulPonds/Views", "assets/views");
+            viewEngine.RegisterSprites("Mods/Jok.ColorfulPonds/Sprites", "assets/sprites");
+            viewEngine.EnableHotReloadingWithSourceSync();
+        }
+
+        private void HarmonyPatches()
         {
             var harmony = new Harmony(ModManifest.UniqueID);
             harmony.Patch(
@@ -55,7 +66,7 @@ namespace FishPondColoring
             
             harmony.Patch(
                 original:  AccessTools.Method(typeof(FishPond), "doFishSpecificWaterColoring"),
-                postfix: new HarmonyMethod(typeof(ModEntry), nameof(Pond_doFishSpecificWaterColoring_Prefix))
+                postfix: new HarmonyMethod(typeof(ModEntry), nameof(Pond_doFishSpecificWaterColoring_postfix))
             );
             
             var parameters = new Type[] { typeof(FishPond) };
@@ -64,7 +75,14 @@ namespace FishPondColoring
                 postfix: new HarmonyMethod(typeof(ModEntry), nameof(Pond_constructor_postfix))
             );
         }
-         
+        
+        public static void ShowColorPicker(FishPond pond)
+        {
+            var model = new PondColorModel(pond);
+            Game1.activeClickableMenu = viewEngine.CreateMenuFromAsset(
+                $"Mods/Jok.ColorfulPonds/Views/ColorPicker",model);
+        }
+
         public static ClickableTextureComponent changeColorButton;
         internal static void Pond_draw_postfix(PondQueryMenu __instance, SpriteBatch b)
         {
@@ -88,8 +106,7 @@ namespace FishPondColoring
                 FishPond? pond = Traverse.Create(__instance).Field("_pond").GetValue() as FishPond;
                 if (pond != null)
                 {
-                    pond.modData["Jok.FishPondColor"] = fishPondColor.PackedValue.ToString();
-                    Pond_doFishSpecificWaterColoring_Prefix(pond);
+                    ShowColorPicker(pond);
                 }
             }
         }
@@ -102,7 +119,6 @@ namespace FishPondColoring
             if (changeColorButton.containsPoint(x, y))
             {
                 changeColorButton.scale = Math.Min(4.1f, changeColorButton.scale + 0.05f);
-                //string text = Game1.content.LoadString("Strings\\UI:PondQuery_ChangeNetting", 10);
                 Traverse.Create(__instance).Field("hoverText").SetValue("Change Pond Color");
             }
             else
@@ -121,7 +137,7 @@ namespace FishPondColoring
             };
         }
 
-        public static void Pond_doFishSpecificWaterColoring_Prefix(FishPond __instance)
+        public static void Pond_doFishSpecificWaterColoring_postfix(FishPond __instance)
         {
             string value;
             if (__instance.modData.TryGetValue("Jok.FishPondColor", out value))

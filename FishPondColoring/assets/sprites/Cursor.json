@@ -1,0 +1,13 @@
+{
+  "Texture": "LooseSprites/Cursors",
+  "Sprites": {
+    "FishPondWaterAnim0": {
+      "SourceRect": "0, 2064, 64, 64",
+      "Scale": 1
+    },
+    "FishPondWaterAnim1": {
+      "SourceRect": "64, 2064, 64, 64",
+      "Scale": 1
+    }
+  }
+}
