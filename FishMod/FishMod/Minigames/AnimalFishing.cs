@@ -11,10 +11,9 @@ public class AnimalFishing
     {
         if (__instance.QualifiedItemId.Equals("(BC)Jok.Fishdew.CP.AnimalMachine") && !justCheckingForActivity && !__result)
         {
-            Game1.activeClickableMenu =
-                new BasicBobberBar(CompleteCallback, 3);
+            // TODO: make animal bar + sprites
+            Game1.activeClickableMenu = new BasicBobberBar(CompleteCallback, 3);
             
-
             void CompleteCallback(int treasures, bool success)
             {
                 if (!(__instance.Location is AnimalHouse animalHouse))

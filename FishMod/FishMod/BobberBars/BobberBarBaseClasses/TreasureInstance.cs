@@ -19,6 +19,9 @@ public static class TreasureSprites
 	public const int Rock = 8;
 	public const int MineralNode = 9;
 	public const int OmniGeode = 10;
+	public const int BossFish = 11;
+	public const int Chicken = 12;
+	public const int Cow = 19;
 }
 
 public class TreasureInstance
@@ -162,19 +165,26 @@ public class TreasureInstance
 			    treasureShake + everythingShake, new Rectangle(256, 51, 20, 24), Color.White, 0f, 
 			    new Vector2(10f, 10f),2f * treasureScale, SpriteEffects.None, 0.85f);
 	    }
-	    else if (spriteId == -1)
+	    else if (spriteId == TreasureSprites.NormalChest)
 	    {
 		    b.Draw(Game1.mouseCursors, // normal treasure
 			    new Vector2(xPositionOnScreen + 64 + 18, (yPositionOnScreen + 12 + 24) + treasurePosition) +
 			    treasureShake + everythingShake, new Rectangle(638, 1865, 20, 24), Color.White, 0f,
 			    new Vector2(10f, 10f), 2f * treasureScale, SpriteEffects.None, 0.85f);
 	    }
-	    else if (spriteId == -2)
+	    else if (spriteId == TreasureSprites.Fish)
 	    {
 		    b.Draw(Game1.mouseCursors, // normal fish
 			    new Vector2(xPositionOnScreen + 64 + 18, (yPositionOnScreen + 12 + 24) + treasurePosition) +
 			    treasureShake + everythingShake, new Rectangle(614, 1840, 20, 20), Color.White, 0f,
 			    new Vector2(10f, 10f), 2f * treasureScale, SpriteEffects.None, 0.88f);
+	    }
+	    else if(spriteId == TreasureSprites.Cow)
+	    {
+		    b.Draw(DeluxeFishingRodTool.fishingTextures,
+			    new Vector2(xPositionOnScreen + 64 + 18, yPositionOnScreen + 12 + 24 + treasurePosition) +
+			    treasureShake + everythingShake, new Rectangle(16 * spriteId, 0, 32, 32), Color.White, 0f,
+			    new Vector2(10f, 10f), 1.6f * treasureScale, SpriteEffects.None, 0.85f);
 	    }
 	    else
 	    {
