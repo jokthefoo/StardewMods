@@ -4,7 +4,9 @@ using System.Xml.Serialization;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using StardewModdingAPI.Events;
 using StardewValley;
+using StardewValley.Constants;
 using StardewValley.GameData.Tools;
 using StardewValley.Menus;
 using StardewValley.Tools;
@@ -43,6 +45,116 @@ namespace FishMod
                 return 2;
             return who.FishingLevel >= 1 ? 1 : 0;
         }
+
+        public static void StartFishingMinigame(BobberBar bobberBar, MenuChangedEventArgs e)
+        {
+
+            string? baitid = "";
+            List<string> tackles = new List<string>();
+            if (Game1.player.CurrentTool is FishingRod fishingRod)
+            {
+                baitid = fishingRod.GetBait()?.QualifiedItemId;
+                tackles = fishingRod.GetTackleQualifiedItemIDs();
+            }
+            else
+            {
+                return;
+            }
+
+            e.NewMenu.exitThisMenu(false);
+            if (!bobberBar.bossFish && Game1.random.NextDouble() < DeluxeFishingRodTool.baseFishFrenzyChance)
+            {
+                Game1.activeClickableMenu = new FishFrenzyBobberBar(bobberBar.whichFish, bobberBar.fishSize,
+                    bobberBar.bobbers, bobberBar.setFlagOnCatch, baitid);
+                return;
+            }
+
+            double tackleBoost = Utility.getStringCountInList(tackles, "(O)693") *
+                DeluxeFishingRodTool.baseChanceForTreasure / 3.0;
+            double pirateTackleBoost = Utility.getStringCountInList(tackles, "(O){{ModId}}.PirateTreasureHunter") *
+                                       DeluxeFishingRodTool.baseChanceForTreasure;
+
+            double pirateRodBoost = 0;
+            if (Game1.player.CurrentTool?.QualifiedItemId == DeluxeFishingRodTool.DeluxeRodQiid)
+            {
+                pirateRodBoost = DeluxeFishingRodTool.baseChanceForTreasure;
+            }
+
+            double baitBoost = baitid == "(O)703" ? DeluxeFishingRodTool.baseChanceForTreasure : 0.0;
+            double pirateBoost =
+                Game1.player.professions.Contains(9) ? DeluxeFishingRodTool.baseChanceForTreasure : 0.0;
+
+            double treasureOdds = DeluxeFishingRodTool.baseChanceForTreasure + Game1.player.LuckLevel * 0.005 +
+                                  baitBoost + tackleBoost + Game1.player.DailyLuck / 2.0 + pirateBoost +
+                                  pirateTackleBoost + pirateRodBoost;
+
+            bool blueTreasure = Game1.random.NextDouble() < treasureOdds;
+            bool redTreasure = Game1.random.NextDouble() < treasureOdds;
+            bool greenTreasure = false;
+            if (pirateRodBoost > 0)
+            {
+                greenTreasure = Game1.random.NextDouble() < treasureOdds;
+            }
+
+            int treasureCount = (bobberBar.treasure ? 1 : 0) + (blueTreasure ? 1 : 0) + (redTreasure ? 1 : 0) +
+                                (greenTreasure ? 1 : 0);
+
+            if (treasureCount < 4 && Game1.random.NextDouble() < pirateRodBoost)
+            {
+                treasureCount++;
+            }
+
+            if (bobberBar.treasure && Game1.player.stats.Get(StatKeys.Mastery(1)) > 0U && Game1.random.NextDouble() <
+                0.25 + Game1.player.team.AverageDailyLuck() + pirateTackleBoost)
+                bobberBar.goldenTreasure = true;
+
+            if (bobberBar.whichFish == "Jok.Fishdew.CP.Susebron")
+            {
+                Game1.activeClickableMenu = new BossBobberBar(bobberBar.whichFish, bobberBar.fishSize, treasureCount,
+                    bobberBar.bobbers, bobberBar.setFlagOnCatch, bobberBar.bossFish, baitid,
+                    bobberBar.goldenTreasure);
+                return;
+            }
+
+            if (bobberBar.whichFish == "Jok.Fishdew.CP.BlueEel")
+            {
+                Game1.activeClickableMenu = new SplitBobberBar(bobberBar.whichFish, bobberBar.fishSize, treasureCount,
+                    bobberBar.bobbers, bobberBar.setFlagOnCatch, bobberBar.bossFish, baitid,
+                    bobberBar.goldenTreasure);
+                return;
+            }
+
+            if (bobberBar.whichFish == "Jok.Fishdew.CP.RedDiscus")
+            {
+                Game1.activeClickableMenu = new DoubleFishBobberBar(bobberBar.whichFish, bobberBar.fishSize,
+                    treasureCount,
+                    bobberBar.bobbers, bobberBar.setFlagOnCatch, bobberBar.bossFish, baitid,
+                    bobberBar.goldenTreasure);
+                return;
+            }
+
+            var fishCaught = Game1.player.fishCaught;
+            if (fishCaught != null && fishCaught.ContainsKey("Jok.Fishdew.CP.Susebron") &&
+                bobberBar.whichFish == "Jok.Fishdew.CP.BlackDorado")
+            {
+                Game1.activeClickableMenu = new BossBobberBar(bobberBar.whichFish, bobberBar.fishSize, treasureCount,
+                    bobberBar.bobbers, bobberBar.setFlagOnCatch, bobberBar.bossFish, baitid,
+                    bobberBar.goldenTreasure);
+                return;
+            }
+
+            if (bobberBar.whichFish == "Jok.Fishdew.CP.MidnightPufferfish")
+            {
+                Game1.activeClickableMenu = new DoubleFishBobberBar(bobberBar.whichFish, bobberBar.fishSize,
+                    treasureCount,
+                    bobberBar.bobbers, bobberBar.setFlagOnCatch, bobberBar.bossFish, baitid,
+                    bobberBar.goldenTreasure);
+                return;
+            }
+            Game1.activeClickableMenu = new AdvBobberBar(bobberBar.whichFish, bobberBar.fishSize, treasureCount,
+                bobberBar.bobbers, bobberBar.setFlagOnCatch, bobberBar.bossFish, baitid, bobberBar.goldenTreasure);
+        }
+
 
         internal static void EditToolAssets(IDictionary<string, ToolData> data)
         {
