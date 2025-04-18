@@ -62,8 +62,11 @@ namespace FishPondColoring
             {
                 if (save)
                 {
-                    fishPond.modData["Jok.FishPondColor"] = pondColor.PackedValue.ToString();
-                    ModEntry.Pond_doFishSpecificWaterColoring_postfix(fishPond);
+                    if (pondColor != defaultPondColor)
+                    {
+                        fishPond.modData["Jok.FishPondColor"] = pondColor.PackedValue.ToString();
+                        ModEntry.Pond_doFishSpecificWaterColoring_postfix(fishPond);
+                    }
                 }
                 Game1.exitActiveMenu();
             }

@@ -6,7 +6,7 @@
   "UniqueID": "Jok.ColorfulPonds",
   "EntryDll": "FishPondColoring.dll",
   "MinimumApiVersion": "4.0.0",
-  "UpdateKeys": [],
+  "UpdateKeys": ["Nexus:33310"],
   "Dependencies": [
     {
       "UniqueID": "focustense.StardewUI",

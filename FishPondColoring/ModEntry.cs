@@ -25,7 +25,7 @@ namespace FishPondColoring
         {
             Helper = helper;
             Helper.Events.GameLoop.GameLaunched += OnGameLaunched;
-            Helper.Events.Input.ButtonPressed += OnButtonPressed;
+            //Helper.Events.Input.ButtonPressed += OnButtonPressed;
             HarmonyPatches();
         }
 
@@ -43,7 +43,7 @@ namespace FishPondColoring
             viewEngine = Helper.ModRegistry.GetApi<IViewEngine>("focustense.StardewUI");
             viewEngine.RegisterViews("Mods/Jok.ColorfulPonds/Views", "assets/views");
             viewEngine.RegisterSprites("Mods/Jok.ColorfulPonds/Sprites", "assets/sprites");
-            viewEngine.EnableHotReloadingWithSourceSync();
+            //viewEngine.EnableHotReloadingWithSourceSync();
         }
 
         private void HarmonyPatches()
