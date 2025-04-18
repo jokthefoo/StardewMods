@@ -374,10 +374,10 @@ public void fishUpdate(GameTime time)
 			treasures.Add(Rock);
 			if (treasures.Count < 30) // prevent infinity
 			{
-				Rock = new TreasureInstance(8, false, 20, 20);
+				Rock = new TreasureInstance(TreasureSprites.Rock, false, 20, 20);
 				Rock.decreaseRate = 0;
 
-				if (TreasureNode.treasureCaught && Game1.random.NextDouble() < 0.15f)
+				if (TreasureNode.treasureCaught && Game1.random.NextDouble() < 0.1f)
 				{
 					TreasureNode = new TreasureInstance(Game1.random.NextBool() ? TreasureSprites.MineralNode : TreasureSprites.OmniGeode, true, 500, 2000);
 					TreasureNode.decreaseRate = 0;

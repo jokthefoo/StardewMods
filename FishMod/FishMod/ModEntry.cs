@@ -364,10 +364,38 @@ namespace FishMod
                 var num3 = num1 * (Game1.random.Next(num2, Math.Max(6, num2)) / 5f);
                 var fishSize = Math.Max(0.0f, Math.Min(1f, num3 * (float)(1.0 + Game1.random.Next(-10, 11) / 100.0)));
                 
-                //Game1.activeClickableMenu = new FishFrenzyBobberBar("136", fishSize, bobbers, "","nobait");
+                Game1.activeClickableMenu = new FishFrenzyBobberBar("136", fishSize, bobbers, "","nobait");
                 //Game1.activeClickableMenu = new SplitBobberBar("136", fishSize, 3, bobbers, "");
                 //Game1.activeClickableMenu = new DoubleFishBobberBar("Jok.Fishdew.CP.RedDiscus", fishSize, 3, bobbers, "");
-                Game1.activeClickableMenu = new ShrinkingBobberBar("Jok.Fishdew.CP.MidnightPufferfish", fishSize, 0, bobbers, "");
+                //Game1.activeClickableMenu = new ShrinkingBobberBar("Jok.Fishdew.CP.MidnightPufferfish", fishSize, 0, bobbers, "");
+            }
+            
+            if (e.Button == SButton.H)
+            {
+
+                if (Game1.player.CurrentTool?.QualifiedItemId == DeluxeFishingRodTool.DeluxeRodQiid)
+                {
+                    if (Game1.player.CurrentTool is FishingRod fishingRod)
+                    {
+                        fishingRod.castingPower = 1f;
+                        var num0 = Math.Max(128f, (float)((double)fishingRod.castingPower * (DeluxeFishingRodTool.getAddedDistance(Game1.player) + 4) * 64.0)) - 8f;
+                        fishingRod.bobber.Set(new Vector2(
+                            Game1.player.StandingPixel.X + (Game1.player.FacingDirection == 3 ? -1f : 1f) * num0,
+                            Game1.player.StandingPixel.Y));
+                    }
+                }
+
+                List<string> bobbers = new List<string>();
+
+                var num1 = 1f * (1 / 5f);
+                var num2 = 1 + Game1.player.FishingLevel / 2;
+                var num3 = num1 * (Game1.random.Next(num2, Math.Max(6, num2)) / 5f);
+                var fishSize = Math.Max(0.0f, Math.Min(1f, num3 * (float)(1.0 + Game1.random.Next(-10, 11) / 100.0)));
+                
+                //Game1.activeClickableMenu = new FishFrenzyBobberBar("136", fishSize, bobbers, "","nobait");
+                Game1.activeClickableMenu = new SplitBobberBar("136", fishSize, 3, bobbers, "");
+                //Game1.activeClickableMenu = new DoubleFishBobberBar("Jok.Fishdew.CP.RedDiscus", fishSize, 3, bobbers, "");
+                //Game1.activeClickableMenu = new ShrinkingBobberBar("Jok.Fishdew.CP.MidnightPufferfish", fishSize, 0, bobbers, "");
             }
             
             if (e.Button == SButton.G)
@@ -387,6 +415,11 @@ namespace FishMod
                     }
                 }
                 //Game1.activeClickableMenu = new MiningBobberBar(Game1.player.currentLocation, Game1.player.CurrentTool, new Vector2(0,0));
+            }
+            
+            if (e.Button == SButton.J)
+            {
+                Game1.activeClickableMenu = new MiningBobberBar(Game1.player.currentLocation, Game1.player.CurrentTool, new Vector2(0,0));
             }
         }
     }
