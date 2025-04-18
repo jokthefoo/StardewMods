@@ -39,10 +39,14 @@ namespace FishMod
         private void HarmonyPatches()
         {
             var harmony = new Harmony(ModManifest.UniqueID);
+            
+            // Axe fishing
             harmony.Patch(
                 original: AccessTools.Method(typeof(Axe), nameof(Axe.DoFunction)),
                 prefix: new HarmonyMethod(typeof(AxeFishing), nameof(AxeFishing.TreeChopping_prefix))
             );
+            
+            // Normal Fishing
             harmony.Patch(
                 original: AccessTools.Method(typeof(FishingRod), nameof(FishingRod.tickUpdate)),
                 transpiler: new HarmonyMethod(typeof(DeluxeFishingRodTool),
@@ -54,14 +58,14 @@ namespace FishMod
                     nameof(DeluxeFishingRodTool.Post_openTreasureMenuEndFunction))
             );
 
+            // Watering can fishing
             Type[] types = { typeof(Vector2), typeof(int), typeof(Farmer) };
             var originalToolsMethod = typeof(Tool).GetMethod("tilesAffected",
                 BindingFlags.Instance | BindingFlags.NonPublic, null, types, null);
             harmony.Patch(
                 original: originalToolsMethod,
                 postfix: new HarmonyMethod(typeof(WateringCanFishing), nameof(WateringCanFishing.Post_tilesAffected)));
-
-
+            
             harmony.Patch(
                 original: AccessTools.Method(typeof(WateringCan), nameof(WateringCan.DoFunction)),
                 postfix: new HarmonyMethod(typeof(WateringCanFishing),
@@ -78,14 +82,22 @@ namespace FishMod
                 postfix: new HarmonyMethod(typeof(WateringCanFishing), nameof(WateringCanFishing.Post_toolCharging))
             );
 
+            // Mining Fishing
             harmony.Patch(
                 original: AccessTools.Method(typeof(Pickaxe), nameof(Pickaxe.DoFunction)),
                 postfix: new HarmonyMethod(typeof(MiningFishing), nameof(MiningFishing.Post_PickaxeSwing))
             );
             
+            // Animal Fishing
             harmony.Patch(
                 original: AccessTools.Method(typeof(StardewValley.Object), nameof(StardewValley.Object.checkForAction)),
                 postfix: new HarmonyMethod(typeof(AnimalFishing), nameof(AnimalFishing.Post_CheckForAction))
+            );
+            
+            Type[] drawTypes = { typeof(SpriteBatch),typeof(int), typeof(int), typeof(float) };
+            harmony.Patch(
+                original: AccessTools.Method(typeof(StardewValley.Object), nameof(StardewValley.Object.draw), drawTypes),
+                prefix: new HarmonyMethod(typeof(AnimalFishing), nameof(AnimalFishing.Pre_draw))
             );
         }
 

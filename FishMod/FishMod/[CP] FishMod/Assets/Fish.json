@@ -1,12 +1,6 @@
 ﻿{
   "Changes": [
     {
-      "LogName": "Aquarium fish load",
-      "Action": "Load",
-      "Target": "Mods/{{ModId}}/AqFish, Mods/{{ModId}}/Objects",
-      "FromFile": "Assets/{{TargetWithoutPath}}.png"
-    },
-    {
       "LogName": "Aquarium data",
       "Action": "EditData",
       "Target": "Data/AquariumFish",

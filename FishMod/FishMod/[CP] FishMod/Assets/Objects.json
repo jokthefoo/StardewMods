@@ -26,7 +26,7 @@
       "Entries": {
         "{{ModId}}_PirateTreasureHunter": "693 1 337 1 /Home/{{ModId}}.PirateTreasureHunter/false/null/",
         "Jok_FishMod_DeluxeFishingRod": "(T)AdvancedIridiumRod 1 {{ModId}}.PirateTreasureHunter 1 /Home/(T)Willy.FishMod.DeluxeFishingRod/false/null/",
-        "{{ModId}}_AnimalMachine": "-5 1 -6 1 388 60 390 60 SeaJelly 1/Home/{{ModId}}.AnimalMachine/true/false/null/"
+        "{{ModId}}_AnimalMachine": "-5 1 -6 1 388 60 390 60 SeaJelly 1/Home/{{ModId}}.AnimalMachine/true/default/null/" // TODO: change default to false and then need to create mail or w/e
       }
     },
     {
@@ -40,8 +40,8 @@
           "DisplayName": "Semi-Auto-Petter",
           "Description": "Made from blueprints some \"sailors\" \"found\" seem to be missing a few parts.",
           "Price": 0,
-          "Fragility": 1,
-          "CanBePlacedOutdoors": true,
+          "Fragility": 0,
+          "CanBePlacedOutdoors": false,
           "CanBePlacedIndoors": true,
           "IsLamp": false,
           "Texture": "Mods\\{{ModId}}\\BigCraftables",

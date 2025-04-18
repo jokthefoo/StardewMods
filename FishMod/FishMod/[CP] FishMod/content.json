@@ -2,6 +2,12 @@
   "Format": "2.6.0",
   "Changes": [
     {
+      "LogName": "Load Assets",
+      "Action": "Load",
+      "Target": "Mods/{{ModId}}/AqFish, Mods/{{ModId}}/Objects, Mods/{{ModId}}/BigCraftables , Mods/{{ModId}}/Rock",
+      "FromFile": "Assets/{{TargetWithoutPath}}.png"
+    },
+    {
       "Action": "Include",
       "FromFile": "Assets/Spawnables.json"
     },

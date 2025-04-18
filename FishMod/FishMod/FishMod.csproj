@@ -21,4 +21,28 @@
           <ContentPacks Include="[CP] FishMod" Version="$(Version)" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="[CP] FishMod\Assets\BigCraftables.png">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="[CP] FishMod\Assets\AqFish.png">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="[CP] FishMod\Assets\Fish.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="[CP] FishMod\Assets\Mail.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="[CP] FishMod\Assets\Objects.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="[CP] FishMod\Assets\Objects.png">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+      <None Update="[CP] FishMod\Assets\Rock.png">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>
