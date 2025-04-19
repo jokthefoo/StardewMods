@@ -198,7 +198,7 @@ public class BasicBobberBar : IClickableMenu
             {
                 int treasureCaughtCount = 0;
                 foreach (var t in treasures)
-                    if (t.treasureCaught)
+                    if (t.treasureCaught && t.realTreasure)
                     {
                         treasureCaughtCount++; 
                     }

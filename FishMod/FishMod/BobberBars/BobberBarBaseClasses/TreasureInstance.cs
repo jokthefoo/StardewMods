@@ -35,6 +35,7 @@ public static class TreasureSprites
 	public const int Goat = 503;
 	public const int Ostrich = 504;
 	public const int Pig = 505;
+	public const int Sheep = 506;
 }
 
 public class TreasureInstance

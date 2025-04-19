@@ -3,6 +3,8 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 using StardewValley.Buildings;
 using StardewValley.ItemTypeDefinitions;
+using StardewValley.Menus;
+using Object = StardewValley.Object;
 
 namespace FishMod;
 
@@ -24,44 +26,75 @@ public class AnimalFishing
                 {
                     continue;
                 }
-                
-                switch (pair.Value.type.Value)
-                {
-                    case "White Chicken":
-                        animals.Add(TreasureSprites.WhiteChicken);
-                        break;
-                    case "White Cow":
-                        animals.Add(TreasureSprites.WhiteCow);
-                        break;
-                    default:
-                        animals.Add(animalHouse.Name.Contains("Barn") ? TreasureSprites.WhiteCow : TreasureSprites.WhiteChicken);
-                        break;
-                }
-            }
 
-            animals.Add(TreasureSprites.BrownChicken);
-            animals.Add(TreasureSprites.Dino);
-            animals.Add(TreasureSprites.Duck);
+                int index = GetAnimalSpriteIndex(pair.Value.type.Value);
+                if (index == -1)
+                {
+                    animals.Add(animalHouse.Name.Contains("Barn") ? TreasureSprites.WhiteCow : TreasureSprites.WhiteChicken);
+                    continue;
+                }
+                animals.Add(index);
+            }
             
-            //TODO treasure results -- probably just what animals produce
+            Dictionary<string, int> produceCounts = new Dictionary<string, int>();
+            
             bool treasure = Game1.random.NextDouble() < DeluxeFishingRodTool.baseChanceForTreasure + who.LuckLevel * 0.005 + who.DailyLuck / 2.0;
-            DeluxeFishingRodTool.PlayHitEffectForRandomEncounter(who, new AnimalBobberBar(CompleteCallback, animals, treasure,3));
+            DeluxeFishingRodTool.PlayHitEffectForRandomEncounter(who, new AnimalBobberBar(CompleteCallback, animals, true,3));
             
             void CompleteCallback(int treasures, bool success)
             {
-                // TODO: normal xp gain?
                 int xp = 5 * animalHouse.animals.Pairs.Count();
                 Game1.player.gainExperience(Farmer.farmingSkill, xp);
                 foreach (KeyValuePair<long, FarmAnimal> pair in animalHouse.animals.Pairs)
                 {
-                    // TODO: should this be auto pet true?
                     pair.Value.pet(Game1.player, is_auto_pet: false);
+                    string key = pair.Value.currentProduce.Value;
+                    if (key == null)
+                    {
+                        continue;
+                    }
+                    if (produceCounts.ContainsKey(key))
+                    {
+                        produceCounts[key] = 1;
+                    }
+                    else
+                    {
+                        produceCounts[key]++;
+                    }
                 }
+                
+                if (treasures > 0 && produceCounts.Any())
+                {
+                    who.playNearbySoundLocal("openChest");
+                    __instance.Location.temporarySprites.Add(new TemporaryAnimatedSprite("LooseSprites\\Cursors", new Rectangle(64, 1920, 32, 32), 200f, 4, 0, who.Position + new Vector2(-32f, -228f), false, false, (float) ( who.StandingPixel.Y / 10000.0 + 1.0 / 1000.0), 0.0f, Color.White, 4f, 0.0f, 0.0f, 0.0f)
+                    {
+                        endFunction = openTreasureMenu
+                    });
+                }
+            }
+
+            void openTreasureMenu(int extraInfo)
+            {
+                Game1.player.gainExperience(Farmer.farmingSkill, 10);
+        
+                List<Item> inventory = new List<Item>();
+                
+                foreach (var pair in produceCounts)
+                {
+                    if (pair.Value > 0)
+                    {
+                        inventory.Add(ItemRegistry.Create(pair.Key, pair.Value));
+                    }
+                }
+        
+                ItemGrabMenu itemGrabMenu = new ItemGrabMenu(inventory).setEssential(true);
+                itemGrabMenu.source = 69;
+                Game1.activeClickableMenu = itemGrabMenu;
             }
         }
     }
 
-    public static bool Pre_draw(StardewValley.Object __instance, SpriteBatch spriteBatch, int x, int y, float alpha = 1f)
+    public static bool Pre_draw(Object __instance, SpriteBatch spriteBatch, int x, int y, float alpha = 1f)
     {
         if (__instance.QualifiedItemId.Equals("(BC)Jok.Fishdew.CP.AnimalMachine"))
         {
@@ -85,5 +118,42 @@ public class AnimalFishing
             return false;
         }
         return true;
+    }
+
+    private static int GetAnimalSpriteIndex(string animalType)
+    {
+        switch (animalType)
+        {
+            case "White Chicken":
+                return TreasureSprites.WhiteChicken;
+            case "Brown Chicken":
+                return TreasureSprites.BrownChicken;
+            case "Blue Chicken":
+                return TreasureSprites.BlueChicken;
+            case "Void Chicken":
+                return TreasureSprites.VoidChicken;
+            case "Golden Chicken":
+                return TreasureSprites.GoldenChicken;
+            case "Duck":
+                return TreasureSprites.Duck;
+            case "Rabbit":
+                return TreasureSprites.Rabbit;
+            case "Dinosaur":
+                return TreasureSprites.Dino;
+            case "White Cow":
+                return TreasureSprites.WhiteCow;
+            case "Brown Cow":
+                return TreasureSprites.BrownCow;
+            case "Goat":
+                return TreasureSprites.Goat;
+            case "Sheep":
+                return TreasureSprites.Sheep;
+            case "Pig":
+                return TreasureSprites.Pig;
+            case "Ostrich":
+                return TreasureSprites.Ostrich;
+        }
+
+        return -1;
     }
 }

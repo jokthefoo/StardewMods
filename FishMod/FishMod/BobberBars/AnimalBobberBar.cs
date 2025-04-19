@@ -26,11 +26,6 @@ public class AnimalBobberBar : BasicBobberBar
         distanceFromCatching = 0.01f;
     }
 
-    public override void update(GameTime time)
-    {
-        base.update(time);
-    }
-
     protected override void TreasureUpdate(GameTime time)
     {
         treasureInBar = false;
