@@ -8,8 +8,8 @@ namespace FishMod;
 public class AnimalBobberBar : BasicBobberBar
 {
     private float perAnimalProgress;
-    public AnimalBobberBar(CallBack completeCallback, List<int> animals, int treasure, int colorIndex = -1)
-        : base(completeCallback, treasure, Game1.player.farmingLevel.Value, false, colorIndex)
+    public AnimalBobberBar(CallBack completeCallback, List<int> animals, bool treasure, int colorIndex = -1)
+        : base(completeCallback, treasure ? 1 : 0, Game1.player.farmingLevel.Value, false, colorIndex)
     {
         perAnimalProgress = 1f / animals.Count;
         foreach (var animalIndex in animals)
@@ -17,9 +17,13 @@ public class AnimalBobberBar : BasicBobberBar
             var newTreasure = new MovingTreasure(animalIndex, false, 20, 20);
             newTreasure.difficulty = 20 + Game1.player.farmingLevel.Value * 3;
             newTreasure.catchEffect = TreasureSprites.HeartIcon;
+            newTreasure.treasureShakeMultiplier = .5f;
+            newTreasure.increaseRate *= 2;
+            newTreasure.isSpecial = true;
+            newTreasure.treasureProgressColor = Color.White;
             treasures.Add(newTreasure);
         }
-        distanceFromCatching = 0.1f;
+        distanceFromCatching = 0.01f;
     }
 
     public override void update(GameTime time)
@@ -79,10 +83,19 @@ public class AnimalBobberBar : BasicBobberBar
     {
         // bar background
         b.Draw(DeluxeFishingRodTool.fishingTextures, new Vector2(xPositionOnScreen + 126, yPositionOnScreen + 296) + everythingShake,
-            new Rectangle(112, 362, 22, 148), Color.White * scale, 0f, new Vector2(18.5f, 74f) * scale, 4f * scale,
+            new Rectangle(141, 362, 22, 148), Color.White * scale, 0f, new Vector2(18.5f, 74f) * scale, 4f * scale,
             SpriteEffects.None, 0.01f);
     }
     
+    protected override void DrawProgressBar(SpriteBatch b)
+    {
+        // current level of progress bar
+        b.Draw(Game1.staminaRect,
+            new Rectangle(xPositionOnScreen + 124 - 8,
+                yPositionOnScreen + 4 + (int)(580f * (1f - distanceFromCatching)), 16,
+                (int)(580f * distanceFromCatching)), Utility.getRedToGreenLerpColor(distanceFromCatching));
+
+    }
     public override void CheckVictory()
     {
         if (distanceFromCatching >= 1f)

@@ -414,7 +414,7 @@ public class BasicBobberBar : IClickableMenu
                       2) + 2f), 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.89f);
     }
 
-    void DrawProgressBar(SpriteBatch b)
+    protected virtual void DrawProgressBar(SpriteBatch b)
     {
         // current level of progress bar
         b.Draw(Game1.staminaRect,

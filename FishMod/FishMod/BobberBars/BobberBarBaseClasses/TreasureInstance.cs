@@ -22,7 +22,19 @@ public static class TreasureSprites
 	public const int BossFish = 11;
 	public const int WhiteChicken = 12;
 	public const int HeartIcon = 13;
-	public const int WhiteCow = 544;
+	public const int BrownChicken = 14;
+	public const int VoidChicken = 15;
+	public const int GoldenChicken = 16;
+	public const int BlueChicken = 17;
+	public const int Dino = 18;
+	public const int Duck = 19;
+	public const int Rabbit = 20;
+	
+	public const int WhiteCow = 501;
+	public const int BrownCow = 502;
+	public const int Goat = 503;
+	public const int Ostrich = 504;
+	public const int Pig = 505;
 }
 
 public class TreasureInstance
@@ -80,7 +92,7 @@ public class TreasureInstance
 
 	public virtual bool treasureUpdate(GameTime time, float bobberBarPos, int bobberBarHeight)
 	{
-		if ((lostTreasure || treasureCaught) && treasureScale == 0f)
+		if ((lostTreasure || treasureCaught) && treasureScale <= 0.01f && playingCatchEffect <= 0.01f)
 		{
 			return false;
 		}
@@ -188,11 +200,11 @@ public class TreasureInstance
 			    treasureShake + everythingShake, new Rectangle(614, 1840, 20, 20), Color.White, 0f,
 			    new Vector2(10f, 10f), 2f * treasureScale, SpriteEffects.None, 0.88f);
 	    }
-	    else if(spriteId == TreasureSprites.WhiteCow)
+	    else if(spriteId >= TreasureSprites.WhiteCow)
 	    {
 		    b.Draw(DeluxeFishingRodTool.fishingTextures,
 			    new Vector2(xPositionOnScreen + 64 + 14, yPositionOnScreen + 12 + 24 + treasurePosition) +
-			    treasureShake + everythingShake, new Rectangle(32, 32, 32, 32), Color.White, 0f,
+			    treasureShake + everythingShake, new Rectangle(32 * (spriteId - 500), 32, 32, 32), Color.White, 0f,
 			    new Vector2(10f, 10f), 1.6f * treasureScale, SpriteEffects.None, 0.85f);
 	    }
 	    else
