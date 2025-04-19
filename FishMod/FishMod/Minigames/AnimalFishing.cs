@@ -39,7 +39,7 @@ public class AnimalFishing
             Dictionary<string, int> produceCounts = new Dictionary<string, int>();
             
             bool treasure = Game1.random.NextDouble() < DeluxeFishingRodTool.baseChanceForTreasure + who.LuckLevel * 0.005 + who.DailyLuck / 2.0;
-            DeluxeFishingRodTool.PlayHitEffectForRandomEncounter(who, new AnimalBobberBar(CompleteCallback, animals, true,3));
+            DeluxeFishingRodTool.PlayHitEffectForRandomEncounter(who, new AnimalBobberBar(CompleteCallback, animals, treasure,3));
             
             void CompleteCallback(int treasures, bool success)
             {
