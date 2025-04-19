@@ -1,0 +1,14 @@
+{
+  "Name": "Modular Tools",
+  "Author": "Jok",
+  "Version": "1.0.0",
+  "Description": "Modular Tools",
+  "UniqueID": "Jok.ModularTools",
+  "EntryDll": "ModularTools.dll",
+  "MinimumApiVersion": "4.0.0",
+  "UpdateKeys": [],
+  "Dependencies": [
+    {
+    }
+  ]
+}

@@ -22,3 +22,5 @@ FishMod/FishMod.sln.DotSettings.user
 /FishPondColoring/.idea
 /FishPondColoring/bin
 FishPondColoring/FishPondColoring.sln.DotSettings.user
+*/.idea*
+*/obj*
