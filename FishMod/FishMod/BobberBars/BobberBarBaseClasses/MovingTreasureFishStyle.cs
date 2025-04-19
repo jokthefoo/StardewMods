@@ -37,7 +37,7 @@ public class MovingTreasureFishStyle : TreasureInstance
 
     public override bool treasureUpdate(GameTime time, float bobberBarPos, int bobberBarHeight)
     {
-	    if (treasureAppearTimer <= 0f)
+	    if (treasureAppearTimer <= 0f && !treasureCaught)
 	    {
 		    updatePosition();
 	    }

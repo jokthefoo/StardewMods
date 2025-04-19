@@ -39,6 +39,7 @@ public class AnimalFishing
                 }
             }
             animals.Add(TreasureSprites.WhiteCow);
+            animals.Add(TreasureSprites.WhiteCow);
             
             Game1.activeClickableMenu = new AnimalBobberBar(CompleteCallback, animals, 2,3);
             

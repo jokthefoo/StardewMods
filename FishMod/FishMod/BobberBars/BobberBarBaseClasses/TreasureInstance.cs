@@ -139,7 +139,11 @@ public class TreasureInstance
 			else if (treasureCaught)
 			{
 				treasureScale = Math.Max(0f, treasureScale - 0.1f);
-				playingCatchEffect = Math.Max(0f, playingCatchEffect - 0.1f);
+				if (treasureScale <= 0.01f)
+				{
+					playingCatchEffect = Math.Max(0f, playingCatchEffect - 0.1f);
+					treasureShake = new Vector2(Game1.random.Next(-2, 3) * treasureShakeMultiplier, Game1.random.Next(-2, 3) * treasureShakeMultiplier);
+				}
 			}
 			else
 			{
@@ -187,7 +191,7 @@ public class TreasureInstance
 	    else if(spriteId == TreasureSprites.WhiteCow)
 	    {
 		    b.Draw(DeluxeFishingRodTool.fishingTextures,
-			    new Vector2(xPositionOnScreen + 64 + 18, yPositionOnScreen + 12 + 24 + treasurePosition) +
+			    new Vector2(xPositionOnScreen + 64 + 14, yPositionOnScreen + 12 + 24 + treasurePosition) +
 			    treasureShake + everythingShake, new Rectangle(32, 32, 32, 32), Color.White, 0f,
 			    new Vector2(10f, 10f), 1.6f * treasureScale, SpriteEffects.None, 0.85f);
 	    }
