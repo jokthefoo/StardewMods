@@ -6,9 +6,5 @@
   "UniqueID": "Jok.ModularTools",
   "EntryDll": "ModularTools.dll",
   "MinimumApiVersion": "4.0.0",
-  "UpdateKeys": [],
-  "Dependencies": [
-    {
-    }
-  ]
+  "UpdateKeys": []
 }

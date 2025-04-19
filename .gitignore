@@ -1,26 +1,27 @@
 *.pdn
-FishMod/global.json
-/FishMod/FishMod/obj
-/FishMod/FishMod/bin
-/FishMod/.idea/.idea.FishMod/.idea
+*/.idea*
+*/obj*
+*/bin*
+*\obj*
+*\bin*
+*.sln.DotSettings.user
+
 
 # Default ignored files
 /shelf/
 /workspace.xml
+
 # Rider ignored files
 /modules.xml
 /contentModel.xml
 /projectSettingsUpdater.xml
-/.idea.FishMod.iml
+
+
 # Editor-based HTTP Client requests
 /httpRequests/
+
 # Datasource local storage ignored files
 /dataSources/
 /dataSources.local.xml
-FishMod/FishMod.sln.DotSettings.user
-/FishPondColoring/obj
-/FishPondColoring/.idea
-/FishPondColoring/bin
-FishPondColoring/FishPondColoring.sln.DotSettings.user
-*/.idea*
-*/obj*
+
+FishMod/global.json
