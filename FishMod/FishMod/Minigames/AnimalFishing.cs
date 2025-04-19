@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
+using StardewValley.Buildings;
 using StardewValley.ItemTypeDefinitions;
 
 namespace FishMod;
@@ -11,16 +12,38 @@ public class AnimalFishing
     {
         if (__instance.QualifiedItemId.Equals("(BC)Jok.Fishdew.CP.AnimalMachine") && !justCheckingForActivity && !__result)
         {
-            // TODO: make animal bar + sprites
-            Game1.activeClickableMenu = new BasicBobberBar(CompleteCallback, 3);
+            if (!(__instance.Location is AnimalHouse animalHouse))
+            {
+                return;
+            }
+            
+            List<int> animals = new List<int>();
+            foreach (KeyValuePair<long, FarmAnimal> pair in animalHouse.animals.Pairs)
+            {
+                if (pair.Value.wasPet.Value || pair.Value.wasAutoPet.Value)
+                {
+                    continue;
+                }
+                
+                switch (pair.Value.type.Value)
+                {
+                    case "White Chicken":
+                        animals.Add(TreasureSprites.WhiteChicken);
+                        break;
+                    case "White Cow":
+                        animals.Add(TreasureSprites.WhiteCow);
+                        break;
+                    default:
+                        animals.Add(animalHouse.Name.Contains("Barn") ? TreasureSprites.WhiteCow : TreasureSprites.WhiteChicken);
+                        break;
+                }
+            }
+            animals.Add(TreasureSprites.WhiteCow);
+            
+            Game1.activeClickableMenu = new AnimalBobberBar(CompleteCallback, animals, 2,3);
             
             void CompleteCallback(int treasures, bool success)
             {
-                if (!(__instance.Location is AnimalHouse animalHouse))
-                {
-                    return;
-                }
-
                 // TODO: normal xp gain?
                 int xp = 5 * animalHouse.animals.Pairs.Count();
                 Game1.player.gainExperience(Farmer.farmingSkill, xp);

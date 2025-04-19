@@ -54,12 +54,16 @@ public class BasicBobberBar : IClickableMenu
     private CallBack minigameEndingCallback;
     public delegate void CallBack(int treasures, bool success);  
 
-    public BasicBobberBar(CallBack completeCallback, int treasure, bool goldenTreasure = false, int colorIndex = -1)
+    public BasicBobberBar(CallBack completeCallback, int treasure, int playerLevel = -1, bool goldenTreasure = false, int colorIndex = -1)
         : base(0, 0, 96, 636)
     {
         minigameEndingCallback = completeCallback;
         TreasureSetup(treasure, goldenTreasure);
-        BobberBarSetup(colorIndex);
+        if (playerLevel == -1)
+        {
+            playerLevel = Game1.player.FishingLevel;
+        }
+        BobberBarSetup(colorIndex, playerLevel);
             
         preGameFadingIn = true;
         scale = 0f;
@@ -68,10 +72,10 @@ public class BasicBobberBar : IClickableMenu
         Game1.setRichPresence("fishing", Game1.currentLocation.Name);
     }
 
-    private void BobberBarSetup(int colorIndex)
+    private void BobberBarSetup(int colorIndex, int playerLevel)
     {
         this.colorIndex = colorIndex;
-        bobberBarHeight = 96 + Game1.player.FishingLevel * 8;
+        bobberBarHeight = 96 + playerLevel * 8;
         bobberBarPos = 568 - bobberBarHeight;
     }
     private void TreasureSetup(int treasureCount, bool goldenTreasure)
@@ -251,7 +255,7 @@ public class BasicBobberBar : IClickableMenu
     }
     
     // Update progress, stop bar shake, start fish shake, play sound
-    private void IncreaseProgress()
+    protected virtual void IncreaseProgress()
     {
         distanceFromCatching += 0.002f;
         barShake = Vector2.Zero;
@@ -371,7 +375,7 @@ public class BasicBobberBar : IClickableMenu
             flipBubble ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0.001f);
     }
 
-    void DrawBackground(SpriteBatch b)
+    protected virtual void DrawBackground(SpriteBatch b)
     {
         // bar background
         b.Draw(Game1.mouseCursors, new Vector2(xPositionOnScreen + 70, yPositionOnScreen + 296) + everythingShake,

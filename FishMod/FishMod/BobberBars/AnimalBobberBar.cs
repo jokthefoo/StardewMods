@@ -1,15 +1,25 @@
-﻿using System.Collections;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
 
 namespace FishMod;
 
-public class AnimalBobberBar : AdvBobberBar
+public class AnimalBobberBar : BasicBobberBar
 {
-    public AnimalBobberBar(int treasure, List<int> animals, int colorIndex = -1)
-        : base("136", 50, treasure, new List<string>(), "", false, "", false, colorIndex)
+    private float perAnimalProgress;
+    public AnimalBobberBar(CallBack completeCallback, List<int> animals, int treasure, int colorIndex = -1)
+        : base(completeCallback, treasure, Game1.player.farmingLevel.Value, false, colorIndex)
     {
+        perAnimalProgress = 1f / animals.Count;
+        foreach (var animalIndex in animals)
+        {
+            var newTreasure = new MovingTreasure(animalIndex, false, 20, 20);
+            newTreasure.difficulty = 20 + Game1.player.farmingLevel.Value * 3;
+            newTreasure.catchEffect = TreasureSprites.HeartIcon;
+            treasures.Add(newTreasure);
+        }
+        distanceFromCatching = 0.1f;
     }
 
     public override void update(GameTime time)
@@ -21,8 +31,16 @@ public class AnimalBobberBar : AdvBobberBar
     {
         treasureInBar = false;
         foreach (var t in treasures)
+        {
+            bool beforeCaught = t.treasureCaught;
             if (t.treasureUpdate(time, bobberBarPos, bobberBarHeight))
                 treasureInBar = true;
+            
+            if (!beforeCaught && t.treasureCaught && !t.realTreasure)
+            {
+                distanceFromCatching += perAnimalProgress;
+            }
+        }
     }
     
     protected override void DrawTreasures(SpriteBatch b)
@@ -31,9 +49,38 @@ public class AnimalBobberBar : AdvBobberBar
             t.drawTreasure(b, everythingShake, xPositionOnScreen, yPositionOnScreen);
     }
     
+    protected override void IncreaseProgress()
+    {
+        if (!treasureInBar)
+        {
+            return;
+        }
+        barShake = Vector2.Zero;
+        Rumble.rumble(0.1f, 1000f);
+        unReelSound?.Stop(AudioStopOptions.Immediate);
+        if (reelSound == null || reelSound.IsStopped || reelSound.IsStopping || !reelSound.IsPlaying)
+            Game1.playSound("fastReel", out reelSound);
+    }
+    
     protected override void DecreaseProgress()
-    { 
-        distanceFromCatching -= 0.003f * distanceFromCatchPenaltyModifier;
+    {
+        if (treasureInBar)
+        {
+            return;
+        }
+        Rumble.stopRumbling();
+        barShake.X = Game1.random.Next(-10, 11) / 10f;
+        barShake.Y = Game1.random.Next(-10, 11) / 10f;
+        reelSound?.Stop(AudioStopOptions.Immediate);
+        if (unReelSound == null || unReelSound.IsStopped) Game1.playSound("slowReel", 600, out unReelSound);
+    }
+    
+    protected override void DrawBackground(SpriteBatch b)
+    {
+        // bar background
+        b.Draw(DeluxeFishingRodTool.fishingTextures, new Vector2(xPositionOnScreen + 126, yPositionOnScreen + 296) + everythingShake,
+            new Rectangle(112, 362, 22, 148), Color.White * scale, 0f, new Vector2(18.5f, 74f) * scale, 4f * scale,
+            SpriteEffects.None, 0.01f);
     }
     
     public override void CheckVictory()

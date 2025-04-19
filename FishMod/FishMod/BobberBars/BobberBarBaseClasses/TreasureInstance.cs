@@ -20,8 +20,9 @@ public static class TreasureSprites
 	public const int MineralNode = 9;
 	public const int OmniGeode = 10;
 	public const int BossFish = 11;
-	public const int Chicken = 12;
-	public const int Cow = 19;
+	public const int WhiteChicken = 12;
+	public const int HeartIcon = 13;
+	public const int WhiteCow = 544;
 }
 
 public class TreasureInstance
@@ -36,8 +37,10 @@ public class TreasureInstance
 	public bool goldenTreasure;
 	private Vector2 treasureShake;
 	public int spriteId;
-	
-	
+
+	public int catchEffect = -1;
+	public float playingCatchEffect = 0;
+		
 	public float initTreasurePosition = 0;
 	
 	public const int minPos = 8;
@@ -130,11 +133,13 @@ public class TreasureInstance
 				{
 					Game1.playSound("newArtifact");
 					treasureCaught = true;
+					playingCatchEffect = 2f;
 				}
 			}
 			else if (treasureCaught)
 			{
 				treasureScale = Math.Max(0f, treasureScale - 0.1f);
+				playingCatchEffect = Math.Max(0f, playingCatchEffect - 0.1f);
 			}
 			else
 			{
@@ -179,11 +184,11 @@ public class TreasureInstance
 			    treasureShake + everythingShake, new Rectangle(614, 1840, 20, 20), Color.White, 0f,
 			    new Vector2(10f, 10f), 2f * treasureScale, SpriteEffects.None, 0.88f);
 	    }
-	    else if(spriteId == TreasureSprites.Cow)
+	    else if(spriteId == TreasureSprites.WhiteCow)
 	    {
 		    b.Draw(DeluxeFishingRodTool.fishingTextures,
 			    new Vector2(xPositionOnScreen + 64 + 18, yPositionOnScreen + 12 + 24 + treasurePosition) +
-			    treasureShake + everythingShake, new Rectangle(16 * spriteId, 0, 32, 32), Color.White, 0f,
+			    treasureShake + everythingShake, new Rectangle(32, 32, 32, 32), Color.White, 0f,
 			    new Vector2(10f, 10f), 1.6f * treasureScale, SpriteEffects.None, 0.85f);
 	    }
 	    else
@@ -220,6 +225,15 @@ public class TreasureInstance
 				    new Rectangle(xPositionOnScreen + 64, yPositionOnScreen + 12 + (int)treasurePosition,
 					    (int)(treasureCatchLevel * 40f), 8), treasureProgressColor);
 		    }
+	    }
+
+	    if (catchEffect != -1 && playingCatchEffect > 0)
+	    {
+		    // draw temporary sprite after catching
+		    b.Draw(DeluxeFishingRodTool.fishingTextures,
+			    new Vector2(xPositionOnScreen + 64 + 18, yPositionOnScreen + 12 + 24 + treasurePosition) +
+			    treasureShake + everythingShake, new Rectangle(20 * catchEffect, 0, 20, 24), Color.White, 0f,
+			    new Vector2(10f, 10f), 2f, SpriteEffects.None, 0.85f);
 	    }
     }
 }
