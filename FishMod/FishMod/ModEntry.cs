@@ -15,7 +15,6 @@ namespace FishMod
     /// <summary>The mod entry point.</summary>
     internal sealed class ModEntry : Mod
     {
-        public static IMonitor Monitor;
         /*********
          ** Public methods
          *********/
