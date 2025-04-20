@@ -88,7 +88,7 @@ namespace FishMod
 		
 		private List<Debris> debris = new List<Debris>();
 
-		public TreeBobberBar(GameLocation location, bool treasure, int logCount, Tool t, Vector2 tileLocation)
+		public TreeBobberBar(GameLocation location, bool treasure, int logCount, Tool t, Vector2 tileLocation, int spriteIndex = TreasureSprites.Wood_Pau)
 			: base(0, 0, 96, 636)
 		{
 			tool = t;
@@ -101,7 +101,7 @@ namespace FishMod
 			
 			for (int i = 0; i < logCount; i++)
 			{
-				treasures.Add(new TreasureInstance(TreasureSprites.Wood_Pau, false, 20,20));
+				treasures.Add(new TreasureInstance(spriteIndex, false, 20,20));
 			}
 
 			if (treasure)
