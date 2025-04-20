@@ -1,4 +1,6 @@
 ﻿using System.Reflection;
+using System.Reflection.Emit;
+using System.Text;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -6,7 +8,9 @@ using Netcode;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
+using StardewValley.Menus;
 using StardewValley.Tools;
+using Object = StardewValley.Object;
 
 namespace ModularTools
 {
@@ -46,13 +50,120 @@ namespace ModularTools
                 prefix: new HarmonyMethod(typeof(ModEntry), nameof(DrawAttachmentSlot_prefix))
             );
             
-            // TODO transpiler IClickableMenu drawHoverText --- height += 68 * hoveredItem.attachmentSlots(); is breaking tools
-            // weapons don't expand at all
+            Type[] drawHoverTypes = { typeof(SpriteBatch), typeof(StringBuilder), typeof(SpriteFont), typeof(int), typeof(int), typeof(int), typeof(string), typeof(int), typeof(string[]), typeof(Item), typeof(int), typeof(string), typeof(int), typeof(int), typeof(int), typeof(float), typeof(CraftingRecipe), typeof(IList<Item>), typeof(Texture2D), typeof(Rectangle), typeof(Color), typeof(Color), typeof(float), typeof(int), typeof(int)};
+            harmony.Patch(
+                original: AccessTools.Method(typeof(IClickableMenu), nameof(IClickableMenu.drawHoverText), drawHoverTypes),
+                transpiler: new HarmonyMethod(typeof(ModEntry),
+                    nameof(IClickableMenu_drawHoverTextTranspiler))
+            );
+            
+            harmony.Patch(
+                original: AccessTools.Method(typeof(Tool), nameof(Tool.canThisBeAttached), new Type[] { typeof(Object), typeof(int) }),
+                postfix: new HarmonyMethod(typeof(ModEntry), nameof(canThisBeAttached_postfix))
+            );
+        }
+
+        // patch GetCategoryColor
+        // patch GetCategoryDisplayName
+        // countsForShippedCollection
+        // isPotentialBasicShipped
+        // GetBaseContextTags??
+        
+        // dont need to patch for this but it is interesting for magic mod: drawPlacementBounds --- isPlaceable
+        public static void canThisBeAttached_postfix(Tool __instance, ref bool __result, Object o, int slot)
+        {
+            /* fishing rod
+            if (o.QualifiedItemId == "(O)789" && slot != 0)
+            {
+                return true;
+            }
+            if (slot != 0)
+            {
+                if (o.Category == -22)
+                {
+                    return this.CanUseTackle();
+                }
+                return false;
+            }
+            if (o.Category == -21)
+            {
+                return this.CanUseBait();
+            }
+            return false;*/
+        }
+        
+        public static int AdjustHoverMenuHeight(Item hoveredItem)
+        {
+            // TODO config to disable this part
+            int slots = hoveredItem.attachmentSlots();
+            if (hoveredItem is WateringCan or Hoe or Pickaxe or Axe or Pan or MeleeWeapon)
+            {
+                if (slots > 0)
+                {
+                    if (slots % 2 == 0)
+                    {
+                        return 68 * slots / 2;
+                    }
+                    return 68 * (slots + 1) / 2;
+                }
+            }
+            return 68 * slots;
+        }
+        
+        public static IEnumerable<CodeInstruction> IClickableMenu_drawHoverTextTranspiler(IEnumerable<CodeInstruction> instructions,
+            ILGenerator generator)
+        {
+            CodeMatcher matcher = new(instructions, generator);
+            MethodInfo attachmentSlots = AccessTools.PropertyGetter(typeof(Item), nameof(Item.attachmentSlots));
+            MethodInfo adjustHeight = AccessTools.Method(typeof(ModEntry), nameof(AdjustHoverMenuHeight));
+
+            // Transpile height for tools
+            matcher.MatchStartForward(
+                    new CodeMatch(OpCodes.Ldloc_2), // load height
+                    new CodeMatch(OpCodes.Ldc_I4_S, (sbyte)68), // 68 
+                    new CodeMatch(OpCodes.Ldarg_S, (byte)9), // hover item
+                    new CodeMatch(OpCodes.Callvirt, attachmentSlots), // get hover item slot count
+                    new CodeMatch(OpCodes.Mul), // 68 * slot count
+                    new CodeMatch(OpCodes.Add), // add to height
+                    new CodeMatch(OpCodes.Stloc_2) // store into height
+                )
+                .ThrowIfNotMatch($"Could not find tool entry point for {nameof(IClickableMenu_drawHoverTextTranspiler)}")
+                .Advance(1)
+                .RemoveInstruction() // remove 68
+                .Advance(1)
+                .RemoveInstruction() // remove get attach slots
+                .InsertAndAdvance(
+                    new CodeInstruction(OpCodes.Call, adjustHeight) // returns int height
+                ).RemoveInstruction(); // remove mul
+
+            
+            MethodInfo getToolForgeLevels = AccessTools.Method(typeof(Tool), nameof(Tool.GetTotalForgeLevels));
+            var myJump = generator.DefineLabel();
+            // Transpile height for weapons
+            matcher.MatchStartForward(
+                new CodeMatch(OpCodes.Ldloc_S), // grab the weapon, (byte)19
+                new CodeMatch(OpCodes.Ldc_I4_0), // push a 0
+                new CodeMatch(OpCodes.Callvirt, getToolForgeLevels), // , getToolForgeLevels
+                new CodeMatch(OpCodes.Ldc_I4_0), // push a 0
+                new CodeMatch(OpCodes.Ble_S) // if forge <= 0 skip next section
+            )
+            .ThrowIfNotMatch($"Could not find weapon entry point for {nameof(IClickableMenu_drawHoverTextTranspiler)}")
+            .Advance(1)
+            .InsertAndAdvance(
+                new CodeInstruction(OpCodes.Ldarg_S, (byte)9), // load hover item
+                new CodeInstruction(OpCodes.Call, adjustHeight), // returns int height
+                new CodeInstruction(OpCodes.Ldloc_2),
+                new CodeInstruction(OpCodes.Add),
+                new CodeInstruction(OpCodes.Stloc_2)
+            );
+
+            return matcher.InstructionEnumeration();
         }
         
         internal static bool DrawAttachmentSlot_prefix(Tool __instance, int slot, SpriteBatch b, int x, int y)
         {
-            if (__instance is not WateringCan && __instance is not Pickaxe && __instance is not Hoe && __instance is not Axe && __instance is not Pan)
+            // TODO config to disable this part
+            if (__instance is not WateringCan && __instance is not Pickaxe && __instance is not Hoe && __instance is not Axe && __instance is not Pan && __instance is not MeleeWeapon)
             {
                 return true;
             }
@@ -70,28 +181,5 @@ namespace ModularTools
             __instance.attachments[slot]?.drawInMenu(b, pixel, 1f);
             return false;
         }
-        
-        // TODO override can this attach
-        // protected override bool canThisBeAttached(Object o, int slot)
-        /*
-         * if (o.QualifiedItemId == "(O)789" && slot != 0)
-		{
-			return true;
-		}
-		if (slot != 0)
-		{
-			if (o.Category == -22)
-			{
-				return this.CanUseTackle();
-			}
-			return false;
-		}
-		if (o.Category == -21)
-		{
-			return this.CanUseBait();
-		}
-		return false;
-		
-         */
     }
 }
