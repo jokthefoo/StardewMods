@@ -29,6 +29,8 @@ public static class TreasureSprites
 	public const int Dino = 18;
 	public const int Duck = 19;
 	public const int Rabbit = 20;
+	public const int Wood_Pau = 21;
+	public const int Hardwood_Pau = 22;
 	
 	public const int WhiteCow = 501;
 	public const int BrownCow = 502;

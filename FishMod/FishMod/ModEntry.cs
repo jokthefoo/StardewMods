@@ -5,7 +5,6 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
-using StardewValley.Constants;
 using StardewValley.GameData.Tools;
 using StardewValley.Menus;
 using StardewValley.TerrainFeatures;
@@ -16,6 +15,7 @@ namespace FishMod
     /// <summary>The mod entry point.</summary>
     internal sealed class ModEntry : Mod
     {
+        public static IMonitor Monitor;
         /*********
          ** Public methods
          *********/
@@ -32,6 +32,7 @@ namespace FishMod
             helper.Events.Display.MenuChanged += OnMenuChanged;
 
             DeluxeFishingRodTool.fishingTextures = helper.ModContent.Load<Texture2D>(DeluxeFishingRodTool.FishSpritesPath);
+            TreeBobberBar.treeBobberBarTextures = helper.ModContent.Load<Texture2D>("Assets/WoodChoppingUI.png");
             Config = helper.ReadConfig<ModConfig>();
             HarmonyPatches();
         }
@@ -135,7 +136,7 @@ namespace FishMod
 
         private void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
         {
-            if (e.NameWithoutLocale.IsEquivalentTo(DeluxeFishingRodTool.ToolSpritesPseudoPath))
+            if (e.NameWithoutLocale.IsEquivalentTo(PirateFishingRodTool.ToolSpritesPseudoPath))
             {
                 e.LoadFromModFile<Texture2D>("assets/ToolSprites.png", AssetLoadPriority.Exclusive);
             }
@@ -143,7 +144,7 @@ namespace FishMod
             {
                 e.Edit(editor =>
                 {
-                    DeluxeFishingRodTool.EditToolAssets(editor.AsDictionary<string, ToolData>().Data);
+                    PirateFishingRodTool.EditToolAssets(editor.AsDictionary<string, ToolData>().Data);
                 });
             }
         }
@@ -158,7 +159,7 @@ namespace FishMod
             }
             else
             {
-                spacecore.RegisterSerializerType(typeof(DeluxeFishingRodTool));
+                spacecore.RegisterSerializerType(typeof(PirateFishingRodTool));
                 Monitor.Log("Registered subclasses with SpaceCore!");
             }
             
@@ -255,7 +256,7 @@ namespace FishMod
                 Game1.player.gainExperience(Farmer.foragingSkill, 5000);
                 Game1.player.gainExperience(Farmer.miningSkill, 5000);
                 
-                var boprod = ItemRegistry.Create(DeluxeFishingRodTool.DeluxeRodQiid);
+                var boprod = ItemRegistry.Create(PirateFishingRodTool.DeluxeRodQiid);
                 boprod.specialItem = true;
                 Game1.player.addItemByMenuIfNecessary(boprod);
                 DeluxeFishingRodTool.baseChanceForTreasure = 2;
@@ -264,7 +265,7 @@ namespace FishMod
             if (e.Button == SButton.F)
             {
 
-                if (Game1.player.CurrentTool?.QualifiedItemId == DeluxeFishingRodTool.DeluxeRodQiid)
+                if (Game1.player.CurrentTool?.QualifiedItemId == PirateFishingRodTool.DeluxeRodQiid)
                 {
                     if (Game1.player.CurrentTool is FishingRod fishingRod)
                     {
@@ -292,7 +293,7 @@ namespace FishMod
             if (e.Button == SButton.H)
             {
 
-                if (Game1.player.CurrentTool?.QualifiedItemId == DeluxeFishingRodTool.DeluxeRodQiid)
+                if (Game1.player.CurrentTool?.QualifiedItemId == PirateFishingRodTool.DeluxeRodQiid)
                 {
                     if (Game1.player.CurrentTool is FishingRod fishingRod)
                     {
@@ -319,7 +320,7 @@ namespace FishMod
             
             if (e.Button == SButton.G)
             {
-                if (Game1.player.CurrentTool?.QualifiedItemId == DeluxeFishingRodTool.DeluxeRodQiid)
+                if (Game1.player.CurrentTool?.QualifiedItemId == PirateFishingRodTool.DeluxeRodQiid)
                 {
                     if (Game1.player.CurrentTool is FishingRod fishingRod)
                     {

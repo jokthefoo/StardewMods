@@ -1,7 +1,9 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System.Diagnostics;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using StardewModdingAPI;
 using StardewValley;
 using StardewValley.BellsAndWhistles;
 using StardewValley.Menus;
@@ -11,6 +13,8 @@ namespace FishMod
 {
 	public class TreeBobberBar : IClickableMenu
 	{
+		public static Texture2D treeBobberBarTextures;
+		
 		public bool handledFishResult;
 
 		public float uiScale;
@@ -49,6 +53,8 @@ namespace FishMod
 
 		public static ICue unReelSound;
 		
+		public static ICue chopSound;
+		
 		public List<TreasureInstance> treasures = new ();
 		
 		public GameLocation location;
@@ -63,6 +69,24 @@ namespace FishMod
 		public int treeAnimTimer = 800;
 		public int farmerAnimTimer = 100;
 		public int farmerAnimIndex = 0;
+		
+		private class Debris
+		{
+			public Debris(int i, int x, int y, Vector2 vel)
+			{
+				index = i;
+				this.x = x;
+				this.y = y;
+				velocity = vel;
+			}
+	
+			public int index;
+			public int x;
+			public int y;
+			public Vector2 velocity;
+		}
+		
+		private List<Debris> debris = new List<Debris>();
 
 		public TreeBobberBar(GameLocation location, bool treasure, int logCount, Tool t, Vector2 tileLocation)
 			: base(0, 0, 96, 636)
@@ -73,11 +97,11 @@ namespace FishMod
 			this.tileLocation = tileLocation;
 			GetTree();
 			
-			axeChoppingAngle = 359;
+			axeChoppingAngle = MathHelper.ToRadians(265);
 			
 			for (int i = 0; i < logCount; i++)
 			{
-				treasures.Add(new TreasureInstance(TreasureSprites.Stick, false, 20,20));
+				treasures.Add(new TreasureInstance(TreasureSprites.Wood_Pau, false, 20,20));
 			}
 
 			if (treasure)
@@ -86,6 +110,8 @@ namespace FishMod
 				realTreasure.difficulty = t.lastUser.ForagingLevel * 5 + 25;
 				treasures.Add(realTreasure);
 			}
+			
+			ConstructDebris();
 			
 			handledFishResult = false;
 			fadeIn = true;
@@ -369,11 +395,7 @@ public void fishUpdate(GameTime time)
 		}
 	}
 
-	axeChoppingAngle += (float)Math.PI / 180f;
-	if (axeChoppingAngle > 2*Math.PI)
-	{
-		axeChoppingAngle = 270f * (float)Math.PI / 180f;
-	}
+	AxeAnimationUpdate(time);
 	
 	if (treasureInBar)
 	{
@@ -421,6 +443,68 @@ public void fishUpdate(GameTime time)
 	}
 }
 
+private static class AxeAnimStates
+{
+	public const int Chop = 0;
+	public const int PullBack = 1;
+}
+
+private int axeAnimstate = AxeAnimStates.Chop;
+private float debrisAlpha = 1.0f;
+private void AxeAnimationUpdate(GameTime time)
+{
+	debrisAlpha -= 0.03f;
+	
+	foreach (Debris d in debris)
+	{
+		d.x += (int)d.velocity.X;
+		d.y += (int)d.velocity.Y;
+		d.y += 4;
+		d.velocity.X -= .2f;
+		d.velocity.X = Math.Clamp(d.velocity.X, 0, 100);
+		d.velocity.Y -= .5f;
+		d.velocity.Y = Math.Clamp(d.velocity.Y, 0, 100);
+	}
+	
+	switch (axeAnimstate)
+	{
+		case AxeAnimStates.Chop:
+			axeChoppingAngle += MathHelper.ToRadians(4);
+			break;
+		case AxeAnimStates.PullBack:
+			axeChoppingAngle -= MathHelper.ToRadians(1.5f);
+			break;
+	}
+	
+	if (axeChoppingAngle < MathHelper.ToRadians(260) && axeAnimstate != AxeAnimStates.Chop)
+	{
+		//start chop
+		axeAnimstate = AxeAnimStates.Chop;
+	}
+	
+	if (axeChoppingAngle > MathHelper.ToRadians(380) && axeAnimstate != AxeAnimStates.PullBack)
+	{
+		if (chopSound == null || chopSound.IsStopped || chopSound.IsStopping || !chopSound.IsPlaying)
+		{
+			Game1.playSound("axchop", out chopSound);
+		}
+
+		//start backswing
+		axeAnimstate = AxeAnimStates.PullBack;
+		debrisAlpha = 1.0f;
+		ConstructDebris();
+	}
+}
+
+private void ConstructDebris()
+{
+	debris = new List<Debris>();
+	for (int i = 0; i < 6; i++)
+	{
+		debris.Add(new Debris(Game1.random.Next(0,6), Game1.random.Next(-8,9), Game1.random.Next(-8,9), new Vector2(Game1.random.Next(-2, 3) * 5, Game1.random.Next(-2, 3) * 5)));
+	}
+}
+
 public override void draw(SpriteBatch b)
 		{
 			// Draw order matters
@@ -434,6 +518,12 @@ public override void draw(SpriteBatch b)
 				flipBubble ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0.001f);
 			
 			
+			// Pau's tree background
+			b.Draw(treeBobberBarTextures, new Vector2(xPositionOnScreen + 50, yPositionOnScreen + 300 - 18) + everythingShake,
+				new Rectangle(6, 8, 53, 156), Color.White * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 4f * uiScale,
+				SpriteEffects.None, 0.01f);
+			
+			/*
 			// bar background tree attempt
 			b.Draw(DeluxeFishingRodTool.fishingTextures, new Vector2(xPositionOnScreen - 36, yPositionOnScreen + 300) + everythingShake,
 				new Rectangle(0, 368, 72, 144), Color.White * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 6f * uiScale,
@@ -442,13 +532,13 @@ public override void draw(SpriteBatch b)
 			// bar background
 			b.Draw(DeluxeFishingRodTool.fishingTextures, new Vector2(xPositionOnScreen + 126, yPositionOnScreen + 296) + everythingShake,
 				new Rectangle(83, 362, 22, 148), Color.White * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 4f * uiScale,
-				SpriteEffects.None, 0.01f);
+				SpriteEffects.None, 0.01f);*/
 			
 			// Gameplay bar
 			if (uiScale == 1f)
 			{
 				// These 3 are bobber bar
-				int colorIndex = 2;
+				int colorIndex = -2;
 				b.Draw(DeluxeFishingRodTool.fishingTextures,
 					new Vector2(xPositionOnScreen + 64, yPositionOnScreen + 12 + (int)bobberBarPos) + barShake +
 					everythingShake, new Rectangle(216, 447 + 10 * colorIndex, 9, 2),
@@ -478,15 +568,27 @@ public override void draw(SpriteBatch b)
 				
 				// current level of Success bar
 				b.Draw(Game1.staminaRect,
-					new Rectangle(xPositionOnScreen + 116,
-						yPositionOnScreen + 4 + (int)(580f * (1f - distanceFromCatching)), 16,
-						(int)(580f * distanceFromCatching)), Utility.getRedToGreenLerpColor(distanceFromCatching));
+					new Rectangle(xPositionOnScreen + 128,
+						yPositionOnScreen + 14 + (int)(570f * (1f - distanceFromCatching)), 8,
+						(int)(570f * distanceFromCatching)), Utility.getRedToGreenLerpColor(distanceFromCatching));
 				
 				// AXE
-				b.Draw(Game1.mouseCursors,
-					new Vector2(xPositionOnScreen - 18, yPositionOnScreen + 514) + everythingShake,
-					new Rectangle(32, 657, 16, 15), Color.White, axeChoppingAngle, new Vector2(2f, 10f), 4f,
+				b.Draw(treeBobberBarTextures,
+					new Vector2(xPositionOnScreen - 18, yPositionOnScreen + 510) + everythingShake,
+					new Rectangle(64, 81, 16, 15), Color.White, axeChoppingAngle, new Vector2(5f, 10f), 4f,
 					SpriteEffects.None, 0.9f);
+
+				if (debrisAlpha > 0f)
+				{
+					// Debris
+					foreach(Debris d in debris)
+					{
+						b.Draw(treeBobberBarTextures,
+							new Vector2(xPositionOnScreen + 18 + d.x, yPositionOnScreen + 505 + d.y) + everythingShake,
+							new Rectangle(80 + 4 * d.index, 56, 4, 3), Color.White * debrisAlpha, axeChoppingAngle, new Vector2(0f, 0f), 4f,
+							SpriteEffects.None, 0.9f);
+					}
+				}
 				
 				//draw treasures
 				foreach (var t in treasures)

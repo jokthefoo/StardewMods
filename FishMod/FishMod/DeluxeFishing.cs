@@ -13,28 +13,18 @@ using StardewValley.Tools;
 
 namespace FishMod
 {
-    [XmlType("Mods_spacechase0_DeluxeFishingRod")]
-    public class DeluxeFishingRodTool : FishingRod
+    public class DeluxeFishingRodTool
     {
         public static Texture2D fishingTextures;
         
         public const string FishSpritesPath = "Assets/FishSprites.png";
-        public const string ToolSpritesPseudoPath = "Mods/Willy/FishMod/ToolSprites";
-
-        public const string DeluxeRodId = "Willy.FishMod.DeluxeFishingRod";
-        public const string DeluxeRodQiid = ItemRegistry.type_tool + DeluxeRodId;
 
         public static int treasureCaughtCount;
         public static TimeSpan minigameTimeToClick;   
         public new static double baseChanceForTreasure = 0.15;
         
         public static float baseFishFrenzyChance = 0.03f;
-        public DeluxeFishingRodTool()
-        {
-            Name = "Pirate Fishing Rod";
-            displayName = "Pirate Fishing Rod";
-        }
-
+        
         public static int getAddedDistance(Farmer who)
         {
             if (who.FishingLevel >= 15)
@@ -75,7 +65,7 @@ namespace FishMod
                                        DeluxeFishingRodTool.baseChanceForTreasure;
 
             double pirateRodBoost = 0;
-            if (Game1.player.CurrentTool?.QualifiedItemId == DeluxeFishingRodTool.DeluxeRodQiid)
+            if (Game1.player.CurrentTool?.QualifiedItemId == PirateFishingRodTool.DeluxeRodQiid)
             {
                 pirateRodBoost = DeluxeFishingRodTool.baseChanceForTreasure;
             }
@@ -153,25 +143,6 @@ namespace FishMod
             }
             Game1.activeClickableMenu = new AdvBobberBar(bobberBar.whichFish, bobberBar.fishSize, treasureCount,
                 bobberBar.bobbers, bobberBar.setFlagOnCatch, bobberBar.bossFish, baitid, bobberBar.goldenTreasure);
-        }
-
-
-        internal static void EditToolAssets(IDictionary<string, ToolData> data)
-        {
-            // Pirate rod has built in 15% treasure boost,
-            // also enables the ability to get up to 3 treasure chests
-            data[DeluxeRodId] = new ToolData
-            {
-                ClassName = "FishingRod",
-                Name = "Pirate Fishing Rod",
-                AttachmentSlots = 3,
-                SalePrice = 25000,
-                DisplayName = "Pirate Fishing Rod",
-                Description = "Somehow this rod seems to find a lot more treasure.",
-                Texture = ToolSpritesPseudoPath,
-                SpriteIndex = 0,
-                UpgradeLevel = 0
-            };
         }
         
         public static bool CheckIfValidBobberBar(IClickableMenu menu)
