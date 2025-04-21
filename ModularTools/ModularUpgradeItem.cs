@@ -54,7 +54,7 @@ public class ModularUpgradeItem : StardewValley.Object
         }
     }
     
-    protected override Item GetOneNew()
+    protected override Item GetOneNew() // needed for right clicking item
     {
         return new ModularUpgradeItem();
     }

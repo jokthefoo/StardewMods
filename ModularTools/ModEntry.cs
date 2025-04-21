@@ -59,7 +59,6 @@ namespace ModularTools
                 Game1.player.addItemByMenuIfNecessary(boprod);
             }
         }
-        //TODO right clicking item breaks it somehow
         
          private void OnAssetRequested(object sender, AssetRequestedEventArgs e)
         {
