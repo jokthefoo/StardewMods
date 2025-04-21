@@ -4,10 +4,12 @@ using System.Text;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Netcode;
+using SpaceShared.APIs;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
+using StardewValley.GameData.Objects;
+using StardewValley.ItemTypeDefinitions;
 using StardewValley.Menus;
 using StardewValley.Tools;
 using Object = StardewValley.Object;
@@ -22,9 +24,23 @@ namespace ModularTools
         public override void Entry(IModHelper helper)
         {
             Helper = helper;
+            I18n.Init(Helper.Translation);
+            
+            Helper.Events.GameLoop.GameLaunched += OnGameLaunched;
+            Helper.Events.Content.AssetRequested += OnAssetRequested;
             Helper.Events.Input.ButtonPressed += OnButtonPressed;
             
+            var def = new ModularUpgradeDefinition();
+            ItemRegistry.ItemTypes.Add(def);
+            Helper.Reflection.GetField<Dictionary<string, IItemDataDefinition>>(typeof(ItemRegistry), "IdentifierLookup").GetValue()[def.Identifier] = def;
+            
             HarmonyPatches();
+        }
+
+        private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
+        {
+            var sc = Helper.ModRegistry.GetApi<ISpaceCoreApi>("spacechase0.SpaceCore");
+            sc.RegisterSerializerType(typeof(ModularUpgradeItem));
         }
 
         private void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
@@ -36,8 +52,60 @@ namespace ModularTools
                     Game1.player.CurrentTool.AttachmentSlotsCount += 1;
                 }
             }
+            
+            if (e.Button == SButton.X)
+            {
+                var boprod = ItemRegistry.Create("(Jok.MU)"+"Jok.ModularTools.Width");
+                Game1.player.addItemByMenuIfNecessary(boprod);
+            }
         }
-
+        //TODO right clicking item breaks it somehow
+        
+         private void OnAssetRequested(object sender, AssetRequestedEventArgs e)
+        {
+            if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/ModularUpgrades"))
+            { 
+                e.LoadFrom(() =>
+                { 
+                    var modAssets = Helper.ModContent.Load <Dictionary<string, ModularUpgradeData>>("assets/modularupgrade_data.json");
+                    Dictionary<string, ModularUpgradeData> ret = new();
+                    foreach (string upgrade in modAssets.Keys)
+                    {
+                        ret.Add(upgrade,
+                            new ModularUpgradeData()
+                            {
+                                TextureIndex = modAssets[upgrade].TextureIndex,
+                                DisplayName = I18n.GetByKey(modAssets[upgrade].DisplayName),
+                                Description = I18n.GetByKey(modAssets[upgrade].Description),
+                                Price = modAssets[upgrade].Price
+                            });
+                    }
+                    return ret;
+                }, AssetLoadPriority.Exclusive);
+            }
+            else if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/modularupgrades.png"))
+            {
+                e.LoadFromModFile<Texture2D>("assets/modularupgrades.png", AssetLoadPriority.Low);
+            }
+            else if (e.NameWithoutLocale.IsEquivalentTo("spacechase0.SpaceCore/ObjectExtensionData"))
+            {
+                e.Edit((asset) =>
+                {
+                    var modAssets = Helper.ModContent.Load <Dictionary<string, ModularUpgradeData>>("assets/modularupgrade_data.json");
+                    var data = asset.AsDictionary<string, SpaceCore.VanillaAssetExpansion.ObjectExtensionData>().Data;
+                    foreach (string upgrade in modAssets.Keys)
+                    {
+                        data.Add(upgrade, new()
+                        {
+                            MaxStackSizeOverride = 1,
+                            CategoryTextOverride = I18n.Modularupgrade_Category_Text(),
+                            CategoryColorOverride = Color.LimeGreen
+                        });
+                    }
+                });
+            }
+        }
+        
         private void HarmonyPatches()
         {
             var harmony = new Harmony(ModManifest.UniqueID);
@@ -63,38 +131,28 @@ namespace ModularTools
             );
         }
 
-        // patch GetCategoryColor
-        // patch GetCategoryDisplayName
-        // countsForShippedCollection
-        // isPotentialBasicShipped
-        // GetBaseContextTags??
-        
         // dont need to patch for this but it is interesting for magic mod: drawPlacementBounds --- isPlaceable
         public static void canThisBeAttached_postfix(Tool __instance, ref bool __result, Object o, int slot)
         {
-            /* fishing rod
-            if (o.QualifiedItemId == "(O)789" && slot != 0)
+            if (__instance is FishingRod or Slingshot)
             {
-                return true;
+                return;
             }
-            if (slot != 0)
+            
+            // TODO config
+            if(o is ModularUpgradeItem)
             {
-                if (o.Category == -22)
-                {
-                    return this.CanUseTackle();
-                }
-                return false;
+                __result = true;
             }
-            if (o.Category == -21)
+            else
             {
-                return this.CanUseBait();
+                __result = false;
             }
-            return false;*/
         }
         
         public static int AdjustHoverMenuHeight(Item hoveredItem)
         {
-            // TODO config to disable this part
+            // TODO config
             int slots = hoveredItem.attachmentSlots();
             if (hoveredItem is WateringCan or Hoe or Pickaxe or Axe or Pan or MeleeWeapon)
             {
@@ -162,7 +220,7 @@ namespace ModularTools
         
         internal static bool DrawAttachmentSlot_prefix(Tool __instance, int slot, SpriteBatch b, int x, int y)
         {
-            // TODO config to disable this part
+            // TODO config
             if (__instance is not WateringCan && __instance is not Pickaxe && __instance is not Hoe && __instance is not Axe && __instance is not Pan && __instance is not MeleeWeapon)
             {
                 return true;

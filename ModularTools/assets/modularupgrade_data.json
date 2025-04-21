@@ -1,0 +1,20 @@
+{
+  "Jok.ModularTools.Width": {
+    DisplayName: "modularupgrade.width.name",
+    Description: "modularupgrade.width.description",
+    TextureIndex: 0,
+    Price: 123
+  },
+  "Jok.ModularTools.Height": {
+    DisplayName: "modularupgrade.length.name",
+    Description: "modularupgrade.length.description",
+    TextureIndex: 1,
+    Price: 124
+  },
+  "Jok.ModularTools.Capacity": {
+    DisplayName: "modularupgrade.capacity.name",
+    Description: "modularupgrade.capacity.description",
+    TextureIndex: 2,
+    Price: 125
+  }
+}
