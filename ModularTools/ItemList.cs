@@ -1,0 +1,9 @@
+﻿namespace ModularTools;
+
+public static class MUQIds
+{
+    public const string Length = "(Jok.MU)Jok.ModularTools.Height";
+    public const string Width = "(Jok.MU)Jok.ModularTools.Width";
+    public const string Capacity = "(Jok.MU)Jok.ModularTools.Capacity";
+    public const string Speed = "(Jok.MU)Jok.ModularTools.Speed";
+}

@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Linq.Expressions;
+using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
 using HarmonyLib;
@@ -8,6 +9,7 @@ using SpaceShared.APIs;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
+using StardewValley.Enchantments;
 using StardewValley.GameData.Objects;
 using StardewValley.ItemTypeDefinitions;
 using StardewValley.Menus;
@@ -50,21 +52,6 @@ namespace ModularTools
                 if (Game1.player.CurrentTool is not null)
                 {
                     Game1.player.CurrentTool.AttachmentSlotsCount += 1;
-                }
-            }
-            
-            if (e.Button == SButton.X)
-            {
-                var boprod = ItemRegistry.Create("(Jok.MU)"+"Jok.ModularTools.Width");
-                Game1.player.addItemByMenuIfNecessary(boprod);
-            }
-            
-            if (e.Button == SButton.Z)
-            {
-                if (Game1.player.CurrentTool is not null)
-                {
-                    //TODO speed module
-                    Game1.player.CurrentTool.AnimationSpeedModifier = .66f;
                 }
             }
         }
@@ -145,6 +132,16 @@ namespace ModularTools
             harmony.Patch(
                 original: originalTilesAffected,
                 postfix: new HarmonyMethod(typeof(ModEntry), nameof(Post_tilesAffected)));
+            
+            harmony.Patch(
+                original: AccessTools.Method(typeof(Tool), nameof(Tool.attach), new Type[] {typeof(Object)}),
+                postfix: new HarmonyMethod(typeof(ModEntry), nameof(attachOrDetach_postfix))
+            );
+            
+            harmony.Patch(
+                original: AccessTools.Method(typeof(Tool), nameof(Tool.UpgradeFrom), new Type[] {typeof(Tool)}),
+                postfix: new HarmonyMethod(typeof(ModEntry), nameof(OnToolUpgrade_postfix))
+            );
         }
         
         public static List<string> GetAttachmentQualifiedItemIDs(Tool tool)
@@ -172,8 +169,8 @@ namespace ModularTools
             tileLocations.Add(tileLocation);
 
 	        List<string> attachments = GetAttachmentQualifiedItemIDs(who.CurrentTool);
-	        int widthAttachCount = Utility.getStringCountInList(attachments, "(Jok.MU)Jok.ModularTools.Width");
-	        int heightAttachCount = Utility.getStringCountInList(attachments, "(Jok.MU)Jok.ModularTools.Height");
+	        int widthAttachCount = Utility.getStringCountInList(attachments, MUQIds.Width);
+	        int heightAttachCount = Utility.getStringCountInList(attachments, MUQIds.Length);
 
 	        if (widthAttachCount + heightAttachCount == 0)
             {
@@ -206,11 +203,11 @@ namespace ModularTools
             int hCount = 0;
             foreach (string s in attachments)
             {
-                if (s == "(Jok.MU)Jok.ModularTools.Width")
+                if (s == MUQIds.Width)
                 {
                     wCount++;
                 } 
-                else if (s == "(Jok.MU)Jok.ModularTools.Height")
+                else if (s == MUQIds.Length)
                 {
                     hCount++;
                 }
@@ -248,6 +245,97 @@ namespace ModularTools
             }
             
 	        __result = tileLocations;
+        }
+        
+        public static void OnToolUpgrade_postfix(Tool __instance)
+        {
+            // TODO config
+            if (__instance is WateringCan wateringCan)
+            {
+                wateringCan.waterCanMax = 40;
+                wateringCan.WaterLeft = 40;
+            }
+            __instance.AttachmentSlotsCount = __instance.UpgradeLevel;
+        }
+
+        private static int GetWateringCanCapacity(Tool tool)
+        {
+            const int wateringCapacityIncrease = 15;
+            int Capacity = 40;
+            foreach (Object o in tool.attachments)
+            {
+                if (o.QualifiedItemId == MUQIds.Capacity)
+                {
+                    Capacity += wateringCapacityIncrease;
+                }
+            }
+            return Capacity;
+        }
+        
+        private static void SetToolSpeed(Tool tool)
+        {
+            const float speedStrength = .5f;
+
+            float speed = 1;
+            if (tool.hasEnchantmentOfType<SwiftToolEnchantment>())
+            {
+                speed = 0.66f;
+            }
+
+            foreach (Object o in tool.attachments)
+            {
+                if (o.QualifiedItemId == MUQIds.Speed)
+                {
+                    speed *= speedStrength;
+                }
+            }
+            tool.AnimationSpeedModifier = speed;
+        }
+
+        public static void attachOrDetach_postfix(Tool __instance, ref Object __result, Object o)
+        {
+            if (__instance is FishingRod or Slingshot)
+            {
+                return;
+            }
+            // TODO config
+            
+            if (__instance is WateringCan wateringCan)
+            {
+                int newCapacity = GetWateringCanCapacity(__instance);
+                int diff = wateringCan.waterCanMax - newCapacity;
+                if (diff > 0) // reduce water if we have a new lower capacity
+                {
+                    wateringCan.WaterLeft -= diff;
+                }
+                wateringCan.waterCanMax = newCapacity;
+            }
+            SetToolSpeed(__instance);
+            
+            /*
+            // Removing item
+            if (o is null && __result is not null)
+            {
+                switch (__result.QualifiedItemId)
+                {
+                    case MUQIds.Speed:
+                        __instance.AnimationSpeedModifier *= speedStrength;
+                        break;
+                }
+            }
+            else // attaching item
+            {
+                var attachedItem = __instance.attachments[^1];
+                if(attachedItem is not null)
+                {
+                    switch (attachedItem.QualifiedItemId)
+                    {
+                        case MUQIds.Speed:
+                            __instance.AnimationSpeedModifier /= speedStrength;
+                            break;
+                    }
+                }
+            }*/
         }
 
         public static void canThisBeAttached_postfix(Tool __instance, ref bool __result, Object o, int slot)

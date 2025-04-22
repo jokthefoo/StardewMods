@@ -6,7 +6,10 @@
   
   "modularupgrade.length.name": "Length Upgrade",
   "modularupgrade.length.description": "Install into a tool to make the area of effect longer.",
-  
+
   "modularupgrade.capacity.name": "Capacity Upgrade",
-  "modularupgrade.capacity.description": "Install into a tool to increase the capacity."
+  "modularupgrade.capacity.description": "Install into a tool to increase the capacity.",
+  
+  "modularupgrade.speed.name": "Speed Upgrade",
+  "modularupgrade.speed.description": "Install into a tool to increase its speed."
 }
