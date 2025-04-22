@@ -59,6 +59,11 @@ public class ModularUpgradeItem : StardewValley.Object
         return new ModularUpgradeItem();
     }
     
+    public override bool IsHeldOverHead()
+    {
+        return false;
+    }
+    
     protected override void GetOneCopyFrom(Item source)
     {
         base.GetOneCopyFrom(source);

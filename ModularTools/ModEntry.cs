@@ -264,7 +264,7 @@ namespace ModularTools
             int Capacity = 40;
             foreach (Object o in tool.attachments)
             {
-                if (o.QualifiedItemId == MUQIds.Capacity)
+                if (o is not null && o.QualifiedItemId == MUQIds.Capacity)
                 {
                     Capacity += wateringCapacityIncrease;
                 }
@@ -284,7 +284,7 @@ namespace ModularTools
 
             foreach (Object o in tool.attachments)
             {
-                if (o.QualifiedItemId == MUQIds.Speed)
+                if (o is not null && o.QualifiedItemId == MUQIds.Speed)
                 {
                     speed *= speedStrength;
                 }
@@ -302,13 +302,11 @@ namespace ModularTools
             
             if (__instance is WateringCan wateringCan)
             {
-                int newCapacity = GetWateringCanCapacity(__instance);
-                int diff = wateringCan.waterCanMax - newCapacity;
-                if (diff > 0) // reduce water if we have a new lower capacity
+                wateringCan.waterCanMax = GetWateringCanCapacity(__instance);
+                if (wateringCan.WaterLeft > wateringCan.waterCanMax) // reduce water if we have a new lower capacity
                 {
-                    wateringCan.WaterLeft -= diff;
+                    wateringCan.WaterLeft = wateringCan.waterCanMax;
                 }
-                wateringCan.waterCanMax = newCapacity;
             }
             SetToolSpeed(__instance);
             
@@ -432,7 +430,6 @@ namespace ModularTools
                 return true;
             }
             
-            //DrawAttachmentSlot(slot, b, x, y + slot * 68);
             y -= slot * 68;
             
             x += slot % 2 * 68;
