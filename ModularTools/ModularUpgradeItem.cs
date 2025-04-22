@@ -70,7 +70,6 @@ public class ModularUpgradeItem : StardewValley.Object
     public override void drawInMenu(SpriteBatch spriteBatch, Vector2 location, float scaleSize, float transparency,
         float layerDepth, StackDrawType drawStackNumber, Color color, bool drawShadow)
     {
-        //spriteBatch.Draw( Assets.Necklaces, location + new Vector2( 32, 32 ), new Rectangle( ( ( int ) necklaceType.Value ) % 4 * 16, ( ( int ) necklaceType.Value ) / 4 * 16, 16, 16 ), color * transparency, 0, new Vector2( 8, 8 ) * scaleSize, scaleSize * Game1.pixelZoom, SpriteEffects.None, layerDepth );
         var data = ItemRegistry.GetDataOrErrorItem(QualifiedItemId);
         Rectangle rect = data.GetSourceRect(0);
         spriteBatch.Draw(data.GetTexture(), location + new Vector2(32, 32) * scaleSize, rect, color * transparency, 0,

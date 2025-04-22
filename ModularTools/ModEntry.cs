@@ -58,6 +58,15 @@ namespace ModularTools
                 var boprod = ItemRegistry.Create("(Jok.MU)"+"Jok.ModularTools.Width");
                 Game1.player.addItemByMenuIfNecessary(boprod);
             }
+            
+            if (e.Button == SButton.Z)
+            {
+                if (Game1.player.CurrentTool is not null)
+                {
+                    //TODO speed module
+                    Game1.player.CurrentTool.AnimationSpeedModifier = .66f;
+                }
+            }
         }
         
          private void OnAssetRequested(object sender, AssetRequestedEventArgs e)
@@ -105,6 +114,7 @@ namespace ModularTools
             }
         }
         
+        // TODO dont need to patch for this but it is interesting for magic mod: drawPlacementBounds --- isPlaceable
         private void HarmonyPatches()
         {
             var harmony = new Harmony(ModManifest.UniqueID);
@@ -128,9 +138,118 @@ namespace ModularTools
                 original: AccessTools.Method(typeof(Tool), nameof(Tool.canThisBeAttached), new Type[] { typeof(Object), typeof(int) }),
                 postfix: new HarmonyMethod(typeof(ModEntry), nameof(canThisBeAttached_postfix))
             );
+            
+            Type[] tileAffectedTypes = { typeof(Vector2), typeof(int), typeof(Farmer) };
+            var originalTilesAffected = typeof(Tool).GetMethod("tilesAffected",
+                BindingFlags.Instance | BindingFlags.NonPublic, null, tileAffectedTypes, null);
+            harmony.Patch(
+                original: originalTilesAffected,
+                postfix: new HarmonyMethod(typeof(ModEntry), nameof(Post_tilesAffected)));
+        }
+        
+        public static List<string> GetAttachmentQualifiedItemIDs(Tool tool)
+        {
+	        List<string> ids = new List<string>();
+	        foreach (Object o in tool.attachments)
+	        {
+		        if (o != null)
+		        {
+			        ids.Add(o.QualifiedItemId);
+		        }
+	        }
+	        return ids;
         }
 
-        // dont need to patch for this but it is interesting for magic mod: drawPlacementBounds --- isPlaceable
+        public static void Post_tilesAffected(ref List<Vector2> __result, Vector2 tileLocation, int power, Farmer who)
+        {
+	        //TODO config
+	        if (who.CurrentTool == null || power == 1)
+	        {
+		        return;
+	        }
+
+            List<Vector2> tileLocations = new List<Vector2>();
+            tileLocations.Add(tileLocation);
+
+	        List<string> attachments = GetAttachmentQualifiedItemIDs(who.CurrentTool);
+	        int widthAttachCount = Utility.getStringCountInList(attachments, "(Jok.MU)Jok.ModularTools.Width");
+	        int heightAttachCount = Utility.getStringCountInList(attachments, "(Jok.MU)Jok.ModularTools.Height");
+
+	        if (widthAttachCount + heightAttachCount == 0)
+            {
+                __result = tileLocations;
+		        return;
+	        }
+            
+	        Vector2 offset = Vector2.Zero;
+	        switch (who.FacingDirection)
+	        {
+		        case 0:
+			        offset = new Vector2(0f, -1f);
+			        break;
+		        case 1:
+			        offset = new Vector2(1f, 0f);
+			        break;
+		        case 2:
+			        offset = new Vector2(0f, 1f);
+			        break;
+		        case 3:
+			        offset = new Vector2(-1f, 0f);
+			        break;
+	        }
+            
+            Vector2 left = new Vector2(offset.Y, -offset.X);
+            Vector2 right = new Vector2(-offset.Y, offset.X);
+
+            int index = 0;
+            int wCount = 0;
+            int hCount = 0;
+            foreach (string s in attachments)
+            {
+                if (s == "(Jok.MU)Jok.ModularTools.Width")
+                {
+                    wCount++;
+                } 
+                else if (s == "(Jok.MU)Jok.ModularTools.Height")
+                {
+                    hCount++;
+                }
+
+                index++;
+                if (index >= power-1)
+                {
+                    break;
+                }
+            }
+
+            int multiplier = 1;
+            if (wCount == 0)
+            {
+                multiplier = hCount;
+            }
+            if (hCount == 0)
+            {
+                multiplier = wCount;
+            }
+            
+            for (int i = 1; i <= wCount * multiplier; i++)
+            {
+                tileLocations.Add(tileLocation + left * i);
+                tileLocations.Add(tileLocation + right * i);
+            }
+
+            int tilesCount = tileLocations.Count - 1;
+            for (int i = 1; i <= hCount * 2 * multiplier; i++)
+            {
+                for (int i2 = 0; i2 <= tilesCount; i2++)
+                {
+                    tileLocations.Add(tileLocations[i2] + offset * i);
+                }
+            }
+            
+	        __result = tileLocations;
+        }
+
         public static void canThisBeAttached_postfix(Tool __instance, ref bool __result, Object o, int slot)
         {
             if (__instance is FishingRod or Slingshot)
