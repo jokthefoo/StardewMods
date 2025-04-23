@@ -9,7 +9,10 @@
 
   "modularupgrade.capacity.name": "Capacity Upgrade",
   "modularupgrade.capacity.description": "Install into a tool to increase the capacity.",
-  
+
   "modularupgrade.speed.name": "Speed Upgrade",
-  "modularupgrade.speed.description": "Install into a tool to increase its speed."
+  "modularupgrade.speed.description": "Install into a tool to increase its speed.",
+  
+  "modularupgrade.power.name": "Power Upgrade",
+  "modularupgrade.power.description": "Install into a tool to increase its power."
 }

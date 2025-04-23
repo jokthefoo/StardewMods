@@ -105,43 +105,102 @@ namespace ModularTools
         private void HarmonyPatches()
         {
             var harmony = new Harmony(ModManifest.UniqueID);
-            
-            Type[] types = { typeof(int),typeof(SpriteBatch),typeof(int),typeof(int) };
+
+            Type[] types = { typeof(int), typeof(SpriteBatch), typeof(int), typeof(int) };
             var originalToolsMethod = typeof(Tool).GetMethod("DrawAttachmentSlot",
                 BindingFlags.Instance | BindingFlags.NonPublic, null, types, null);
             harmony.Patch(
                 original: originalToolsMethod,
-                prefix: new HarmonyMethod(typeof(ModEntry), nameof(DrawAttachmentSlot_prefix))
-            );
-            
-            Type[] drawHoverTypes = { typeof(SpriteBatch), typeof(StringBuilder), typeof(SpriteFont), typeof(int), typeof(int), typeof(int), typeof(string), typeof(int), typeof(string[]), typeof(Item), typeof(int), typeof(string), typeof(int), typeof(int), typeof(int), typeof(float), typeof(CraftingRecipe), typeof(IList<Item>), typeof(Texture2D), typeof(Rectangle), typeof(Color), typeof(Color), typeof(float), typeof(int), typeof(int)};
+                prefix: new HarmonyMethod(typeof(ModEntry), nameof(DrawAttachmentSlot_prefix)));
+
+            Type[] drawHoverTypes =
+            {
+                typeof(SpriteBatch), typeof(StringBuilder), typeof(SpriteFont), typeof(int), typeof(int), typeof(int),
+                typeof(string), typeof(int), typeof(string[]), typeof(Item), typeof(int), typeof(string), typeof(int),
+                typeof(int), typeof(int), typeof(float), typeof(CraftingRecipe), typeof(IList<Item>), typeof(Texture2D),
+                typeof(Rectangle), typeof(Color), typeof(Color), typeof(float), typeof(int), typeof(int) };
             harmony.Patch(
-                original: AccessTools.Method(typeof(IClickableMenu), nameof(IClickableMenu.drawHoverText), drawHoverTypes),
+                original: AccessTools.Method(typeof(IClickableMenu), nameof(IClickableMenu.drawHoverText),
+                    drawHoverTypes),
                 transpiler: new HarmonyMethod(typeof(ModEntry),
-                    nameof(IClickableMenu_drawHoverTextTranspiler))
-            );
-            
+                    nameof(IClickableMenu_drawHoverTextTranspiler)));
+
             harmony.Patch(
-                original: AccessTools.Method(typeof(Tool), nameof(Tool.canThisBeAttached), new Type[] { typeof(Object), typeof(int) }),
-                postfix: new HarmonyMethod(typeof(ModEntry), nameof(canThisBeAttached_postfix))
-            );
-            
+                original: AccessTools.Method(typeof(Tool), nameof(Tool.canThisBeAttached),
+                    new Type[] { typeof(Object), typeof(int) }),
+                postfix: new HarmonyMethod(typeof(ModEntry), nameof(canThisBeAttached_postfix)));
+
             Type[] tileAffectedTypes = { typeof(Vector2), typeof(int), typeof(Farmer) };
             var originalTilesAffected = typeof(Tool).GetMethod("tilesAffected",
                 BindingFlags.Instance | BindingFlags.NonPublic, null, tileAffectedTypes, null);
             harmony.Patch(
                 original: originalTilesAffected,
                 postfix: new HarmonyMethod(typeof(ModEntry), nameof(Post_tilesAffected)));
-            
+
             harmony.Patch(
-                original: AccessTools.Method(typeof(Tool), nameof(Tool.attach), new Type[] {typeof(Object)}),
-                postfix: new HarmonyMethod(typeof(ModEntry), nameof(attachOrDetach_postfix))
-            );
-            
+                original: AccessTools.Method(typeof(Tool), nameof(Tool.attach), new Type[] { typeof(Object) }),
+                postfix: new HarmonyMethod(typeof(ModEntry), nameof(attachOrDetach_postfix)));
+
             harmony.Patch(
-                original: AccessTools.Method(typeof(Tool), nameof(Tool.UpgradeFrom), new Type[] {typeof(Tool)}),
-                postfix: new HarmonyMethod(typeof(ModEntry), nameof(OnToolUpgrade_postfix))
-            );
+                original: AccessTools.Method(typeof(Tool), nameof(Tool.UpgradeFrom), new Type[] { typeof(Tool) }),
+                postfix: new HarmonyMethod(typeof(ModEntry), nameof(OnToolUpgrade_postfix)));
+
+            harmony.Patch(
+                original: AccessTools.Method(typeof(Pickaxe), nameof(Pickaxe.DoFunction),
+                    new Type[] { typeof(GameLocation), typeof(int), typeof(int), typeof(int), typeof(Farmer) }),
+                prefix: new HarmonyMethod(typeof(ModEntry), nameof(PickaxeDoFunction_prefix)));
+
+            harmony.Patch(
+                original: AccessTools.Method(typeof(Pickaxe), nameof(Pickaxe.DoFunction),
+                    new Type[] { typeof(GameLocation), typeof(int), typeof(int), typeof(int), typeof(Farmer) }),
+                postfix: new HarmonyMethod(typeof(ModEntry), nameof(PickaxeDoFunction_postfix)));
+
+            harmony.Patch(
+                original: AccessTools.Method(typeof(Axe), nameof(Axe.DoFunction),
+                    new Type[] { typeof(GameLocation), typeof(int), typeof(int), typeof(int), typeof(Farmer) }),
+                prefix: new HarmonyMethod(typeof(ModEntry), nameof(AxeDoFunction_prefix)));
+
+            harmony.Patch(
+                original: AccessTools.Method(typeof(Axe), nameof(Axe.DoFunction),
+                    new Type[] { typeof(GameLocation), typeof(int), typeof(int), typeof(int), typeof(Farmer) }),
+                postfix: new HarmonyMethod(typeof(ModEntry), nameof(AxeDoFunction_postfix)));
+        }
+
+        public static void AxeDoFunction_prefix(Axe __instance, out int __state, GameLocation location, int x, int y, int power, Farmer who)
+        {
+            __state = __instance.UpgradeLevel;
+            //TODO config
+            __instance.UpgradeLevel = GetToolStrength(__instance);
+        }
+        
+        public static void AxeDoFunction_postfix(Axe __instance, int __state, GameLocation location, int x, int y, int power, Farmer who)
+        {
+            __instance.UpgradeLevel = __state;
+        }
+        
+        public static void PickaxeDoFunction_prefix(Pickaxe __instance, out int __state, GameLocation location, int x, int y, int power, Farmer who)
+        {
+            __state = __instance.UpgradeLevel;
+            //TODO config
+            __instance.UpgradeLevel = GetToolStrength(__instance);
+        }
+        
+        public static void PickaxeDoFunction_postfix(Pickaxe __instance, int __state, GameLocation location, int x, int y, int power, Farmer who)
+        {
+           __instance.UpgradeLevel = __state;
+        }
+        
+        private static int GetToolStrength(Tool tool)
+        {
+            int strength = 0;
+            foreach (Object o in tool.attachments)
+            {
+                if (o is not null && o.QualifiedItemId == MUQIds.Power)
+                {
+                    strength++;
+                }
+            }
+            return strength;
         }
         
         public static List<string> GetAttachmentQualifiedItemIDs(Tool tool)
@@ -246,9 +305,19 @@ namespace ModularTools
             
 	        __result = tileLocations;
         }
+
+        private static bool IsAllowedTool(Tool tool)
+        {
+            return tool is WateringCan or Hoe or Pickaxe or Axe or MeleeWeapon;
+        }
         
         public static void OnToolUpgrade_postfix(Tool __instance)
         {
+            if (!IsAllowedTool(__instance))
+            {
+                return;
+            }
+            
             // TODO config
             if (__instance is WateringCan wateringCan)
             {
@@ -257,7 +326,7 @@ namespace ModularTools
             }
             __instance.AttachmentSlotsCount = __instance.UpgradeLevel;
         }
-
+        
         private static int GetWateringCanCapacity(Tool tool)
         {
             const int wateringCapacityIncrease = 15;
@@ -294,7 +363,7 @@ namespace ModularTools
 
         public static void attachOrDetach_postfix(Tool __instance, ref Object __result, Object o)
         {
-            if (__instance is FishingRod or Slingshot)
+            if (!IsAllowedTool(__instance))
             {
                 return;
             }
@@ -338,7 +407,7 @@ namespace ModularTools
 
         public static void canThisBeAttached_postfix(Tool __instance, ref bool __result, Object o, int slot)
         {
-            if (__instance is FishingRod or Slingshot)
+            if (!IsAllowedTool(__instance))
             {
                 return;
             }
@@ -358,7 +427,12 @@ namespace ModularTools
         {
             // TODO config
             int slots = hoveredItem.attachmentSlots();
-            if (hoveredItem is WateringCan or Hoe or Pickaxe or Axe or Pan or MeleeWeapon)
+            if (hoveredItem is not Tool tool)
+            {
+                return 68 * slots;
+            }
+            
+            if (!IsAllowedTool(tool))
             {
                 if (slots > 0)
                 {
@@ -425,7 +499,7 @@ namespace ModularTools
         internal static bool DrawAttachmentSlot_prefix(Tool __instance, int slot, SpriteBatch b, int x, int y)
         {
             // TODO config
-            if (__instance is not WateringCan && __instance is not Pickaxe && __instance is not Hoe && __instance is not Axe && __instance is not Pan && __instance is not MeleeWeapon)
+            if (!IsAllowedTool(__instance))
             {
                 return true;
             }

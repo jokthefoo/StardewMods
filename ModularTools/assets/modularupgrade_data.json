@@ -22,5 +22,11 @@
     Description: "modularupgrade.speed.description",
     TextureIndex: 3,
     Price: 125
+  },
+  "Jok.ModularTools.Power": {
+    DisplayName: "modularupgrade.power.name",
+    Description: "modularupgrade.power.description",
+    TextureIndex: 4,
+    Price: 125
   }
 }

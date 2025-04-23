@@ -35,6 +35,8 @@ namespace FishMod
             Config = helper.ReadConfig<ModConfig>();
             HarmonyPatches();
         }
+        // TODO rock might be broken
+        // TODO dont allow movement when ! pops
 
         private void HarmonyPatches()
         {
