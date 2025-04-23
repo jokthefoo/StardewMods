@@ -218,11 +218,15 @@ namespace ModularTools
 
         public static void Post_tilesAffected(ref List<Vector2> __result, Vector2 tileLocation, int power, Farmer who)
         {
-	        //TODO config
 	        if (who.CurrentTool == null || power == 1)
 	        {
 		        return;
 	        }
+
+            if (!IsAllowedTool(who.CurrentTool))
+            {
+                return;
+            }
 
             List<Vector2> tileLocations = new List<Vector2>();
             tileLocations.Add(tileLocation);
@@ -308,6 +312,7 @@ namespace ModularTools
 
         private static bool IsAllowedTool(Tool tool)
         {
+            // TODO Config
             return tool is WateringCan or Hoe or Pickaxe or Axe or MeleeWeapon;
         }
         
@@ -318,7 +323,6 @@ namespace ModularTools
                 return;
             }
             
-            // TODO config
             if (__instance is WateringCan wateringCan)
             {
                 wateringCan.waterCanMax = 40;
@@ -367,7 +371,6 @@ namespace ModularTools
             {
                 return;
             }
-            // TODO config
             
             if (__instance is WateringCan wateringCan)
             {
@@ -412,7 +415,6 @@ namespace ModularTools
                 return;
             }
             
-            // TODO config
             if(o is ModularUpgradeItem)
             {
                 __result = true;
@@ -425,7 +427,6 @@ namespace ModularTools
         
         public static int AdjustHoverMenuHeight(Item hoveredItem)
         {
-            // TODO config
             int slots = hoveredItem.attachmentSlots();
             if (hoveredItem is not Tool tool)
             {
@@ -498,7 +499,6 @@ namespace ModularTools
         
         internal static bool DrawAttachmentSlot_prefix(Tool __instance, int slot, SpriteBatch b, int x, int y)
         {
-            // TODO config
             if (!IsAllowedTool(__instance))
             {
                 return true;
