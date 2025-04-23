@@ -28,5 +28,11 @@
     Description: "modularupgrade.power.description",
     TextureIndex: 4,
     Price: 125
+  },
+  "Jok.ModularTools.Water": {
+    DisplayName: "modularupgrade.water.name",
+    Description: "modularupgrade.water.description",
+    TextureIndex: 5,
+    Price: 125
   }
 }

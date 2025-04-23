@@ -12,7 +12,10 @@
 
   "modularupgrade.speed.name": "Speed Upgrade",
   "modularupgrade.speed.description": "Install into a tool to increase its speed.",
-  
+
   "modularupgrade.power.name": "Power Upgrade",
-  "modularupgrade.power.description": "Install into a tool to increase its power."
+  "modularupgrade.power.description": "Install into a tool to increase its power.",
+
+  "modularupgrade.water.name": "Watering Upgrade",
+  "modularupgrade.water.description": "Install into a watering can to water deep into the soil. (stays watered for an extra day) Or Install into a Hoe to water the tilled dirt."
 }

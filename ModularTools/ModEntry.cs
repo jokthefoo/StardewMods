@@ -11,8 +11,10 @@ using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Enchantments;
 using StardewValley.GameData.Objects;
+using StardewValley.Internal;
 using StardewValley.ItemTypeDefinitions;
 using StardewValley.Menus;
+using StardewValley.TerrainFeatures;
 using StardewValley.Tools;
 using Object = StardewValley.Object;
 
@@ -21,22 +23,54 @@ namespace ModularTools
     /// <summary>The mod entry point.</summary>
     internal sealed class ModEntry : Mod
     {
+        public static Mod Instance;
+        public static IMonitor MonitorInst;
+        //  debug logging:  MonitorInst.Log($"X value: {x}", LogLevel.Info);
         public static IModHelper Helper;
+        public static Texture2D UpgradeTextures;
         
         public override void Entry(IModHelper helper)
         {
+            Instance = this;
+            MonitorInst = Monitor;
             Helper = helper;
             I18n.Init(Helper.Translation);
             
             Helper.Events.GameLoop.GameLaunched += OnGameLaunched;
             Helper.Events.Content.AssetRequested += OnAssetRequested;
             Helper.Events.Input.ButtonPressed += OnButtonPressed;
+            Helper.Events.GameLoop.DayStarted += OnDayStarted;
             
             var def = new ModularUpgradeDefinition();
             ItemRegistry.ItemTypes.Add(def);
             Helper.Reflection.GetField<Dictionary<string, IItemDataDefinition>>(typeof(ItemRegistry), "IdentifierLookup").GetValue()[def.Identifier] = def;
             
+            UpgradeTextures = Helper.ModContent.Load<Texture2D>($"{ModManifest.UniqueID}/modularupgrades.png");
+            
             HarmonyPatches();
+        }
+
+        private void OnDayStarted(object? sender, DayStartedEventArgs e)
+        {
+            foreach (var location in Game1.locations)
+            {
+                location.ForEachDirt(delegate(HoeDirt dirt)
+                {
+                    if (dirt.modData.TryGetValue(shouldWaterDirtKey, out string value))
+                    {
+                        if (dirt.Pot != null)
+                        {
+                            dirt.Pot.Water();
+                        }
+                        else
+                        {
+                            dirt.state.Value = 1;
+                        }
+                        dirt.modData.Remove(shouldWaterDirtKey);
+                    }
+                    return true;
+                });
+            }
         }
 
         private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
@@ -102,6 +136,12 @@ namespace ModularTools
         }
         
         // TODO dont need to patch for this but it is interesting for magic mod: drawPlacementBounds --- isPlaceable
+        
+        // TODO test watering upgrade -- can and hoe
+        
+        // todo treasure upgrade? ladder chance?
+        // todo crafting recipes -- gate better behind levels? -- more basic ones should be easier to craft
+        // TODO block upgrades from going into wrong tools -- maybe warning message?
         private void HarmonyPatches()
         {
             var harmony = new Harmony(ModManifest.UniqueID);
@@ -140,10 +180,14 @@ namespace ModularTools
             harmony.Patch(
                 original: AccessTools.Method(typeof(Tool), nameof(Tool.attach), new Type[] { typeof(Object) }),
                 postfix: new HarmonyMethod(typeof(ModEntry), nameof(attachOrDetach_postfix)));
-
+            
             harmony.Patch(
-                original: AccessTools.Method(typeof(Tool), nameof(Tool.UpgradeFrom), new Type[] { typeof(Tool) }),
-                postfix: new HarmonyMethod(typeof(ModEntry), nameof(OnToolUpgrade_postfix)));
+                original: AccessTools.Method(typeof(Tool), nameof(Tool.actionWhenPurchased), new Type[] { typeof(string) }),
+                prefix: new HarmonyMethod(typeof(ModEntry), nameof(ToolActionWhenPurchased_prefix)));
+            
+            harmony.Patch(
+                original: AccessTools.Method(typeof(Tool), nameof(Tool.actionWhenPurchased), new Type[] { typeof(string) }),
+                postfix: new HarmonyMethod(typeof(ModEntry), nameof(ToolActionWhenPurchased_postfix)));
 
             harmony.Patch(
                 original: AccessTools.Method(typeof(Pickaxe), nameof(Pickaxe.DoFunction),
@@ -164,8 +208,36 @@ namespace ModularTools
                 original: AccessTools.Method(typeof(Axe), nameof(Axe.DoFunction),
                     new Type[] { typeof(GameLocation), typeof(int), typeof(int), typeof(int), typeof(Farmer) }),
                 postfix: new HarmonyMethod(typeof(ModEntry), nameof(AxeDoFunction_postfix)));
+            
+            harmony.Patch(
+                original: AccessTools.Method(typeof(Tool), nameof(Tool.draw)),
+                prefix: new HarmonyMethod(typeof(ModEntry), nameof(ToolDraw_prefix))
+            );
+            
+            harmony.Patch(
+                original: AccessTools.Method(typeof(HoeDirt), nameof(HoeDirt.performToolAction)),
+                postfix: new HarmonyMethod(typeof(ModEntry), nameof(HoeDirt_performToolAction_postfix))
+            );
+            
+            harmony.Patch(
+                original: AccessTools.Method(typeof(Hoe), nameof(Hoe.DoFunction),
+                    new Type[] { typeof(GameLocation), typeof(int), typeof(int), typeof(int), typeof(Farmer) }),
+                transpiler: new HarmonyMethod(typeof(ModEntry), nameof(Hoe_DoFunctionTranspiler)));
         }
-
+        
+        public static void HoeDirt_performToolAction_postfix(HoeDirt __instance, Tool t, int damage, Vector2 tileLocation)
+        {
+            if (!IsAllowedTool(t))
+            {
+                return;
+            }
+            
+            if(t is WateringCan && GetHasAttachmentQualifiedItemID(t, MUQIds.Water))
+            {
+                __instance.modData[shouldWaterDirtKey] = "Water";
+            }
+        }
+        
         public static void AxeDoFunction_prefix(Axe __instance, out int __state, GameLocation location, int x, int y, int power, Farmer who)
         {
             __state = __instance.UpgradeLevel;
@@ -203,6 +275,18 @@ namespace ModularTools
             return strength;
         }
         
+        public static bool GetHasAttachmentQualifiedItemID(Tool tool, string id)
+        {
+            foreach (Object o in tool.attachments)
+            {
+                if (o != null && o.QualifiedItemId == id)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+        
         public static List<string> GetAttachmentQualifiedItemIDs(Tool tool)
         {
 	        List<string> ids = new List<string>();
@@ -215,23 +299,55 @@ namespace ModularTools
 	        }
 	        return ids;
         }
-
-        public static void Post_tilesAffected(ref List<Vector2> __result, Vector2 tileLocation, int power, Farmer who)
+        
+        public static bool ToolDraw_prefix(Tool __instance, SpriteBatch b)
         {
-	        if (who.CurrentTool == null || power == 1)
+            if (!IsAllowedTool(__instance) || __instance is not WateringCan)
+            {
+                return true;
+            }
+
+            if (!GetHasAttachmentQualifiedItemID(__instance,MUQIds.Water))
+            {
+                return true;
+            }
+
+            Farmer lastUser = __instance.lastUser;
+            if (lastUser == null || !__instance.lastUser.canReleaseTool || !__instance.lastUser.IsLocalPlayer)
+            {
+                return true;
+            }
+
+            List<Vector2> tilesAffected = Helper.Reflection.GetMethod(__instance, "tilesAffected").Invoke<List<Vector2>>(__instance.lastUser.GetToolLocation() / 64f,
+                __instance.lastUser.toolPower.Value, __instance.lastUser);
+            foreach (var vector2 in tilesAffected)
+                b.Draw(UpgradeTextures, Game1.GlobalToLocal(new Vector2((int)vector2.X * 64, (int)vector2.Y * 64)),
+                    new Rectangle(237, 490, 16, 16), Color.White, 0.0f, Vector2.Zero, 4f, SpriteEffects.None, 0.01f);
+
+            return false;
+        }
+
+        public static void Post_tilesAffected(Tool __instance, ref List<Vector2> __result, Vector2 tileLocation, int power, Farmer who)
+        {
+	        if (__instance == null)
 	        {
 		        return;
 	        }
 
-            if (!IsAllowedTool(who.CurrentTool))
+            if (!IsAllowedTool(__instance))
+            {
+                return;
+            }
+            
+            List<Vector2> tileLocations = new List<Vector2>();
+            tileLocations.Add(tileLocation);
+            
+            List<string> attachments = GetAttachmentQualifiedItemIDs(__instance);
+            if (power == 1 && attachments.Contains(MUQIds.Water))
             {
                 return;
             }
 
-            List<Vector2> tileLocations = new List<Vector2>();
-            tileLocations.Add(tileLocation);
-
-	        List<string> attachments = GetAttachmentQualifiedItemIDs(who.CurrentTool);
 	        int widthAttachCount = Utility.getStringCountInList(attachments, MUQIds.Width);
 	        int heightAttachCount = Utility.getStringCountInList(attachments, MUQIds.Length);
 
@@ -261,7 +377,6 @@ namespace ModularTools
             Vector2 left = new Vector2(offset.Y, -offset.X);
             Vector2 right = new Vector2(-offset.Y, offset.X);
 
-            int index = 0;
             int wCount = 0;
             int hCount = 0;
             foreach (string s in attachments)
@@ -273,12 +388,6 @@ namespace ModularTools
                 else if (s == MUQIds.Length)
                 {
                     hCount++;
-                }
-
-                index++;
-                if (index >= power-1)
-                {
-                    break;
                 }
             }
 
@@ -310,25 +419,53 @@ namespace ModularTools
 	        __result = tileLocations;
         }
 
-        private static bool IsAllowedTool(Tool tool)
+        private static bool IsAllowedTool(Item tool)
         {
             // TODO Config
             return tool is WateringCan or Hoe or Pickaxe or Axe or MeleeWeapon;
         }
         
-        public static void OnToolUpgrade_postfix(Tool __instance)
+        public static void ToolActionWhenPurchased_prefix(Tool __instance, out Tool __state, string shopId)
         {
+            __state = null;
             if (!IsAllowedTool(__instance))
             {
                 return;
             }
             
-            if (__instance is WateringCan wateringCan)
+            string previousToolId = ShopBuilder.GetToolUpgradeData(__instance.GetToolData(), Game1.player)?.RequireToolId;
+            if (previousToolId != null)
+            {
+                if (Game1.player.Items.GetById(previousToolId).FirstOrDefault() is Tool tool)
+                {
+                    __state = tool;
+                }
+            }
+        }
+        
+        public static void ToolActionWhenPurchased_postfix(Tool __instance, Tool __state, string shopId)
+        {
+            if (!IsAllowedTool(__state))
+            {
+                return;
+            }
+
+            Tool tool = Game1.player.toolBeingUpgraded.Value;
+            
+            if (tool is WateringCan wateringCan)
             {
                 wateringCan.waterCanMax = 40;
                 wateringCan.WaterLeft = 40;
             }
-            __instance.AttachmentSlotsCount = __instance.UpgradeLevel;
+            tool.AttachmentSlotsCount = tool.UpgradeLevel;
+
+            foreach (Object o in __state.attachments)
+            {
+                if (o is not null)
+                {
+                    tool.attach((Object)o.getOne());
+                }
+            }
         }
         
         private static int GetWateringCanCapacity(Tool tool)
@@ -428,20 +565,20 @@ namespace ModularTools
         public static int AdjustHoverMenuHeight(Item hoveredItem)
         {
             int slots = hoveredItem.attachmentSlots();
-            if (hoveredItem is not Tool tool)
-            {
-                return 68 * slots;
-            }
-            
-            if (!IsAllowedTool(tool))
+            if (IsAllowedTool(hoveredItem))
             {
                 if (slots > 0)
                 {
+                    int enchantInc = 4;
+                    if (((Tool)hoveredItem).enchantments.Count > 0)
+                    {
+                        enchantInc += 4;
+                    }
                     if (slots % 2 == 0)
                     {
-                        return 68 * slots / 2;
+                        return 68 * slots / 2 + enchantInc;
                     }
-                    return 68 * (slots + 1) / 2;
+                    return 68 * (slots + 1) / 2 + enchantInc;
                 }
             }
             return 68 * slots;
@@ -495,6 +632,46 @@ namespace ModularTools
             );
 
             return matcher.InstructionEnumeration();
+        }
+        
+        public static void HoeWatering(Farmer who, Vector2 tileLocation)
+        {
+            if (!IsAllowedTool(who.CurrentTool))
+            {
+                return;
+            }
+
+            if (who.currentLocation.terrainFeatures.TryGetValue(tileLocation, out TerrainFeature terrainFeature) && terrainFeature is HoeDirt dirt)
+            {
+                if (GetHasAttachmentQualifiedItemID(who.CurrentTool, MUQIds.Water))
+                {
+                    //dirt.modData[shouldWaterDirtKey] = "Water";
+                    dirt.state.Value = 1;
+                }
+            }
+        }
+        
+        public static IEnumerable<CodeInstruction> Hoe_DoFunctionTranspiler(IEnumerable<CodeInstruction> instructions,
+            ILGenerator generator)
+        {
+            CodeMatcher matcher = new(instructions, generator);
+            MethodInfo makeHoeDirt = AccessTools.PropertyGetter(typeof(GameLocation), nameof(GameLocation.makeHoeDirt));
+            MethodInfo hoeWatering = AccessTools.Method(typeof(ModEntry), nameof(HoeWatering));
+
+            return matcher.MatchStartForward(
+                    new CodeMatch(OpCodes.Ldarg_1),
+                    new CodeMatch(OpCodes.Ldloc_S, (sbyte)4), // tileLocation
+                    new CodeMatch(OpCodes.Ldc_I4_0),
+                    new CodeMatch(OpCodes.Callvirt, makeHoeDirt),
+                    new CodeMatch(OpCodes.Brfalse)
+                )
+                .ThrowIfNotMatch($"Could not find tool entry point for {nameof(Hoe_DoFunctionTranspiler)}")
+                .Advance(5)
+                .InsertAndAdvance(
+                    new CodeInstruction(OpCodes.Ldloc_S, (byte)4), // tileLocation
+                    new CodeInstruction(OpCodes.Ldarg_S, (byte)5), // Farmer
+                    new CodeInstruction(OpCodes.Call, hoeWatering)
+                ).InstructionEnumeration();
         }
         
         internal static bool DrawAttachmentSlot_prefix(Tool __instance, int slot, SpriteBatch b, int x, int y)
