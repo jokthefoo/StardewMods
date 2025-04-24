@@ -28,6 +28,7 @@ namespace ModularTools
         //  debug logging:  MonitorInst.Log($"X value: {x}", LogLevel.Info);
         public static IModHelper Helper;
         public static Texture2D UpgradeTextures;
+        private static string shouldWaterDirtKey = "Jok.ModularTools.WaterDirt";
         
         public override void Entry(IModHelper helper)
         {
@@ -45,7 +46,7 @@ namespace ModularTools
             ItemRegistry.ItemTypes.Add(def);
             Helper.Reflection.GetField<Dictionary<string, IItemDataDefinition>>(typeof(ItemRegistry), "IdentifierLookup").GetValue()[def.Identifier] = def;
             
-            UpgradeTextures = Helper.ModContent.Load<Texture2D>($"{ModManifest.UniqueID}/modularupgrades.png");
+            UpgradeTextures = Helper.ModContent.Load<Texture2D>("Assets/modularupgrades.png");
             
             HarmonyPatches();
         }
@@ -136,8 +137,6 @@ namespace ModularTools
         }
         
         // TODO dont need to patch for this but it is interesting for magic mod: drawPlacementBounds --- isPlaceable
-        
-        // TODO test watering upgrade -- can and hoe
         
         // todo treasure upgrade? ladder chance?
         // todo crafting recipes -- gate better behind levels? -- more basic ones should be easier to craft
@@ -232,9 +231,17 @@ namespace ModularTools
                 return;
             }
             
-            if(t is WateringCan && GetHasAttachmentQualifiedItemID(t, MUQIds.Water))
+            if(t is WateringCan wateringCan && GetHasAttachmentQualifiedItemID(t, MUQIds.Water))
             {
                 __instance.modData[shouldWaterDirtKey] = "Water";
+                if (wateringCan.getLastFarmerToUse() != null)
+                {
+                    wateringCan.getLastFarmerToUse().stamina -= 1 - wateringCan.getLastFarmerToUse().FarmingLevel * 0.1f;
+                    if (!wateringCan.IsBottomless)
+                    {
+                        wateringCan.WaterLeft -= 1;
+                    }
+                }
             }
         }
         
@@ -302,7 +309,7 @@ namespace ModularTools
         
         public static bool ToolDraw_prefix(Tool __instance, SpriteBatch b)
         {
-            if (!IsAllowedTool(__instance) || __instance is not WateringCan)
+            if (!IsAllowedTool(__instance))
             {
                 return true;
             }
@@ -322,7 +329,7 @@ namespace ModularTools
                 __instance.lastUser.toolPower.Value, __instance.lastUser);
             foreach (var vector2 in tilesAffected)
                 b.Draw(UpgradeTextures, Game1.GlobalToLocal(new Vector2((int)vector2.X * 64, (int)vector2.Y * 64)),
-                    new Rectangle(237, 490, 16, 16), Color.White, 0.0f, Vector2.Zero, 4f, SpriteEffects.None, 0.01f);
+                    new Rectangle(48, 48, 16, 16), Color.White, 0.0f, Vector2.Zero, 4f, SpriteEffects.None, 0.01f);
 
             return false;
         }
@@ -343,7 +350,7 @@ namespace ModularTools
             tileLocations.Add(tileLocation);
             
             List<string> attachments = GetAttachmentQualifiedItemIDs(__instance);
-            if (power == 1 && attachments.Contains(MUQIds.Water))
+            if (power == 1)
             {
                 return;
             }
@@ -376,7 +383,7 @@ namespace ModularTools
             
             Vector2 left = new Vector2(offset.Y, -offset.X);
             Vector2 right = new Vector2(-offset.Y, offset.X);
-
+            
             int wCount = 0;
             int hCount = 0;
             foreach (string s in attachments)
@@ -388,6 +395,11 @@ namespace ModularTools
                 else if (s == MUQIds.Length)
                 {
                     hCount++;
+                }
+                
+                if (wCount + hCount >= power-1)
+                {
+                    break;
                 }
             }
 
@@ -647,6 +659,10 @@ namespace ModularTools
                 {
                     //dirt.modData[shouldWaterDirtKey] = "Water";
                     dirt.state.Value = 1;
+                    if (!who.CurrentTool.isEfficient.Value)
+                    {
+                        who.Stamina -= 2 * who.toolPower.Value - who.FarmingLevel * 0.1f;
+                    }
                 }
             }
         }
@@ -655,21 +671,24 @@ namespace ModularTools
             ILGenerator generator)
         {
             CodeMatcher matcher = new(instructions, generator);
-            MethodInfo makeHoeDirt = AccessTools.PropertyGetter(typeof(GameLocation), nameof(GameLocation.makeHoeDirt));
+            MethodInfo tilePassable = AccessTools.Method(typeof(GameLocation), nameof(GameLocation.isTilePassable),  new[] { typeof(xTile.Dimensions.Location), typeof(xTile.Dimensions.Rectangle) });
+            MethodInfo makeHoeDirt = AccessTools.Method(typeof(GameLocation), nameof(GameLocation.makeHoeDirt));
             MethodInfo hoeWatering = AccessTools.Method(typeof(ModEntry), nameof(HoeWatering));
 
             return matcher.MatchStartForward(
+                    new CodeMatch(OpCodes.Callvirt, tilePassable),
+                    new CodeMatch(OpCodes.Brfalse),
                     new CodeMatch(OpCodes.Ldarg_1),
-                    new CodeMatch(OpCodes.Ldloc_S, (sbyte)4), // tileLocation
+                    new CodeMatch(OpCodes.Ldloc_S), // tileLocation
                     new CodeMatch(OpCodes.Ldc_I4_0),
                     new CodeMatch(OpCodes.Callvirt, makeHoeDirt),
                     new CodeMatch(OpCodes.Brfalse)
                 )
                 .ThrowIfNotMatch($"Could not find tool entry point for {nameof(Hoe_DoFunctionTranspiler)}")
-                .Advance(5)
+                .Advance(7)
                 .InsertAndAdvance(
-                    new CodeInstruction(OpCodes.Ldloc_S, (byte)4), // tileLocation
                     new CodeInstruction(OpCodes.Ldarg_S, (byte)5), // Farmer
+                    new CodeInstruction(OpCodes.Ldloc_S, (byte)4), // tileLocation
                     new CodeInstruction(OpCodes.Call, hoeWatering)
                 ).InstructionEnumeration();
         }
