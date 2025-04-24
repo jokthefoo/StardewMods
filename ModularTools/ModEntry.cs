@@ -107,7 +107,8 @@ namespace ModularTools
                                 TextureIndex = modAssets[upgrade].TextureIndex,
                                 DisplayName = I18n.GetByKey(modAssets[upgrade].DisplayName),
                                 Description = I18n.GetByKey(modAssets[upgrade].Description),
-                                Price = modAssets[upgrade].Price
+                                Price = modAssets[upgrade].Price,
+                                AllowedTools = modAssets[upgrade].AllowedTools
                             });
                     }
                     return ret;
@@ -138,7 +139,6 @@ namespace ModularTools
         
         // TODO dont need to patch for this but it is interesting for magic mod: drawPlacementBounds --- isPlaceable
         
-        // todo treasure upgrade? ladder chance?
         // todo crafting recipes -- gate better behind levels? -- more basic ones should be easier to craft
         // TODO block upgrades from going into wrong tools -- maybe warning message?
         private void HarmonyPatches()
@@ -222,6 +222,16 @@ namespace ModularTools
                 original: AccessTools.Method(typeof(Hoe), nameof(Hoe.DoFunction),
                     new Type[] { typeof(GameLocation), typeof(int), typeof(int), typeof(int), typeof(Farmer) }),
                 transpiler: new HarmonyMethod(typeof(ModEntry), nameof(Hoe_DoFunctionTranspiler)));
+            
+            harmony.Patch(
+                original: AccessTools.Method(typeof(Hoe), nameof(Hoe.DoFunction),
+                    new Type[] { typeof(GameLocation), typeof(int), typeof(int), typeof(int), typeof(Farmer) }),
+                prefix: new HarmonyMethod(typeof(ModEntry), nameof(HoeDoFunction_prefix)));
+
+            harmony.Patch(
+                original: AccessTools.Method(typeof(Hoe), nameof(Hoe.DoFunction),
+                    new Type[] { typeof(GameLocation), typeof(int), typeof(int), typeof(int), typeof(Farmer) }),
+                postfix: new HarmonyMethod(typeof(ModEntry), nameof(HoeDoFunction_postfix)));
         }
         
         public static void HoeDirt_performToolAction_postfix(HoeDirt __instance, Tool t, int damage, Vector2 tileLocation)
@@ -245,16 +255,30 @@ namespace ModularTools
             }
         }
         
+        public static void HoeDoFunction_prefix(Axe __instance, out int __state, GameLocation location, int x, int y, int power, Farmer who)
+        {
+            __state = 0;
+            //TODO config
+            who.luckLevel.Value += Utility.getStringCountInList(GetAttachmentQualifiedItemIDs(__instance), MUQIds.Luck);
+        }
+        
+        public static void HoeDoFunction_postfix(Axe __instance, int __state, GameLocation location, int x, int y, int power, Farmer who)
+        {
+            who.luckLevel.Value -= Utility.getStringCountInList(GetAttachmentQualifiedItemIDs(__instance), MUQIds.Luck);
+        }
+        
         public static void AxeDoFunction_prefix(Axe __instance, out int __state, GameLocation location, int x, int y, int power, Farmer who)
         {
             __state = __instance.UpgradeLevel;
             //TODO config
             __instance.UpgradeLevel = GetToolStrength(__instance);
+            who.luckLevel.Value += Utility.getStringCountInList(GetAttachmentQualifiedItemIDs(__instance), MUQIds.Luck);
         }
         
         public static void AxeDoFunction_postfix(Axe __instance, int __state, GameLocation location, int x, int y, int power, Farmer who)
         {
             __instance.UpgradeLevel = __state;
+            who.luckLevel.Value -= Utility.getStringCountInList(GetAttachmentQualifiedItemIDs(__instance), MUQIds.Luck);
         }
         
         public static void PickaxeDoFunction_prefix(Pickaxe __instance, out int __state, GameLocation location, int x, int y, int power, Farmer who)
@@ -262,11 +286,13 @@ namespace ModularTools
             __state = __instance.UpgradeLevel;
             //TODO config
             __instance.UpgradeLevel = GetToolStrength(__instance);
+            who.luckLevel.Value += Utility.getStringCountInList(GetAttachmentQualifiedItemIDs(__instance), MUQIds.Luck);
         }
         
         public static void PickaxeDoFunction_postfix(Pickaxe __instance, int __state, GameLocation location, int x, int y, int power, Farmer who)
         {
            __instance.UpgradeLevel = __state;
+           who.luckLevel.Value -= Utility.getStringCountInList(GetAttachmentQualifiedItemIDs(__instance), MUQIds.Luck);
         }
         
         private static int GetToolStrength(Tool tool)
@@ -564,9 +590,9 @@ namespace ModularTools
                 return;
             }
             
-            if(o is ModularUpgradeItem)
+            if(o is ModularUpgradeItem moditem)
             {
-                __result = true;
+                __result = moditem.CanThisBeAttached(__instance);
             }
             else
             {

@@ -3,19 +3,22 @@
     DisplayName: "modularupgrade.width.name",
     Description: "modularupgrade.width.description",
     TextureIndex: 0,
-    Price: 123
+    Price: 123,
+    AllowedTools: ["hoe", "wateringcan"]
   },
   "Jok.ModularTools.Height": {
     DisplayName: "modularupgrade.length.name",
     Description: "modularupgrade.length.description",
     TextureIndex: 1,
-    Price: 124
+    Price: 124,
+    AllowedTools: ["hoe", "wateringcan"]
   },
   "Jok.ModularTools.Capacity": {
     DisplayName: "modularupgrade.capacity.name",
     Description: "modularupgrade.capacity.description",
     TextureIndex: 2,
-    Price: 125
+    Price: 125,
+    AllowedTools: ["wateringcan"]
   },
   "Jok.ModularTools.Speed": {
     DisplayName: "modularupgrade.speed.name",
@@ -27,12 +30,21 @@
     DisplayName: "modularupgrade.power.name",
     Description: "modularupgrade.power.description",
     TextureIndex: 4,
-    Price: 125
+    Price: 125,
+    AllowedTools: ["pickaxe", "axe"]
   },
   "Jok.ModularTools.Water": {
     DisplayName: "modularupgrade.water.name",
     Description: "modularupgrade.water.description",
     TextureIndex: 5,
-    Price: 125
+    Price: 125,
+    AllowedTools: ["hoe", "wateringcan"]
+  },
+  "Jok.ModularTools.Luck": {
+    DisplayName: "modularupgrade.luck.name",
+    Description: "modularupgrade.luck.description",
+    TextureIndex: 6,
+    Price: 125,
+    AllowedTools: ["hoe", "pickaxe", "axe"]
   }
 }

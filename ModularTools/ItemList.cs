@@ -8,4 +8,5 @@ public static class MUQIds
     public const string Speed = "(Jok.MU)Jok.ModularTools.Speed";
     public const string Power = "(Jok.MU)Jok.ModularTools.Power";
     public const string Water = "(Jok.MU)Jok.ModularTools.Water";
+    public const string Luck = "(Jok.MU)Jok.ModularTools.Luck";
 }

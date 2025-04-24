@@ -1,5 +1,7 @@
 {
   "modularupgrade.category.text": "Modular Upgrade",
+  
+  "modularupgrade.attach.error": "This upgrade cannot be applied to that tool.",
 
   "modularupgrade.width.name": "Width Upgrade",
   "modularupgrade.width.description": "Install into a tool to make the area of effect wider.",
@@ -17,5 +19,8 @@
   "modularupgrade.power.description": "Install into a tool to increase its power.",
 
   "modularupgrade.water.name": "Watering Upgrade",
-  "modularupgrade.water.description": "Install into a watering can to water deep into the soil. (stays watered for an extra day) Or Install into a Hoe to water the tilled dirt."
+  "modularupgrade.water.description": "Install into a watering can to water deep into the soil. (stays watered for an extra day) Or Install into a Hoe to water the tilled dirt.",
+  
+  "modularupgrade.luck.name": "Lucky Upgrade",
+  "modularupgrade.luck.description": "Install into a tool to have extra luck when using."
 }

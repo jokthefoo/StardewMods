@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Netcode;
 using StardewValley;
+using StardewValley.Tools;
 
 namespace ModularTools;
 
@@ -11,10 +12,11 @@ public class ModularUpgradeItem : StardewValley.Object
 {
     public override string DisplayName => GetDisplayName();
     public string Description { get; set; }
-
     public override string TypeDefinitionId => "(Jok.MU)";
     
     public readonly NetString upgradeName = new();
+
+    [XmlIgnore] private List<string> allowedTools;
 
     public ModularUpgradeItem()
     {
@@ -28,6 +30,32 @@ public class ModularUpgradeItem : StardewValley.Object
         ReloadData(itemid);
     }
 
+    public bool CanThisBeAttached(Tool t)
+    {
+        if(allowedTools == null) return true;
+        
+        if (t is WateringCan && allowedTools.Contains("WateringCan", StringComparer.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+        if (t is Hoe && allowedTools.Contains("Hoe", StringComparer.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+        if (t is Pickaxe && allowedTools.Contains("Pickaxe", StringComparer.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+        if (t is Axe && allowedTools.Contains("Axe", StringComparer.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        Game1.addHUDMessage(new HUDMessage(I18n.GetByKey("modularupgrade.attach.error"), 3));
+        Game1.playSound("cancel");
+        return false;
+    }
+
     private void ReloadData(string itemid)
     {
         var data = Game1.content.Load< Dictionary< string, ModularUpgradeData > >("Jok.ModularTools/ModularUpgrades");
@@ -36,6 +64,7 @@ public class ModularUpgradeItem : StardewValley.Object
         price.Value = data[ItemId].Price;
         displayName = data[ItemId].DisplayName;
         Description = data[ItemId].Description;
+        allowedTools = data[ItemId].AllowedTools;
     }
 
     private string GetDisplayName()
