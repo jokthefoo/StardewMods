@@ -35,8 +35,6 @@ namespace FishMod
             Config = helper.ReadConfig<ModConfig>();
             HarmonyPatches();
         }
-        // TODO rock might be broken
-        // TODO dont allow movement when ! pops
         // TODO tiles to water next day persist through save?
 
         private void HarmonyPatches()

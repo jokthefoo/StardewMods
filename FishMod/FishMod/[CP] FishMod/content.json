@@ -4,7 +4,7 @@
     {
       "LogName": "Load Assets",
       "Action": "Load",
-      "Target": "Mods/{{ModId}}/AqFish, Mods/{{ModId}}/Objects, Mods/{{ModId}}/BigCraftables , Mods/{{ModId}}/Rock",
+      "Target": "Mods/{{ModId}}/AqFish, Mods/{{ModId}}/Objects, Mods/{{ModId}}/BigCraftables",
       "FromFile": "Assets/{{TargetWithoutPath}}.png"
     },
     {
