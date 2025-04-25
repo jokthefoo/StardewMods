@@ -1,4 +1,6 @@
-﻿namespace ModularTools;
+﻿using System.Security.Cryptography;
+
+namespace ModularTools;
 
 public static class MUQIds
 {

@@ -36,6 +36,7 @@ namespace FishMod
             HarmonyPatches();
         }
         // TODO tiles to water next day persist through save?
+        // TODO semi-auto-petter name is null
 
         private void HarmonyPatches()
         {

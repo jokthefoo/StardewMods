@@ -91,14 +91,16 @@ namespace ModularTools
                 }
             }
         }
-        
-         private void OnAssetRequested(object sender, AssetRequestedEventArgs e)
+
+        private void OnAssetRequested(object sender, AssetRequestedEventArgs e)
         {
             if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/ModularUpgrades"))
-            { 
+            {
                 e.LoadFrom(() =>
-                { 
-                    var modAssets = Helper.ModContent.Load <Dictionary<string, ModularUpgradeData>>("assets/modularupgrade_data.json");
+                {
+                    var modAssets =
+                        Helper.ModContent.Load<Dictionary<string, ModularUpgradeData>>(
+                            "assets/modularupgrade_data.json");
                     Dictionary<string, ModularUpgradeData> ret = new();
                     foreach (string upgrade in modAssets.Keys)
                     {
@@ -112,6 +114,7 @@ namespace ModularTools
                                 AllowedTools = modAssets[upgrade].AllowedTools
                             });
                     }
+
                     return ret;
                 }, AssetLoadPriority.Exclusive);
             }
@@ -123,7 +126,9 @@ namespace ModularTools
             {
                 e.Edit((asset) =>
                 {
-                    var modAssets = Helper.ModContent.Load <Dictionary<string, ModularUpgradeData>>("assets/modularupgrade_data.json");
+                    var modAssets =
+                        Helper.ModContent.Load<Dictionary<string, ModularUpgradeData>>(
+                            "assets/modularupgrade_data.json");
                     var data = asset.AsDictionary<string, SpaceCore.VanillaAssetExpansion.ObjectExtensionData>().Data;
                     foreach (string upgrade in modAssets.Keys)
                     {
@@ -136,11 +141,21 @@ namespace ModularTools
                     }
                 });
             }
+            else if (e.NameWithoutLocale.IsEquivalentTo("Data/CraftingRecipes"))
+            {
+                e.Edit(asset =>
+                {
+                    var dict = asset.AsDictionary<string, string>().Data;
+                    // ingredients / unused / yield / big craftable? / unlock conditions /
+                    dict.Add(MUQIds.Width,
+                        $"388 50/what/{MUQIds.Width}/false/null/"); 
+        
+                    // todo crafting recipes -- gate better behind levels? -- more basic ones should be easier to craft
+                });
+            }
         }
-        
+
         // TODO dont need to patch for this but it is interesting for magic mod: drawPlacementBounds --- isPlaceable
-        
-        // todo crafting recipes -- gate better behind levels? -- more basic ones should be easier to craft
         private void HarmonyPatches()
         {
             var harmony = new Harmony(ModManifest.UniqueID);
@@ -197,7 +212,6 @@ namespace ModularTools
                 original: AccessTools.Method(typeof(Tool), nameof(Tool.DoFunction),
                     new Type[] { typeof(GameLocation), typeof(int), typeof(int), typeof(int), typeof(Farmer) }),
                 postfix: new HarmonyMethod(typeof(ModEntry), nameof(ToolDoFunction_postfix)));
-            
             
             // Range upgrade
             Type[] tileAffectedTypes = { typeof(Vector2), typeof(int), typeof(Farmer) };
@@ -365,7 +379,7 @@ namespace ModularTools
             {
                 Buff buff = new Buff(
                     id: "Jok.ModularTools.AirSpeed",
-                    displayName: I18n.GetByKey("modularupgrade.buff.display.name"),
+                    displayName: I18n.Modularupgrade_Buff_Display_Name(),
                     iconTexture: Game1.buffsIcons,
                     iconSheetIndex: 9,
                     duration: 1000, // milliseconds
