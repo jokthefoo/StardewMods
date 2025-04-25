@@ -232,6 +232,103 @@ namespace ModularTools
                 original: AccessTools.Method(typeof(Hoe), nameof(Hoe.DoFunction),
                     new Type[] { typeof(GameLocation), typeof(int), typeof(int), typeof(int), typeof(Farmer) }),
                 postfix: new HarmonyMethod(typeof(ModEntry), nameof(HoeDoFunction_postfix)));
+            
+            harmony.Patch(
+                original: AccessTools.Method(typeof(GameLocation), nameof(GameLocation.OnStoneDestroyed),
+                    new Type[] { typeof(string), typeof(int), typeof(int), typeof(Farmer) }),
+                postfix: new HarmonyMethod(typeof(ModEntry), nameof(OnStoneDestroyed_postfix)));
+            
+            harmony.Patch(
+                original: AccessTools.Method(typeof(Tree), nameof(Tree.tickUpdate),
+                    new Type[] { typeof(GameTime) }),
+                transpiler: new HarmonyMethod(typeof(ModEntry), nameof(Tree_tickUpdateTranspiler)));
+        }
+        
+        public static IEnumerable<CodeInstruction> Tree_tickUpdateTranspiler(IEnumerable<CodeInstruction> instructions,
+            ILGenerator generator)
+        {
+            CodeMatcher matcher = new(instructions, generator);
+            MethodInfo typeToDrop = AccessTools.Method(typeof(ModEntry), nameof(AxeFireUpgradeDropType));
+            MethodInfo amountToDrop = AccessTools.Method(typeof(ModEntry), nameof(AxeFireUpgradeDropAmount));
+
+            return matcher.MatchStartForward(
+                    new CodeMatch(OpCodes.Add),
+                    new CodeMatch(OpCodes.Ldloc_1),
+                    new CodeMatch(OpCodes.Ldfld),
+                    new CodeMatch(OpCodes.Conv_I4),
+                    new CodeMatch(OpCodes.Ldloc_S), // num to drop
+                    new CodeMatch(OpCodes.Ldc_I4_1), // true for resource
+                    new CodeMatch(OpCodes.Ldc_I4_M1),
+                    new CodeMatch(OpCodes.Ldc_I4_0),
+                    new CodeMatch(OpCodes.Ldloca_S)
+                )
+                .ThrowIfNotMatch($"Could not find tool entry point for {nameof(Tree_tickUpdateTranspiler)}")
+                .Advance(-11) // right before we load "12" for wood
+                .RemoveInstruction() // remove 12
+                .InsertAndAdvance(
+                    new CodeInstruction(OpCodes.Ldloc_S, 9), // load farmer for our call
+                    new CodeInstruction(OpCodes.Call, typeToDrop) // load type of dropped resource
+                ).Advance(15)
+                .InsertAndAdvance(
+                    new CodeInstruction(OpCodes.Ldloc_S, 9), // load farmer for our call, also stealing original amount
+                    new CodeInstruction(OpCodes.Call, amountToDrop) // load amount of dropped resource
+                )
+                .InstructionEnumeration();
+        }
+        
+        public static int AxeFireUpgradeDropAmount(int amount, Farmer farmer)
+        {
+            if (!IsAllowedTool(farmer.CurrentTool))
+            {
+                return amount;
+            }
+
+            if (GetHasAttachmentQualifiedItemID(farmer.CurrentTool, MUQIds.Fire))
+            {
+                int coalAmount = amount / 10;
+                return coalAmount == 0 ? 1 : coalAmount;
+            }
+            return amount;
+        }
+        
+        public static int AxeFireUpgradeDropType(Farmer farmer)
+        {
+            const int wood = 12;
+            const int coal = 4;
+            if (!IsAllowedTool(farmer.CurrentTool))
+            {
+                return wood;
+            }
+
+            if (GetHasAttachmentQualifiedItemID(farmer.CurrentTool, MUQIds.Fire))
+            {
+                return coal;
+            }
+            return wood;
+        }
+        
+        public static void OnStoneDestroyed_postfix(GameLocation __instance, string stoneId, int x, int y, Farmer who)
+        {
+            Tool t = who.CurrentTool;
+            if (!IsAllowedTool(t))
+            {
+                return;
+            }
+
+            if(GetAttachmentQualifiedItemID(t, MUQIds.Fire) is ModularUpgradeItem upgrade)
+            {
+                upgrade.fireCounter++;
+                if (upgrade.fireCounter == 10)
+                {
+                    upgrade.fireCounter = 0;
+                    int amount = 1;
+                    if (Game1.random.NextDouble() < 0.2)
+                    {
+                        amount++;
+                    }
+                    Game1.createMultipleObjectDebris("(O)382", x, y, amount, who.UniqueMultiplayerID, __instance);
+                }
+            }
         }
         
         public static void HoeDirt_performToolAction_postfix(HoeDirt __instance, Tool t, int damage, Vector2 tileLocation)
@@ -306,6 +403,18 @@ namespace ModularTools
                 }
             }
             return strength;
+        }
+        
+        public static Object GetAttachmentQualifiedItemID(Tool tool, string id)
+        {
+            foreach (Object o in tool.attachments)
+            {
+                if (o != null && o.QualifiedItemId == id)
+                {
+                    return o;
+                }
+            }
+            return null;
         }
         
         public static bool GetHasAttachmentQualifiedItemID(Tool tool, string id)

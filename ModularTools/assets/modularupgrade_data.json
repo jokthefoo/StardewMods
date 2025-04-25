@@ -16,20 +16,20 @@
   "Jok.ModularTools.Capacity": {
     DisplayName: "modularupgrade.capacity.name",
     Description: "modularupgrade.capacity.description",
-    TextureIndex: 2,
+    TextureIndex: 4,
     Price: 125,
     AllowedTools: ["wateringcan"]
   },
   "Jok.ModularTools.Speed": {
     DisplayName: "modularupgrade.speed.name",
     Description: "modularupgrade.speed.description",
-    TextureIndex: 3,
+    TextureIndex: 7,
     Price: 125
   },
   "Jok.ModularTools.Power": {
     DisplayName: "modularupgrade.power.name",
     Description: "modularupgrade.power.description",
-    TextureIndex: 4,
+    TextureIndex: 2,
     Price: 125,
     AllowedTools: ["pickaxe", "axe"]
   },
@@ -46,5 +46,12 @@
     TextureIndex: 6,
     Price: 125,
     AllowedTools: ["hoe", "pickaxe", "axe"]
+  },
+  "Jok.ModularTools.Fire": {
+    DisplayName: "modularupgrade.fire.name",
+    Description: "modularupgrade.fire.description",
+    TextureIndex: 3,
+    Price: 125,
+    AllowedTools: ["pickaxe", "axe"]
   }
 }

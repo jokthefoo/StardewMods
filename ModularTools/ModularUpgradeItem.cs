@@ -17,6 +17,7 @@ public class ModularUpgradeItem : StardewValley.Object
     public readonly NetString upgradeName = new();
 
     [XmlIgnore] private List<string> allowedTools;
+    [XmlIgnore] public int fireCounter = 0;
 
     public ModularUpgradeItem()
     {
