@@ -10,4 +10,5 @@ public static class MUQIds
     public const string Water = "(Jok.MU)Jok.ModularTools.Water";
     public const string Luck = "(Jok.MU)Jok.ModularTools.Luck";
     public const string Fire = "(Jok.MU)Jok.ModularTools.Fire";
+    public const string Air = "(Jok.MU)Jok.ModularTools.Air";
 }

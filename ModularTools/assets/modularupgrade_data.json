@@ -53,5 +53,11 @@
     TextureIndex: 3,
     Price: 125,
     AllowedTools: ["pickaxe", "axe"]
+  },
+  "Jok.ModularTools.Air": {
+    DisplayName: "modularupgrade.air.name",
+    Description: "modularupgrade.air.description",
+    TextureIndex: 8,
+    Price: 125
   }
 }

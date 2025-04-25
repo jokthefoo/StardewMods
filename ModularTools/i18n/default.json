@@ -1,7 +1,9 @@
 {
   "modularupgrade.category.text": "Modular Upgrade",
-  
+
   "modularupgrade.attach.error": "This upgrade cannot be applied to that tool.",
+  
+  "modularupgrade.buff.display.name": "Air Speed",
 
   "modularupgrade.width.name": "Width Upgrade",
   "modularupgrade.width.description": "Install into a tool to make the area of effect wider.",
@@ -23,7 +25,10 @@
 
   "modularupgrade.luck.name": "Lucky Upgrade",
   "modularupgrade.luck.description": "Install into a tool to have extra luck for that tool.",
-  
+
   "modularupgrade.fire.name": "Fire Upgrade",
-  "modularupgrade.fire.description": "Install into a tool to increase the heat of the tool."
+  "modularupgrade.fire.description": "Install into a tool to increase the heat of the tool.",
+  
+  "modularupgrade.air.name": "Air Upgrade",
+  "modularupgrade.air.description": "Install into a tool to gain a short speed boost after using the tool."
 }

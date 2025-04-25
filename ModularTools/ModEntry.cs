@@ -9,6 +9,7 @@ using SpaceShared.APIs;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
+using StardewValley.Buffs;
 using StardewValley.Enchantments;
 using StardewValley.GameData.Objects;
 using StardewValley.Internal;
@@ -140,11 +141,11 @@ namespace ModularTools
         // TODO dont need to patch for this but it is interesting for magic mod: drawPlacementBounds --- isPlaceable
         
         // todo crafting recipes -- gate better behind levels? -- more basic ones should be easier to craft
-        // TODO block upgrades from going into wrong tools -- maybe warning message?
         private void HarmonyPatches()
         {
             var harmony = new Harmony(ModManifest.UniqueID);
 
+            // Attaching
             Type[] types = { typeof(int), typeof(SpriteBatch), typeof(int), typeof(int) };
             var originalToolsMethod = typeof(Tool).GetMethod("DrawAttachmentSlot",
                 BindingFlags.Instance | BindingFlags.NonPublic, null, types, null);
@@ -169,13 +170,6 @@ namespace ModularTools
                     new Type[] { typeof(Object), typeof(int) }),
                 postfix: new HarmonyMethod(typeof(ModEntry), nameof(canThisBeAttached_postfix)));
 
-            Type[] tileAffectedTypes = { typeof(Vector2), typeof(int), typeof(Farmer) };
-            var originalTilesAffected = typeof(Tool).GetMethod("tilesAffected",
-                BindingFlags.Instance | BindingFlags.NonPublic, null, tileAffectedTypes, null);
-            harmony.Patch(
-                original: originalTilesAffected,
-                postfix: new HarmonyMethod(typeof(ModEntry), nameof(Post_tilesAffected)));
-
             harmony.Patch(
                 original: AccessTools.Method(typeof(Tool), nameof(Tool.attach), new Type[] { typeof(Object) }),
                 postfix: new HarmonyMethod(typeof(ModEntry), nameof(attachOrDetach_postfix)));
@@ -187,32 +181,33 @@ namespace ModularTools
             harmony.Patch(
                 original: AccessTools.Method(typeof(Tool), nameof(Tool.actionWhenPurchased), new Type[] { typeof(string) }),
                 postfix: new HarmonyMethod(typeof(ModEntry), nameof(ToolActionWhenPurchased_postfix)));
-
-            harmony.Patch(
-                original: AccessTools.Method(typeof(Pickaxe), nameof(Pickaxe.DoFunction),
-                    new Type[] { typeof(GameLocation), typeof(int), typeof(int), typeof(int), typeof(Farmer) }),
-                prefix: new HarmonyMethod(typeof(ModEntry), nameof(PickaxeDoFunction_prefix)));
-
-            harmony.Patch(
-                original: AccessTools.Method(typeof(Pickaxe), nameof(Pickaxe.DoFunction),
-                    new Type[] { typeof(GameLocation), typeof(int), typeof(int), typeof(int), typeof(Farmer) }),
-                postfix: new HarmonyMethod(typeof(ModEntry), nameof(PickaxeDoFunction_postfix)));
-
-            harmony.Patch(
-                original: AccessTools.Method(typeof(Axe), nameof(Axe.DoFunction),
-                    new Type[] { typeof(GameLocation), typeof(int), typeof(int), typeof(int), typeof(Farmer) }),
-                prefix: new HarmonyMethod(typeof(ModEntry), nameof(AxeDoFunction_prefix)));
-
-            harmony.Patch(
-                original: AccessTools.Method(typeof(Axe), nameof(Axe.DoFunction),
-                    new Type[] { typeof(GameLocation), typeof(int), typeof(int), typeof(int), typeof(Farmer) }),
-                postfix: new HarmonyMethod(typeof(ModEntry), nameof(AxeDoFunction_postfix)));
             
             harmony.Patch(
                 original: AccessTools.Method(typeof(Tool), nameof(Tool.draw)),
                 prefix: new HarmonyMethod(typeof(ModEntry), nameof(ToolDraw_prefix))
             );
             
+            // Luck, Power, and Speed Upgrades
+            harmony.Patch(
+                original: AccessTools.Method(typeof(Tool), nameof(Tool.DoFunction),
+                    new Type[] { typeof(GameLocation), typeof(int), typeof(int), typeof(int), typeof(Farmer) }),
+                prefix: new HarmonyMethod(typeof(ModEntry), nameof(ToolDoFunction_prefix)));
+
+            harmony.Patch(
+                original: AccessTools.Method(typeof(Tool), nameof(Tool.DoFunction),
+                    new Type[] { typeof(GameLocation), typeof(int), typeof(int), typeof(int), typeof(Farmer) }),
+                postfix: new HarmonyMethod(typeof(ModEntry), nameof(ToolDoFunction_postfix)));
+            
+            
+            // Range upgrade
+            Type[] tileAffectedTypes = { typeof(Vector2), typeof(int), typeof(Farmer) };
+            var originalTilesAffected = typeof(Tool).GetMethod("tilesAffected",
+                BindingFlags.Instance | BindingFlags.NonPublic, null, tileAffectedTypes, null);
+            harmony.Patch(
+                original: originalTilesAffected,
+                postfix: new HarmonyMethod(typeof(ModEntry), nameof(Post_tilesAffected)));
+
+            // Water upgrade
             harmony.Patch(
                 original: AccessTools.Method(typeof(HoeDirt), nameof(HoeDirt.performToolAction)),
                 postfix: new HarmonyMethod(typeof(ModEntry), nameof(HoeDirt_performToolAction_postfix))
@@ -223,16 +218,7 @@ namespace ModularTools
                     new Type[] { typeof(GameLocation), typeof(int), typeof(int), typeof(int), typeof(Farmer) }),
                 transpiler: new HarmonyMethod(typeof(ModEntry), nameof(Hoe_DoFunctionTranspiler)));
             
-            harmony.Patch(
-                original: AccessTools.Method(typeof(Hoe), nameof(Hoe.DoFunction),
-                    new Type[] { typeof(GameLocation), typeof(int), typeof(int), typeof(int), typeof(Farmer) }),
-                prefix: new HarmonyMethod(typeof(ModEntry), nameof(HoeDoFunction_prefix)));
-
-            harmony.Patch(
-                original: AccessTools.Method(typeof(Hoe), nameof(Hoe.DoFunction),
-                    new Type[] { typeof(GameLocation), typeof(int), typeof(int), typeof(int), typeof(Farmer) }),
-                postfix: new HarmonyMethod(typeof(ModEntry), nameof(HoeDoFunction_postfix)));
-            
+            // Fire Upgrade
             harmony.Patch(
                 original: AccessTools.Method(typeof(GameLocation), nameof(GameLocation.OnStoneDestroyed),
                     new Type[] { typeof(string), typeof(int), typeof(int), typeof(Farmer) }),
@@ -352,44 +338,44 @@ namespace ModularTools
             }
         }
         
-        public static void HoeDoFunction_prefix(Axe __instance, out int __state, GameLocation location, int x, int y, int power, Farmer who)
-        {
-            __state = 0;
-            //TODO config
-            who.luckLevel.Value += Utility.getStringCountInList(GetAttachmentQualifiedItemIDs(__instance), MUQIds.Luck);
-        }
-        
-        public static void HoeDoFunction_postfix(Axe __instance, int __state, GameLocation location, int x, int y, int power, Farmer who)
-        {
-            who.luckLevel.Value -= Utility.getStringCountInList(GetAttachmentQualifiedItemIDs(__instance), MUQIds.Luck);
-        }
-        
-        public static void AxeDoFunction_prefix(Axe __instance, out int __state, GameLocation location, int x, int y, int power, Farmer who)
+        public static void ToolDoFunction_prefix(Tool __instance, out int __state, GameLocation location, int x, int y, int power, Farmer who)
         {
             __state = __instance.UpgradeLevel;
-            //TODO config
-            __instance.UpgradeLevel = GetToolStrength(__instance);
+            if (!IsAllowedTool(__instance))
+            {
+                return;
+            }
+
+            if (GetHasAttachmentQualifiedItemID(__instance, MUQIds.Power))
+            {
+                __instance.UpgradeLevel = GetToolStrength(__instance);
+            }
             who.luckLevel.Value += Utility.getStringCountInList(GetAttachmentQualifiedItemIDs(__instance), MUQIds.Luck);
         }
         
-        public static void AxeDoFunction_postfix(Axe __instance, int __state, GameLocation location, int x, int y, int power, Farmer who)
+        public static void ToolDoFunction_postfix(Tool __instance, int __state, GameLocation location, int x, int y, int power, Farmer who)
         {
+            if (!IsAllowedTool(__instance))
+            {
+                return;
+            }
             __instance.UpgradeLevel = __state;
             who.luckLevel.Value -= Utility.getStringCountInList(GetAttachmentQualifiedItemIDs(__instance), MUQIds.Luck);
-        }
-        
-        public static void PickaxeDoFunction_prefix(Pickaxe __instance, out int __state, GameLocation location, int x, int y, int power, Farmer who)
-        {
-            __state = __instance.UpgradeLevel;
-            //TODO config
-            __instance.UpgradeLevel = GetToolStrength(__instance);
-            who.luckLevel.Value += Utility.getStringCountInList(GetAttachmentQualifiedItemIDs(__instance), MUQIds.Luck);
-        }
-        
-        public static void PickaxeDoFunction_postfix(Pickaxe __instance, int __state, GameLocation location, int x, int y, int power, Farmer who)
-        {
-           __instance.UpgradeLevel = __state;
-           who.luckLevel.Value -= Utility.getStringCountInList(GetAttachmentQualifiedItemIDs(__instance), MUQIds.Luck);
+            if (GetHasAttachmentQualifiedItemID(__instance, MUQIds.Air))
+            {
+                Buff buff = new Buff(
+                    id: "Jok.ModularTools.AirSpeed",
+                    displayName: I18n.GetByKey("modularupgrade.buff.display.name"),
+                    iconTexture: Game1.buffsIcons,
+                    iconSheetIndex: 9,
+                    duration: 1000, // milliseconds
+                    effects: new BuffEffects()
+                    {
+                        Speed = { 2 }
+                    }
+                );
+                who.applyBuff(buff);
+            }
         }
         
         private static int GetToolStrength(Tool tool)
