@@ -403,7 +403,7 @@ namespace ModularTools
             
             if (GetHasAttachmentQualifiedItemID(tool, MUQIds.Air2))
             {
-                duration = 1000;
+                duration = 1200;
                 speed = 3;
             }
 
