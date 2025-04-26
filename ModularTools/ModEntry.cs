@@ -151,6 +151,7 @@ namespace ModularTools
                     dict.Add(MUQIds.Length, $"334 2 388 15/what/{MUQIds.Length}/false/s Farming 2/");
                     dict.Add(MUQIds.Capacity, $"334 2 390 15/what/{MUQIds.Capacity}/false/s Farming 2/");
                     dict.Add(MUQIds.Power, $"334 2 390 15/what/{MUQIds.Power}/false/s Mining 2/");
+
                     dict.Add(MUQIds.Water, $"336 2 371 5/what/{MUQIds.Water}/false/s Farming 7/");
                     dict.Add(MUQIds.Speed, $"335 2 60 1/what/{MUQIds.Speed}/false/s Mining 4/");
                     dict.Add(MUQIds.Luck, $"335 2 CaveJelly 1/what/{MUQIds.Luck}/false/s Fishing 4/");
@@ -530,6 +531,11 @@ namespace ModularTools
             int heightAttachCount = Utility.getStringCountInList(attachments, MUQIds.Length);
             int aoeAttachCount = Utility.getStringCountInList(attachments, MUQIds.WidthHeight);
 
+            if (__instance.hasEnchantmentOfType<ReachingToolEnchantment>())
+            {
+                aoeAttachCount++;
+            }
+
 	        if (widthAttachCount + heightAttachCount + aoeAttachCount == 0)
             {
                 __result = tileLocations;
@@ -614,7 +620,7 @@ namespace ModularTools
         private static bool IsAllowedTool(Item tool)
         {
             // TODO Config
-            return tool is WateringCan or Hoe or Pickaxe or Axe or MeleeWeapon;
+            return tool is WateringCan or Hoe or Pickaxe or Axe;
         }
         
         public static void ToolActionWhenPurchased_prefix(Tool __instance, out Tool __state, string shopId)
@@ -707,7 +713,7 @@ namespace ModularTools
                 return;
             }
             
-            if (__instance is WateringCan wateringCan)
+            if (__instance is WateringCan wateringCan && !__instance.hasEnchantmentOfType<BottomlessEnchantment>())
             {
                 wateringCan.waterCanMax = GetWateringCanCapacity(__instance);
                 if (wateringCan.WaterLeft > wateringCan.waterCanMax) // reduce water if we have a new lower capacity
