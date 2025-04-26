@@ -12,6 +12,7 @@ using StardewValley;
 using StardewValley.Buffs;
 using StardewValley.Enchantments;
 using StardewValley.GameData.Objects;
+using StardewValley.GameData.Tools;
 using StardewValley.Internal;
 using StardewValley.ItemTypeDefinitions;
 using StardewValley.Menus;
@@ -40,16 +41,38 @@ namespace ModularTools
             
             Helper.Events.GameLoop.GameLaunched += OnGameLaunched;
             Helper.Events.Content.AssetRequested += OnAssetRequested;
-            Helper.Events.Input.ButtonPressed += OnButtonPressed;
             Helper.Events.GameLoop.DayStarted += OnDayStarted;
+            Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
+            Helper.ConsoleCommands.Add("modulartools_attachment_slots_reset", "Resets all tools to their default attachment slot count for the mod (1 per upgrade).\n\nUsage: modulartools_attachment_slots_reset", UpdateAttachmentSlotsForTools);
             
             var def = new ModularUpgradeDefinition();
             ItemRegistry.ItemTypes.Add(def);
             Helper.Reflection.GetField<Dictionary<string, IItemDataDefinition>>(typeof(ItemRegistry), "IdentifierLookup").GetValue()[def.Identifier] = def;
             
             UpgradeTextures = Helper.ModContent.Load<Texture2D>("Assets/modularupgrades.png");
-            
+            Config = helper.ReadConfig<ModConfig>();
             HarmonyPatches();
+        }
+
+        private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
+        {
+            if (!Game1.player.mailReceived.Contains("Jok.ModularTools.Started"))
+            {
+                UpdateAttachmentSlotsForTools("", new []{""});
+                Game1.player.mailReceived.Add("Jok.ModularTools.Started");
+            }
+        }
+
+        private void UpdateAttachmentSlotsForTools(string command, string[] args)
+        {
+            Utility.ForEachItem(item =>
+            {
+                if (item is Tool tool && IsAllowedTool(tool))
+                {
+                    tool.AttachmentSlotsCount = tool.UpgradeLevel;
+                }
+                return true;
+            });
         }
 
         private void OnDayStarted(object? sender, DayStartedEventArgs e)
@@ -79,18 +102,32 @@ namespace ModularTools
         {
             var sc = Helper.ModRegistry.GetApi<ISpaceCoreApi>("spacechase0.SpaceCore");
             sc.RegisterSerializerType(typeof(ModularUpgradeItem));
+            SetupModConfigs();
         }
-
-        private void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
+         private void SetupModConfigs()
         {
-            if (e.Button == SButton.C)
-            {
-                if (Game1.player.CurrentTool is not null)
-                {
-                    Game1.player.CurrentTool.AttachmentSlotsCount += 1;
-                }
-            }
+            // get Generic Mod Config Menu's API (if it's installed)
+            var configMenu = Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
+            if (configMenu is null)
+                return;
+
+            // register mod
+            configMenu.Register(
+                mod: ModManifest,
+                reset: () => Config = new ModConfig(),
+                save: () => Helper.WriteConfig(Config)
+            );
+
+            // add config options
+            configMenu.AddBoolOption(
+                mod: ModManifest,
+                name: () => I18n.Modularupgrade_Config_Clint_Name(),
+                tooltip: () => I18n.Modularupgrade_Config_Clint_Description(),
+                getValue: () => Config.ClintDiscount,
+                setValue: value => Config.ClintDiscount = value
+            );
         }
+        public static ModConfig Config { get; set; }
 
         private void OnAssetRequested(object sender, AssetRequestedEventArgs e)
         {
@@ -146,6 +183,7 @@ namespace ModularTools
                 e.Edit(asset =>
                 {
                     var dict = asset.AsDictionary<string, string>().Data;
+                    
                     // ingredients / unused / yield / big craftable? / unlock conditions /
                     dict.Add(MUQIds.Width, $"334 2 388 15/what/{MUQIds.Width}/false/s Farming 2/");
                     dict.Add(MUQIds.Length, $"334 2 388 15/what/{MUQIds.Length}/false/s Farming 2/");
@@ -158,7 +196,6 @@ namespace ModularTools
                     dict.Add(MUQIds.Air, $"337 2 253 5/what/{MUQIds.Air}/false/s Combat 5/");
                     dict.Add(MUQIds.Fire, $"336 2 382 15 82 1/what/{MUQIds.Fire}/false/s Foraging 3/");
                     
-                    
                     dict.Add(MUQIds.WidthHeight, $"337 5 {MUQIds.Width} 1 {MUQIds.Length} 1/what/{MUQIds.WidthHeight}/false/s Farming 9/");
                     dict.Add(MUQIds.Power2, $"337 5 {MUQIds.Power} 2/what/{MUQIds.Power2}/false/s Foraging 9/");
                     dict.Add(MUQIds.Air2, $"74 1 {MUQIds.Air} 2/what/{MUQIds.Air2}/false/s Combat 9/");
@@ -168,7 +205,6 @@ namespace ModularTools
             }
         }
 
-        // TODO dont need to patch for this but it is interesting for magic mod: drawPlacementBounds --- isPlaceable
         private void HarmonyPatches()
         {
             var harmony = new Harmony(ModManifest.UniqueID);
@@ -255,6 +291,44 @@ namespace ModularTools
                 original: AccessTools.Method(typeof(Tree), nameof(Tree.tickUpdate),
                     new Type[] { typeof(GameTime) }),
                 transpiler: new HarmonyMethod(typeof(ModEntry), nameof(Tree_tickUpdateTranspiler)));
+            
+            // Tool prices
+            harmony.Patch(
+                original: AccessTools.Method(typeof(ShopBuilder), nameof(ShopBuilder.GetToolUpgradeData),
+                    new Type[] { typeof(ToolData), typeof(Farmer)}),
+                transpiler: new HarmonyMethod(typeof(ModEntry), nameof(GetToolUpgradeDataTranspiler)));
+        }
+        
+        public static IEnumerable<CodeInstruction> GetToolUpgradeDataTranspiler(IEnumerable<CodeInstruction> instructions,
+            ILGenerator generator)
+        {
+            CodeMatcher matcher = new(instructions, generator);
+            PropertyInfo tradeItemAmount = AccessTools.Property(typeof(ToolUpgradeData), nameof(ToolUpgradeData.TradeItemAmount));
+            MethodInfo clintUpgradeAmount = AccessTools.Method(typeof(ModEntry), nameof(ClintUpgradeBarAmount));
+
+            return matcher.MatchStartForward(
+                    new CodeMatch(OpCodes.Ldc_I4_5),
+                    new CodeMatch(OpCodes.Stfld, tradeItemAmount),
+                    new CodeMatch(OpCodes.Stelem_Ref),
+                    new CodeMatch(OpCodes.Stloc_1),
+                    new CodeMatch(OpCodes.Ldloc_0),
+                    new CodeMatch(OpCodes.Brfalse_S)
+                )
+                .ThrowIfNotMatch($"Could not find tool entry point for {nameof(Tree_tickUpdateTranspiler)}")
+                .RemoveInstruction() // remove 5
+                .InsertAndAdvance(
+                    new CodeInstruction(OpCodes.Call, clintUpgradeAmount) // load bar amount
+                    ) 
+                .InstructionEnumeration();
+        }
+        
+        public static int ClintUpgradeBarAmount()
+        {
+            if (Config.ClintDiscount)
+            {
+                return 3;
+            }
+            return 5; // default bar amount
         }
         
         public static IEnumerable<CodeInstruction> Tree_tickUpdateTranspiler(IEnumerable<CodeInstruction> instructions,
@@ -619,7 +693,6 @@ namespace ModularTools
 
         private static bool IsAllowedTool(Item tool)
         {
-            // TODO Config
             return tool is WateringCan or Hoe or Pickaxe or Axe;
         }
         
@@ -688,7 +761,6 @@ namespace ModularTools
             {
                 speed = 0.66f;
             }
-
             
             const float speedStrength = .9f;
             const float speed2Strength = .8f;

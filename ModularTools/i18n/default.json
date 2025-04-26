@@ -1,8 +1,10 @@
 {
-  "modularupgrade.category.text": "Modular Upgrade",
 
-  "modularupgrade.attach.error": "This upgrade cannot be applied to that tool.",
+  "modularupgrade.config.clint.name": "Tool Upgrade discount",
+  "modularupgrade.config.clint.description": "When enabled makes the amount of bars required for upgrading tools to be 3 isntead of 5.",
   
+  "modularupgrade.category.text": "Modular Upgrade",
+  "modularupgrade.attach.error": "This upgrade cannot be applied to that tool.",
   "modularupgrade.buff.display.name": "Air Speed",
 
   "modularupgrade.width.name": "Width Upgrade",
