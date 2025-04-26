@@ -26,7 +26,7 @@
       "Entries": {
         "{{ModId}}_PirateTreasureHunter": "693 1 337 1 /Home/{{ModId}}.PirateTreasureHunter/false/null/",
         "Jok_FishMod_DeluxeFishingRod": "(T)AdvancedIridiumRod 1 {{ModId}}.PirateTreasureHunter 1 /Home/(T)Willy.FishMod.DeluxeFishingRod/false/null/",
-        "{{ModId}}_AnimalMachine": "-5 1 -6 1 388 60 390 60 SeaJelly 1/Home/{{ModId}}.AnimalMachine/true/s farming 4/null/"
+        "{{ModId}}_AnimalMachine": "-5 1 -6 1 388 60 390 60 SeaJelly 1/Home/{{ModId}}.AnimalMachine/true/s farming 4/Semi-Auto-Petter/"
       }
     },
     {
