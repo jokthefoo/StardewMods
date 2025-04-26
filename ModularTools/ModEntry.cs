@@ -147,10 +147,22 @@ namespace ModularTools
                 {
                     var dict = asset.AsDictionary<string, string>().Data;
                     // ingredients / unused / yield / big craftable? / unlock conditions /
-                    dict.Add(MUQIds.Width,
-                        $"388 50/what/{MUQIds.Width}/false/null/"); 
-        
-                    // todo crafting recipes -- gate better behind levels? -- more basic ones should be easier to craft
+                    dict.Add(MUQIds.Width, $"334 2 388 15/what/{MUQIds.Width}/false/s Farming 2/");
+                    dict.Add(MUQIds.Length, $"334 2 388 15/what/{MUQIds.Length}/false/s Farming 2/");
+                    dict.Add(MUQIds.Capacity, $"334 2 390 15/what/{MUQIds.Capacity}/false/s Farming 2/");
+                    dict.Add(MUQIds.Power, $"334 2 390 15/what/{MUQIds.Power}/false/s Mining 2/");
+                    dict.Add(MUQIds.Water, $"336 2 371 5/what/{MUQIds.Water}/false/s Farming 7/");
+                    dict.Add(MUQIds.Speed, $"335 2 60 1/what/{MUQIds.Speed}/false/s Mining 4/");
+                    dict.Add(MUQIds.Luck, $"335 2 CaveJelly 1/what/{MUQIds.Luck}/false/s Fishing 4/");
+                    dict.Add(MUQIds.Air, $"337 2 253 5/what/{MUQIds.Air}/false/s Combat 5/");
+                    dict.Add(MUQIds.Fire, $"336 2 382 15 82 1/what/{MUQIds.Fire}/false/s Foraging 3/");
+                    
+                    
+                    dict.Add(MUQIds.WidthHeight, $"337 5 {MUQIds.Width} 1 {MUQIds.Length} 1/what/{MUQIds.WidthHeight}/false/s Farming 9/");
+                    dict.Add(MUQIds.Power2, $"337 5 {MUQIds.Power} 2/what/{MUQIds.Power2}/false/s Foraging 9/");
+                    dict.Add(MUQIds.Air2, $"74 1 {MUQIds.Air} 2/what/{MUQIds.Air2}/false/s Combat 9/");
+                    dict.Add(MUQIds.Speed2, $"337 5 {MUQIds.Speed} 2/what/{MUQIds.Speed2}/false/s Mining 9/");
+                    dict.Add(MUQIds.Luck2, $"337 5 {MUQIds.Luck} 2/what/{MUQIds.Luck2}/false/s Fishing 9/");
                 });
             }
         }
@@ -360,11 +372,12 @@ namespace ModularTools
                 return;
             }
 
-            if (GetHasAttachmentQualifiedItemID(__instance, MUQIds.Power))
+            if (GetHasAttachmentQualifiedItemID(__instance, MUQIds.Power) || GetHasAttachmentQualifiedItemID(__instance, MUQIds.Power2))
             {
                 __instance.UpgradeLevel = GetToolStrength(__instance);
             }
             who.luckLevel.Value += Utility.getStringCountInList(GetAttachmentQualifiedItemIDs(__instance), MUQIds.Luck);
+            who.luckLevel.Value += Utility.getStringCountInList(GetAttachmentQualifiedItemIDs(__instance), MUQIds.Luck2) * 2;
         }
         
         public static void ToolDoFunction_postfix(Tool __instance, int __state, GameLocation location, int x, int y, int power, Farmer who)
@@ -375,21 +388,41 @@ namespace ModularTools
             }
             __instance.UpgradeLevel = __state;
             who.luckLevel.Value -= Utility.getStringCountInList(GetAttachmentQualifiedItemIDs(__instance), MUQIds.Luck);
-            if (GetHasAttachmentQualifiedItemID(__instance, MUQIds.Air))
+            who.luckLevel.Value -= Utility.getStringCountInList(GetAttachmentQualifiedItemIDs(__instance), MUQIds.Luck2) * 2;
+            ApplyAirBuff(__instance, who);
+        }
+
+        private static void ApplyAirBuff(Tool tool, Farmer who)
+        {
+            int duration = 0;
+            int speed = 2;
+            if (GetHasAttachmentQualifiedItemID(tool, MUQIds.Air))
+            {
+                duration = 1000;
+            } 
+            
+            if (GetHasAttachmentQualifiedItemID(tool, MUQIds.Air2))
+            {
+                duration = 1000;
+                speed = 3;
+            }
+
+            if (duration != 0)
             {
                 Buff buff = new Buff(
                     id: "Jok.ModularTools.AirSpeed",
                     displayName: I18n.Modularupgrade_Buff_Display_Name(),
                     iconTexture: Game1.buffsIcons,
                     iconSheetIndex: 9,
-                    duration: 1000, // milliseconds
+                    duration: duration, // milliseconds
                     effects: new BuffEffects()
                     {
-                        Speed = { 2 }
+                        Speed = { speed }
                     }
                 );
                 who.applyBuff(buff);
             }
+            
         }
         
         private static int GetToolStrength(Tool tool)
@@ -400,6 +433,9 @@ namespace ModularTools
                 if (o is not null && o.QualifiedItemId == MUQIds.Power)
                 {
                     strength++;
+                } else if (o is not null && o.QualifiedItemId == MUQIds.Power2)
+                {
+                    strength += 2;
                 }
             }
             return strength;
@@ -491,9 +527,10 @@ namespace ModularTools
             }
 
 	        int widthAttachCount = Utility.getStringCountInList(attachments, MUQIds.Width);
-	        int heightAttachCount = Utility.getStringCountInList(attachments, MUQIds.Length);
+            int heightAttachCount = Utility.getStringCountInList(attachments, MUQIds.Length);
+            int aoeAttachCount = Utility.getStringCountInList(attachments, MUQIds.WidthHeight);
 
-	        if (widthAttachCount + heightAttachCount == 0)
+	        if (widthAttachCount + heightAttachCount + aoeAttachCount == 0)
             {
                 __result = tileLocations;
 		        return;
@@ -521,6 +558,7 @@ namespace ModularTools
             
             int wCount = 0;
             int hCount = 0;
+            int aoeCount = 0;
             foreach (string s in attachments)
             {
                 if (s == MUQIds.Width)
@@ -530,13 +568,20 @@ namespace ModularTools
                 else if (s == MUQIds.Length)
                 {
                     hCount++;
+                } 
+                else if (s == MUQIds.WidthHeight)
+                {
+                    aoeCount++;
                 }
                 
-                if (wCount + hCount >= power-1)
+                if (aoeCount + wCount + hCount >= power-1)
                 {
                     break;
                 }
             }
+
+            wCount += aoeCount;
+            hCount += aoeCount;
 
             int multiplier = 1;
             if (wCount == 0)
@@ -617,7 +662,7 @@ namespace ModularTools
         
         private static int GetWateringCanCapacity(Tool tool)
         {
-            const int wateringCapacityIncrease = 15;
+            const int wateringCapacityIncrease = 40;
             int Capacity = 40;
             foreach (Object o in tool.attachments)
             {
@@ -631,7 +676,6 @@ namespace ModularTools
         
         private static void SetToolSpeed(Tool tool)
         {
-            const float speedStrength = .5f;
 
             float speed = 1;
             if (tool.hasEnchantmentOfType<SwiftToolEnchantment>())
@@ -639,11 +683,18 @@ namespace ModularTools
                 speed = 0.66f;
             }
 
+            
+            const float speedStrength = .9f;
+            const float speed2Strength = .8f;
             foreach (Object o in tool.attachments)
             {
                 if (o is not null && o.QualifiedItemId == MUQIds.Speed)
                 {
                     speed *= speedStrength;
+                } 
+                else if (o is not null && o.QualifiedItemId == MUQIds.Speed2)
+                {
+                    speed *= speed2Strength;
                 }
             }
             tool.AnimationSpeedModifier = speed;
@@ -665,31 +716,6 @@ namespace ModularTools
                 }
             }
             SetToolSpeed(__instance);
-            
-            /*
-            // Removing item
-            if (o is null && __result is not null)
-            {
-                switch (__result.QualifiedItemId)
-                {
-                    case MUQIds.Speed:
-                        __instance.AnimationSpeedModifier *= speedStrength;
-                        break;
-                }
-            }
-            else // attaching item
-            {
-                var attachedItem = __instance.attachments[^1];
-                if(attachedItem is not null)
-                {
-                    switch (attachedItem.QualifiedItemId)
-                    {
-                        case MUQIds.Speed:
-                            __instance.AnimationSpeedModifier /= speedStrength;
-                            break;
-                    }
-                }
-            }*/
         }
 
         public static void canThisBeAttached_postfix(Tool __instance, ref bool __result, Object o, int slot)

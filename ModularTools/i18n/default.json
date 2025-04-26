@@ -6,29 +6,44 @@
   "modularupgrade.buff.display.name": "Air Speed",
 
   "modularupgrade.width.name": "Width Upgrade",
-  "modularupgrade.width.description": "Install into a tool to make the area of effect wider.",
+  "modularupgrade.width.description": "Install into a Hoe or Watering can to make the area of effect wider.",
   
   "modularupgrade.length.name": "Length Upgrade",
-  "modularupgrade.length.description": "Install into a tool to make the area of effect longer.",
+  "modularupgrade.length.description": "Install into a Hoe or Watering can to make the area of effect longer.",
+
+  "modularupgrade.widthheight.name": "AOE Upgrade",
+  "modularupgrade.widthheight.description": "Install into a Hoe or Watering Can to make the area of effect larger.",
 
   "modularupgrade.capacity.name": "Capacity Upgrade",
-  "modularupgrade.capacity.description": "Install into a tool to increase the capacity.",
+  "modularupgrade.capacity.description": "Install into a Watering Can to increase the capacity.",
 
   "modularupgrade.speed.name": "Speed Upgrade",
-  "modularupgrade.speed.description": "Install into a tool to increase its speed.",
+  "modularupgrade.speed.description": "Install into a Tool to slightly increase its speed.",
+  
+  "modularupgrade.speed2.name": "Speedy Upgrade",
+  "modularupgrade.speed2.description": "Install into a Tool to increase its speed.",
 
   "modularupgrade.power.name": "Power Upgrade",
-  "modularupgrade.power.description": "Install into a tool to increase its power.",
+  "modularupgrade.power.description": "Install into an Axe or Pickaxe to increase its power.",
+  
+  "modularupgrade.power2.name": "Power Plus Upgrade",
+  "modularupgrade.power2.description": "Install into an Axe or Pickaxe to increase its power greatly.",
 
   "modularupgrade.water.name": "Watering Upgrade",
-  "modularupgrade.water.description": "Install into a watering can to water deep into the soil. (stays watered for an extra day) Or Install into a Hoe to water the tilled dirt.",
+  "modularupgrade.water.description": "Install into a Watering Can to water deep into the soil. (stays watered for an extra day) Or install into a Hoe to water the tilled dirt.",
 
   "modularupgrade.luck.name": "Lucky Upgrade",
-  "modularupgrade.luck.description": "Install into a tool to have extra luck for that tool.",
+  "modularupgrade.luck.description": "Install into a Tool to have extra luck (for that tool only).",
+
+  "modularupgrade.luck2.name": "Lucky Ducky Upgrade",
+  "modularupgrade.luck2.description": "Install into a Tool to have extra extra luck (for that tool only).",
 
   "modularupgrade.fire.name": "Fire Upgrade",
-  "modularupgrade.fire.description": "Install into a tool to increase the heat of the tool.",
-  
+  "modularupgrade.fire.description": "Install into an Axe or Pickaxe to increase the heat of the tool (get coal from trees instead of wood, or extra coal when mining).",
+
   "modularupgrade.air.name": "Air Upgrade",
-  "modularupgrade.air.description": "Install into a tool to gain a short speed boost after using the tool."
+  "modularupgrade.air.description": "Install into a Tool to gain a small speed boost after using the tool.",
+  
+  "modularupgrade.air2.name": "Wind Upgrade",
+  "modularupgrade.air2.description": "Install into a Tool to gain a speed boost after using the tool."
 }
