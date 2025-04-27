@@ -6,7 +6,7 @@
   "UniqueID": "Jok.ModularTools",
   "EntryDll": "ModularTools.dll",
   "MinimumApiVersion": "4.0.0",
-  "UpdateKeys": [],
+  "UpdateKeys": ["Nexus:33581"],
   "Dependencies": [
     {
       "UniqueID": "spacechase0.SpaceCore",
