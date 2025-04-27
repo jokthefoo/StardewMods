@@ -1,5 +1,4 @@
-﻿using System.Linq.Expressions;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
 using HarmonyLib;
@@ -11,7 +10,6 @@ using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Buffs;
 using StardewValley.Enchantments;
-using StardewValley.GameData.Objects;
 using StardewValley.GameData.Tools;
 using StardewValley.Internal;
 using StardewValley.ItemTypeDefinitions;
@@ -42,6 +40,7 @@ namespace ModularTools
             Helper.Events.GameLoop.GameLaunched += OnGameLaunched;
             Helper.Events.Content.AssetRequested += OnAssetRequested;
             Helper.Events.GameLoop.DayStarted += OnDayStarted;
+            //Helper.Events.Input.ButtonPressed += OnButtonPressed;
             Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
             Helper.ConsoleCommands.Add("modulartools_attachment_slots_reset", "Resets all tools to their default attachment slot count for the mod (1 per upgrade).\n\nUsage: modulartools_attachment_slots_reset", UpdateAttachmentSlotsForTools);
             
@@ -53,6 +52,18 @@ namespace ModularTools
             Config = helper.ReadConfig<ModConfig>();
             HarmonyPatches();
         }
+
+        /*
+        private void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
+        {
+            if (e.Button == SButton.C)
+            {
+                if (Game1.player.CurrentTool is not null)
+                {
+                    Game1.player.CurrentTool.AttachmentSlotsCount += 1;
+                }
+            }
+        }*/
 
         private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
         {
@@ -297,6 +308,20 @@ namespace ModularTools
                 original: AccessTools.Method(typeof(ShopBuilder), nameof(ShopBuilder.GetToolUpgradeData),
                     new Type[] { typeof(ToolData), typeof(Farmer)}),
                 transpiler: new HarmonyMethod(typeof(ModEntry), nameof(GetToolUpgradeDataTranspiler)));
+            
+            // Tool forge 
+            harmony.Patch(
+                original: AccessTools.Method(typeof(BaseEnchantment), nameof(BaseEnchantment.GetEnchantmentFromItem),
+                    new Type[] { typeof(Item), typeof(Item)}),
+                postfix: new HarmonyMethod(typeof(ModEntry), nameof(GetEnchantmentFromItem_postfix)));
+        }
+        
+        public static void GetEnchantmentFromItem_postfix(BaseEnchantment __instance, ref BaseEnchantment __result, Item base_item, Item item)
+        {
+            if (IsAllowedTool(base_item) && item?.QualifiedItemId == "(O)896" && base_item is Tool tool && !tool.hasEnchantmentOfType<ModularToolsGalaxyEnchantment>())
+            {
+                __result = new ModularToolsGalaxyEnchantment();
+            }
         }
         
         public static IEnumerable<CodeInstruction> GetToolUpgradeDataTranspiler(IEnumerable<CodeInstruction> instructions,
@@ -660,6 +685,11 @@ namespace ModularTools
                 }
             }
 
+            if (__instance.hasEnchantmentOfType<ReachingToolEnchantment>() && power == 6)
+            {
+                aoeCount++;
+            }
+
             wCount += aoeCount;
             hCount += aoeCount;
 
@@ -691,7 +721,7 @@ namespace ModularTools
 	        __result = tileLocations;
         }
 
-        private static bool IsAllowedTool(Item tool)
+        public static bool IsAllowedTool(Item tool)
         {
             return tool is WateringCan or Hoe or Pickaxe or Axe;
         }
@@ -813,6 +843,8 @@ namespace ModularTools
             }
         }
         
+        
+        private const int slotsInRow = 2;
         public static int AdjustHoverMenuHeight(Item hoveredItem)
         {
             int slots = hoveredItem.attachmentSlots();
@@ -825,11 +857,12 @@ namespace ModularTools
                     {
                         enchantInc += 4;
                     }
-                    if (slots % 2 == 0)
+
+                    if (slots % slotsInRow == 0)
                     {
-                        return 68 * slots / 2 + enchantInc;
+                        return 68 * slots / slotsInRow + enchantInc;
                     }
-                    return 68 * (slots + 1) / 2 + enchantInc;
+                    return 68 * (slots + slotsInRow - slots % slotsInRow) / slotsInRow + enchantInc;
                 }
             }
             return 68 * slots;
@@ -941,8 +974,8 @@ namespace ModularTools
             
             y -= slot * 68;
             
-            x += slot % 2 * 68;
-            y += slot / 2 * 68;
+            x += slot % slotsInRow * 68;
+            y += slot / slotsInRow * 68;
             
             Vector2 pixel = new Vector2(x, y);
             Texture2D texture = Game1.menuTexture;
