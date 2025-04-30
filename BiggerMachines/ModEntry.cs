@@ -1,4 +1,5 @@
-﻿using BiggerMachines;
+﻿using System.Reflection;
+using System.Reflection.Emit;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -6,10 +7,10 @@ using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Buildings;
-using StardewValley.Extensions;
 using StardewValley.GameData.BigCraftables;
 using StardewValley.GameData.Machines;
 using StardewValley.ItemTypeDefinitions;
+using StardewValley.Network;
 using StardewValley.Objects;
 using StardewValley.Tools;
 using xTile.Dimensions;
@@ -29,10 +30,10 @@ namespace BiggerMachines
         public static Dictionary<string, List<BiggerMachine>> LocationBigMachines = new();
         public static Dictionary<string, BiggerMachineData> BigMachinesList = new();
 
-        public static string ModDataDimensionsKey = "Jok.BiggerMachines.Dimensions";
-        public static string ModDataAlphaKey = "Jok.BiggerMachines.Alpha";
-        public static string ModDataFadeBehindKey = "Jok.BiggerMachines.EnableTransparency";
-        public static string ModDataShadowKey = "Jok.BiggerMachines.DrawShadow";
+        public static string ModDataAlphaKey = "Jok.BiggerMachines.Alpha"; // just used for internal tracking for transparency
+        public static string ModDataDimensionsKey = "Jok.BiggerMachines.Dimensions"; // dimensions of object
+        public static string ModDataFadeBehindKey = "Jok.BiggerMachines.EnableTransparency"; // transparency when player is behind
+        public static string ModDataShadowKey = "Jok.BiggerMachines.DrawShadow"; // draws a shadow similar to building shadow
         
         /*********
          ** Public methods
@@ -45,11 +46,33 @@ namespace BiggerMachines
             MonitorInst = Monitor;
             Helper = helper;
             I18n.Init(Helper.Translation);
-            Helper.Events.Input.ButtonPressed += OnButtonPressed;
             Helper.Events.Content.AssetRequested += OnAssetRequested;
             Helper.Events.World.ObjectListChanged += OnObjectListChanged;
+            Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
             
             HarmonyPatches();
+        }
+
+        private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
+        {
+            Utility.ForEachLocation(location =>
+            {
+                foreach (var obj in location.Objects.Values)
+                {
+                    if (!obj.bigCraftable.Value || !BigMachinesList.TryGetValue(obj.ItemId, out var bigMachineData))
+                    {
+                        continue;
+                    }
+                
+                    if (!LocationBigMachines.ContainsKey(location.Name))
+                    {
+                        LocationBigMachines.TryAdd(location.Name, new List<BiggerMachine>());
+                    }
+                    BiggerMachine bm = new BiggerMachine(obj, bigMachineData);
+                    LocationBigMachines[location.Name].Add(bm);
+                }
+                return true;
+            });
         }
 
         private void OnObjectListChanged(object? sender, ObjectListChangedEventArgs e)
@@ -135,16 +158,13 @@ namespace BiggerMachines
             }
         }
 
-        private void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
-        {
-            if (e.Button == SButton.C)
-            {
-            }
-        }
-        // TODO maybe: Chest.CheckAutoLoad  --- (hopper)
+        // TODO: support chests?
+        // TODO maybe: Chest.CheckAutoLoad  --- (hopper) idk if this is correct
         // TODO maybe: workbench -- objects.TryGetValue(  --- grabs nearby chests
-        // TODO maybe: Game1 -- pressusetoolbutton  --- can pop machines without tool
-        // TODO maybe: right click placing only works to the right
+        
+        // TODO prob not: Game1 -- pressusetoolbutton  --- can pop machines without tool
+        // TODO prob not: right click placing only works to the right
+        
         private void HarmonyPatches()
         {
             var harmony = new Harmony(ModManifest.UniqueID);
@@ -199,6 +219,51 @@ namespace BiggerMachines
             harmony.Patch(
                 original: AccessTools.DeclaredMethod(typeof(Object), nameof(Object.updateWhenCurrentLocation)),
                 postfix: new HarmonyMethod(typeof(ModEntry), nameof(Object_updateWhenCurrentLocation_postfix)));
+            
+            harmony.Patch(
+                original: AccessTools.DeclaredMethod(typeof(GameLocation), nameof(GameLocation.draw)),
+                transpiler: new HarmonyMethod(typeof(ModEntry), nameof(GameLocation_draw_transpiler)));
+            
+            harmony.Patch(
+                original: AccessTools.DeclaredMethod(typeof(GameLocation), nameof(GameLocation.draw)),
+                postfix: new HarmonyMethod(typeof(ModEntry), nameof(GameLocation_draw_postfix)));
+        }
+        
+        public static IEnumerable<CodeInstruction> GameLocation_draw_transpiler(IEnumerable<CodeInstruction> instructions,
+            ILGenerator generator)
+        {
+            CodeMatcher matcher = new(instructions, generator);
+            MethodInfo tryGetValue = AccessTools.Method(typeof(OverlaidDictionary), nameof(OverlaidDictionary.TryGetValue),  new[] { typeof(Vector2), typeof(Object) });
+            MethodInfo objectDrawTranspile = AccessTools.Method(typeof(ModEntry), nameof(ObjectDrawTranspile));
+
+            return matcher.MatchStartForward(
+                    new CodeMatch(OpCodes.Ldarg_0), // this
+                    new CodeMatch(OpCodes.Ldfld), // grab location.Objects
+                    new CodeMatch(OpCodes.Ldloc_S), // tileLocation
+                    new CodeMatch(OpCodes.Ldloca_S), // object
+                    new CodeMatch(OpCodes.Callvirt, tryGetValue),
+                    new CodeMatch(OpCodes.Brfalse_S)
+                )
+                .ThrowIfNotMatch($"Could not find entry point for {nameof(GameLocation_draw_transpiler)}")
+                .Advance(1) // keep this
+                .RemoveInstruction() // remove location.Objects
+                .Advance(2) // keep tileLocation and object
+                .RemoveInstruction() // remove tryGetValue
+                .InsertAndAdvance(
+                    new CodeInstruction(OpCodes.Call, objectDrawTranspile)
+                ).InstructionEnumeration();
+        }
+        
+        public static void GameLocation_draw_postfix(GameLocation __instance, SpriteBatch b)
+        {
+            if (!LocationBigMachines.TryGetValue(__instance.Name, out var biggerMachines))
+            {
+                return;
+            }
+            foreach (var bm in biggerMachines)
+            {
+                bm.Object.draw(b, (int)bm.Object.TileLocation.X, (int)bm.Object.TileLocation.Y);
+            }
         }
         
         public static void Object_updateWhenCurrentLocation_postfix(Object __instance, GameTime time)
@@ -256,7 +321,7 @@ namespace BiggerMachines
                 return;
             }
 
-            var bm = GetMachineAt(l.Name, tile);
+            var bm = GetBiggerMachineAt(l.Name, tile);
             if (bm != null && (!bm.Object.isPassable() || !__instance.isPassable()))
             {
                 __result = false;
@@ -271,12 +336,12 @@ namespace BiggerMachines
                 return;
             }
 
-            BiggerMachine bm = GetMachineAt(__instance.Name, new Vector2(tileLocation.X, tileLocation.Y));
+            BiggerMachine bm = GetBiggerMachineAt(__instance.Name, new Vector2(tileLocation.X, tileLocation.Y));
             if (bm == null)
             {
                 return;
             }
-
+            
             if (who.ActiveObject == null && bm.Object.checkForAction(who))
             {
                 __result = true;
@@ -327,7 +392,7 @@ namespace BiggerMachines
             }
 
             Vector2 tilePosition = new Vector2(x / 64, y / 64);
-            var bm = GetMachineAt(Game1.currentLocation.Name, tilePosition);
+            var bm = GetBiggerMachineAt(Game1.currentLocation.Name, tilePosition);
             if (bm != null)
             {
                 if (bm.Object.readyForHarvest.Value)
@@ -352,7 +417,7 @@ namespace BiggerMachines
             }
 
             Vector2 tilePosition = new Vector2(x / 64, y / 64);
-            var bm = GetMachineAt(location.Name, tilePosition);
+            var bm = GetBiggerMachineAt(location.Name, tilePosition);
             if (bm != null && bm.Object.performToolAction(__instance))
             {
                 if (bm.Object.Type == "Crafting" && bm.Object.Fragility != 2)
@@ -372,14 +437,29 @@ namespace BiggerMachines
                 return;
             }
             
-            BiggerMachine bm = GetMachineAt(__instance.Name, tile);
+            BiggerMachine bm = GetBiggerMachineAt(__instance.Name, tile);
             if (bm != null && (!ignorePassables.HasFlag(CollisionMask.Objects) || !bm.Object.isPassable()))
             {
                 __result = true;
             }
         }
         
-        private static BiggerMachine? GetMachineAt(string locationName, Vector2 tile)
+        private static bool ObjectDrawTranspile(GameLocation location, Vector2 tile, out Object value)
+        {
+            value = null;
+            if (location.objects.TryGetValue(tile, out var o))
+            {
+                if (o.bigCraftable.Value && BigMachinesList.TryGetValue(o.ItemId, out var bigMachineData))
+                {
+                    return false;
+                }
+                value = o;
+                return true;
+            }
+            return false;
+        } 
+        
+        private static BiggerMachine? GetBiggerMachineAt(string locationName, Vector2 tile)
         {
             Point position = default(Point);
             position.X = (int)((int)tile.X + 0.5f) * 64;

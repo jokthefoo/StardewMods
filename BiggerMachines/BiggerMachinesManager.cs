@@ -35,8 +35,7 @@ internal class BiggerMachine
     public BiggerMachineData BMData { get;}
     public StardewValley.Object Object { get; }
     
-    public bool 
-        IntersectsForCollision(Rectangle rect)
+    public bool IntersectsForCollision(Rectangle rect)
     {
         return GetBoundingBox().Intersects(rect);
     }
