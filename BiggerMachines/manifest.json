@@ -1,0 +1,11 @@
+{
+  "Name": "Bigger Machines",
+  "Author": "Jok",
+  "Version": "1.0.0",
+  "Description": "Bigger Machines",
+  "UniqueID": "Jok.BiggerMachines",
+  "EntryDll": "BiggerMachines.dll",
+  "MinimumApiVersion": "4.0.0",
+  //"UpdateKeys": [],
+  //"Dependencies": []
+}
