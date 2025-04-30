@@ -4,11 +4,6 @@ using Newtonsoft.Json;
 
 namespace BiggerMachines;
 
-internal class BiggerMachinesList
-{
-    public List<BiggerMachineData> BiggerMachines { get; set; } = new();
-}
-
 internal class BiggerMachineData
 {
     public BiggerMachineData(int w, int h, bool fade = false, bool drawShadow = false)

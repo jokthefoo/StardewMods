@@ -27,7 +27,7 @@ namespace BiggerMachines
         //  debug logging:  MonitorInst.Log($"X value: {x}", LogLevel.Info);
         public static IModHelper Helper;
         
-        public static Dictionary<string, List<BiggerMachine>> LocationBigMachines = new();
+        public static Dictionary<string, Dictionary<Vector2, BiggerMachine>> LocationBigMachines = new();
         public static Dictionary<string, BiggerMachineData> BigMachinesList = new();
 
         public static string ModDataAlphaKey = "Jok.BiggerMachines.Alpha"; // just used for internal tracking for transparency
@@ -49,28 +49,42 @@ namespace BiggerMachines
             Helper.Events.Content.AssetRequested += OnAssetRequested;
             Helper.Events.World.ObjectListChanged += OnObjectListChanged;
             Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
+            Helper.Events.World.LocationListChanged += OnLocationListChanged;
             
             HarmonyPatches();
         }
 
+        private void OnLocationListChanged(object? sender, LocationListChangedEventArgs e)
+        {
+            foreach (var location in e.Added)
+            {
+                AddAllBiggerMachinesToTrackerList(location);
+            }
+        }
+
+        private void AddAllBiggerMachinesToTrackerList(GameLocation location)
+        {
+            foreach (var obj in location.Objects.Values)
+            {
+                if (!obj.bigCraftable.Value || !BigMachinesList.TryGetValue(obj.ItemId, out var bigMachineData))
+                {
+                    continue;
+                }
+                
+                if (!LocationBigMachines.ContainsKey(location.Name))
+                {
+                    LocationBigMachines.TryAdd(location.Name, new Dictionary<Vector2, BiggerMachine>());
+                }
+                BiggerMachine bm = new BiggerMachine(obj, bigMachineData);
+                LocationBigMachines[location.Name].Add(obj.TileLocation, bm);
+            }
+        }
+        
         private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
         {
             Utility.ForEachLocation(location =>
             {
-                foreach (var obj in location.Objects.Values)
-                {
-                    if (!obj.bigCraftable.Value || !BigMachinesList.TryGetValue(obj.ItemId, out var bigMachineData))
-                    {
-                        continue;
-                    }
-                
-                    if (!LocationBigMachines.ContainsKey(location.Name))
-                    {
-                        LocationBigMachines.TryAdd(location.Name, new List<BiggerMachine>());
-                    }
-                    BiggerMachine bm = new BiggerMachine(obj, bigMachineData);
-                    LocationBigMachines[location.Name].Add(bm);
-                }
+                AddAllBiggerMachinesToTrackerList(location);
                 return true;
             });
         }
@@ -81,7 +95,7 @@ namespace BiggerMachines
             
             if (!LocationBigMachines.ContainsKey(location.Name))
             {
-                LocationBigMachines.TryAdd(location.Name, new List<BiggerMachine>());
+                LocationBigMachines.TryAdd(location.Name, new Dictionary<Vector2, BiggerMachine>());
             }
 
             foreach (var (pos, obj) in e.Added)
@@ -92,7 +106,10 @@ namespace BiggerMachines
                 }
                 
                 BiggerMachine bm = new BiggerMachine(obj, bigMachineData);
-                LocationBigMachines[location.Name].Add(bm);
+                if (!LocationBigMachines[location.Name].TryAdd(pos, bm))
+                {
+                    MonitorInst.Log($"Jok.BiggerMachines tried to add machine at: {pos.ToString()}, but machine already at position", LogLevel.Error);
+                }
             }
             
             foreach (var (pos, obj) in e.Removed)
@@ -101,14 +118,10 @@ namespace BiggerMachines
                 {
                     continue;
                 }
-                
-                foreach (var bm in LocationBigMachines[location.Name])
+
+                if (!LocationBigMachines[location.Name].Remove(pos))
                 {
-                    if (bm.IntersectsForCollision(obj.boundingBox.Value))
-                    {
-                        LocationBigMachines[location.Name].Remove(bm);
-                        return;
-                    }
+                    MonitorInst.Log($"Jok.BiggerMachines tried to remove machine at: {pos.ToString()}, but machine was not found.", LogLevel.Error);
                 }
             }
         }
@@ -260,9 +273,9 @@ namespace BiggerMachines
             {
                 return;
             }
-            foreach (var bm in biggerMachines)
+            foreach (var (pos, bm) in biggerMachines)
             {
-                bm.Object.draw(b, (int)bm.Object.TileLocation.X, (int)bm.Object.TileLocation.Y);
+                bm.Object.draw(b, (int)pos.X, (int)pos.Y);
             }
         }
         
@@ -464,7 +477,7 @@ namespace BiggerMachines
             Point position = default(Point);
             position.X = (int)((int)tile.X + 0.5f) * 64;
             position.Y = (int)((int)tile.Y + 0.5f) * 64;
-            foreach (var bm in LocationBigMachines[locationName])
+            foreach (var (pos, bm) in LocationBigMachines[locationName])
             {
                 if (bm.GetBoundingBox().Contains(position))
                 {
@@ -532,7 +545,7 @@ namespace BiggerMachines
                 currentBounds = null;
             }
             
-            foreach (var bm in LocationBigMachines[__instance.Name])
+            foreach (var (pos, bm) in LocationBigMachines[__instance.Name])
             {
                 if (bm.IntersectsForCollision(position) && (!currentBounds.HasValue || !bm.IntersectsForCollision(currentBounds.Value)))
                 {
