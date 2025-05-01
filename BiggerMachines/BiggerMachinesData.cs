@@ -1,23 +1,23 @@
 ﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using Newtonsoft.Json;
 
 namespace BiggerMachines;
 
 internal class BiggerMachineData
 {
-    public BiggerMachineData(int w, int h, bool fade = false, bool drawShadow = false)
+    public BiggerMachineData(int w, int h, bool fade = false, bool drawShadow = false, bool isChest = false)
     {
         Width = w;
         Height = h;
         Fade = fade;
         DrawShadow = drawShadow;
+        IsChest = isChest;
     }
 
     public int Width { get; set; }
     public int Height { get; set; }
     public bool Fade { get; set; }    
     public bool DrawShadow { get; set; }
+    public bool IsChest { get; set; }
 }
 
 internal class BiggerMachine
