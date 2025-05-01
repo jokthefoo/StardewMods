@@ -71,9 +71,10 @@ internal static class HarmonyPatches
             postfix: new HarmonyMethod(typeof(HarmonyPatches), nameof(Object_updateWhenCurrentLocation_postfix)));
 
         // Don't cull Bigger Machines when top left is out of frame
+        // Skip bigger machine drawing
         harmony.Patch(AccessTools.DeclaredMethod(typeof(GameLocation), nameof(GameLocation.draw)), 
             transpiler: new HarmonyMethod(typeof(HarmonyPatches), nameof(GameLocation_draw_transpiler)));
-
+        // Draw bigger machines if any part is in frame
         harmony.Patch(AccessTools.DeclaredMethod(typeof(GameLocation), nameof(GameLocation.draw)), 
             postfix: new HarmonyMethod(typeof(HarmonyPatches), nameof(GameLocation_draw_postfix)));
 
