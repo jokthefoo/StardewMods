@@ -71,7 +71,7 @@ Small example:
 }
 ```
 
-See (\[CP\] Bigger Machines Example).
+See [Example Content Pack.zip](<[CP] Bigger Machines Example.zip>).
 
 ## Compatibility
 Compatible with Stardew Valley 1.6+ on Linux/macOS/Windows, both single-player and multiplayer.
