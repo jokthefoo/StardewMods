@@ -12,10 +12,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="assets\" />
-    </ItemGroup>
-
-    <ItemGroup>
       <Reference Include="Newtonsoft.Json">
         <HintPath>..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\Stardew Valley\smapi-internal\Newtonsoft.Json.dll</HintPath>
       </Reference>
