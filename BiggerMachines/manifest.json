@@ -6,6 +6,5 @@
   "UniqueID": "Jok.BiggerMachines",
   "EntryDll": "BiggerMachines.dll",
   "MinimumApiVersion": "4.0.0",
-  //"UpdateKeys": [],
-  //"Dependencies": []
+  "UpdateKeys": ["Nexus:33660"]
 }
