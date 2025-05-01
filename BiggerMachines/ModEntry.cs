@@ -3,6 +3,7 @@ using System.Reflection.Emit;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Netcode;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -27,13 +28,13 @@ namespace BiggerMachines
         //  debug logging:  MonitorInst.Log($"X value: {x}", LogLevel.Info);
         public static IModHelper Helper;
         
-        public static Dictionary<string, Dictionary<Vector2, BiggerMachine>> LocationBigMachines = new();
-        public static Dictionary<string, BiggerMachineData> BigMachinesList = new();
+        private static Dictionary<string, Dictionary<Vector2, BiggerMachine>> LocationBigMachines = new();
+        private static Dictionary<string, BiggerMachineData> BigMachinesList = new();
 
-        public static string ModDataAlphaKey = "Jok.BiggerMachines.Alpha"; // just used for internal tracking for transparency
-        public static string ModDataDimensionsKey = "Jok.BiggerMachines.Dimensions"; // dimensions of object
-        public static string ModDataFadeBehindKey = "Jok.BiggerMachines.EnableTransparency"; // transparency when player is behind
-        public static string ModDataShadowKey = "Jok.BiggerMachines.DrawShadow"; // draws a shadow similar to building shadow
+        private const string ModDataAlphaKey = "Jok.BiggerMachines.Alpha"; // just used for internal tracking for transparency
+        public const string ModDataDimensionsKey = "Jok.BiggerMachines.Dimensions"; // dimensions of object
+        public const string ModDataFadeBehindKey = "Jok.BiggerMachines.EnableTransparency"; // transparency when player is behind
+        public const string ModDataShadowKey = "Jok.BiggerMachines.DrawShadow"; // draws a shadow similar to building shadow
         
         /*********
          ** Public methods
@@ -49,16 +50,61 @@ namespace BiggerMachines
             Helper.Events.Content.AssetRequested += OnAssetRequested;
             Helper.Events.World.ObjectListChanged += OnObjectListChanged;
             Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
-            Helper.Events.World.LocationListChanged += OnLocationListChanged;
             
+            if (!Context.IsMainPlayer)
+            {
+                Helper.Events.Player.Warped += OnPlayerWarp; // used on clients
+            }
+
             HarmonyPatches();
+        } 
+        
+        private void OnPlayerWarp(object? sender, WarpedEventArgs e)
+        {
+            if (!Context.IsMainPlayer)
+            {
+                e.OldLocation.netObjects.OnValueAdded -= OnObjectAddedFarmhand;
+                e.OldLocation.netObjects.OnValueRemoved -= OnObjectRemovedFarmhand;
+                AddAllBiggerMachinesToTrackerList(e.NewLocation);
+                RemoveDeadMachinesFromList(e.NewLocation);
+                e.NewLocation.netObjects.OnValueAdded += OnObjectAddedFarmhand;
+                e.NewLocation.netObjects.OnValueRemoved += OnObjectRemovedFarmhand;
+            }
         }
 
-        private void OnLocationListChanged(object? sender, LocationListChangedEventArgs e)
+        private void OnObjectAddedFarmhand(Vector2 pos, Object obj)
         {
-            foreach (var location in e.Added)
+            if (!obj.bigCraftable.Value || !BigMachinesList.TryGetValue(obj.ItemId, out var bigMachineData))
             {
-                AddAllBiggerMachinesToTrackerList(location);
+                return;
+            }
+
+            if (!LocationBigMachines.ContainsKey(obj.Location.Name))
+            {
+                LocationBigMachines.TryAdd(obj.Location.Name, new Dictionary<Vector2, BiggerMachine>());
+            }
+            
+            BiggerMachine bm = new BiggerMachine(obj, bigMachineData);
+            if (!LocationBigMachines[obj.Location.Name].TryAdd(pos, bm))
+            {
+                MonitorInst.Log(
+                    $"Jok.BiggerMachines tried to add machine at: {pos.ToString()}, but machine already at position",
+                    LogLevel.Error);
+            }
+        }
+
+        private void OnObjectRemovedFarmhand(Vector2 pos, Object obj)
+        {
+            if (!obj.bigCraftable.Value || !BigMachinesList.TryGetValue(obj.ItemId, out var bigMachineData) || !LocationBigMachines.ContainsKey(obj.Location.Name))
+            {
+                return;
+            }
+            
+            if (!LocationBigMachines[obj.Location.Name].Remove(pos))
+            {
+                MonitorInst.Log(
+                    $"Jok.BiggerMachines tried to remove machine at: {pos.ToString()}, but machine was not found.",
+                    LogLevel.Error);
             }
         }
 
@@ -76,21 +122,55 @@ namespace BiggerMachines
                     LocationBigMachines.TryAdd(location.Name, new Dictionary<Vector2, BiggerMachine>());
                 }
                 BiggerMachine bm = new BiggerMachine(obj, bigMachineData);
-                LocationBigMachines[location.Name].Add(obj.TileLocation, bm);
+                LocationBigMachines[location.Name].TryAdd(obj.TileLocation, bm);
+            }
+        }
+        
+        private void RemoveDeadMachinesFromList(GameLocation location)
+        {
+            if (!LocationBigMachines.ContainsKey(location.Name))
+            {
+                return;
+            }
+            
+            List<Vector2> toRemove = new List<Vector2>();
+            foreach (var obj in LocationBigMachines[location.Name].Values)
+            {
+                if (!location.Objects.TryGetValue(obj.Object.TileLocation, out var value))
+                {
+                    toRemove.Add(obj.Object.TileLocation);
+                }
+            }
+
+            foreach (var pos in toRemove)
+            {
+                LocationBigMachines[location.Name].Remove(pos);
             }
         }
         
         private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
         {
+            LocationBigMachines.Clear();
             Utility.ForEachLocation(location =>
             {
                 AddAllBiggerMachinesToTrackerList(location);
                 return true;
             });
+            
+            if (!Context.IsMainPlayer)
+            {
+                Game1.player.currentLocation.netObjects.OnValueAdded += OnObjectAddedFarmhand;
+                Game1.player.currentLocation.netObjects.OnValueRemoved += OnObjectRemovedFarmhand;
+            }
         }
 
         private void OnObjectListChanged(object? sender, ObjectListChangedEventArgs e)
         {
+            if (!Context.IsMainPlayer)
+            {
+                return;
+            }
+
             var location = e.Location;
             
             if (!LocationBigMachines.ContainsKey(location.Name))

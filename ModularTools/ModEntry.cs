@@ -67,6 +67,11 @@ namespace ModularTools
 
         private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
         {
+            if (!Context.IsMainPlayer)
+            {
+                return;
+            }
+            
             if (!Game1.player.mailReceived.Contains("Jok.ModularTools.Started"))
             {
                 UpdateAttachmentSlotsForTools("", new []{""});
