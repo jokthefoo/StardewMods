@@ -182,7 +182,7 @@ namespace ModularTools
                     var modAssets =
                         Helper.ModContent.Load<Dictionary<string, ModularUpgradeData>>(
                             "assets/modularupgrade_data.json");
-                    var data = asset.AsDictionary<string, ModularTools.ObjectExtensionData>().Data;
+                    var data = asset.AsDictionary<string, SpaceCore.VanillaAssetExpansion.ObjectExtensionData>().Data;
                     foreach (string upgrade in modAssets.Keys)
                     {
                         data.Add(upgrade, new()
