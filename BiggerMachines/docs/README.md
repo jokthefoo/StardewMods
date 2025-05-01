@@ -1,0 +1,39 @@
+# Bigger Machines is a [Stardew Valley](http://stardewvalley.net/) mod to allow content packs to easily add big craftables larger than one tile!
+
+![](screenshot.png)
+
+## Install
+1. Install the latest version of [SMAPI](https://smapi.io).
+2. Install [this mod from Nexus Mods](http://www.nexusmods.com/stardewvalley/mods/33660).
+3. Run the game using SMAPI.
+
+## Use
+### For players
+This mod does nothing on its own; you need to install content packs by unzipping them into your
+`Mods` folder. See _Requirements_ > _Mods requiring this file_ on the Nexus mod page to find
+content packs.
+
+### For mod authors
+Set the following fields in the [Bigger craftables's `CustomFields`](https://stardewvalleywiki.com/Modding:Big_craftables#Advanced).
+
+REQUIRED:
+`"Jok.BiggerMachines.Dimensions": "H,W"` where H is height and W is width. '"2,2"' would be a 2x2 item
+
+Optionals:
+`"Jok.BiggerMachines.EnableTransparency": "true"` makes it so the big craftable fades out when the player is behind them, like buildings or trees
+
+`"Jok.BiggerMachines.DrawShadow": "true"` draws a shadow at the base of the big craftable like buildings have
+
+`"Jok.BiggerMachines.IsChest": "true"` makes the item work as a chest (animations not supported)
+
+
+The Bigger Machines also work as machines, they can have effects, animations, inputs, outpus, etc.
+
+Sprites are assumed to have a widths in multiples of 16, but height is a lot more flexible.
+For animations they must be to the right of the base sprite
+Spritesheets also cannot be multiple rows. 
+
+See (\[CP\] Bigger Machines Example).
+
+## Compatibility
+Compatible with Stardew Valley 1.6+ on Linux/macOS/Windows, both single-player and multiplayer.

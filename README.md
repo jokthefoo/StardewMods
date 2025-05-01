@@ -1,2 +1,2 @@
-# StardewMods
- 
+# Stardew Mods
+

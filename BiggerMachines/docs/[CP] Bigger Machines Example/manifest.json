@@ -1,0 +1,13 @@
+﻿{
+  "Name": "Bigger Machines Example",
+  "Author": "Jok",
+  "Version": "1.0.0",
+  "Description": "Bigger Machines Example",
+  "UniqueID": "Jok.BiggerMachines.Example",
+  "MinimumApiVersion": "4.0.0",
+  "UpdateKeys": [],
+  "ContentPackFor": {
+    "UniqueID": "Pathoschild.ContentPatcher",
+    "MinimumVersion": "1.1.0"
+    }
+}

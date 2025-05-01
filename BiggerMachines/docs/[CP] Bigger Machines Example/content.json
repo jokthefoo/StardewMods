@@ -1,0 +1,138 @@
+{
+	"Format": "2.6.0",
+	"Changes": [
+		{
+			"Action": "EditData",
+			"Target": "Data/BigCraftables",
+			"Entries": {
+				"Jok.BiggerCraftables.Purple": {
+					"Name": "Big Purple Guy",
+					"DisplayName": "{{i18n:Jok.BiggerCraftables.Purple.name}}",
+					"Description": "{{i18n:Jok.BiggerCraftables.Purple.description}}",
+					"Price": 300,
+					"Fragility": 0,
+					"CanBePlacedOutdoors": true,
+					"CanBePlacedIndoors": true,
+					"IsLamp": true,
+					"Texture": "Mods\\Jok.BiggerMachines.Example\\iridium-box",
+					"SpriteIndex": 0,
+					"ContextTags": null,
+					"CustomFields": {
+						"Jok.BiggerMachines.Dimensions": "2,2"
+					}
+				},
+				"Jok.BiggerCraftables.Blue": {
+					"Name": "Big Blue Guy",
+					"DisplayName": "{{i18n:Jok.BiggerCraftables.Blue.name}}",
+					"Description": "{{i18n:Jok.BiggerCraftables.Blue.description}}",
+					"Price": 900,
+					"Fragility": 0,
+					"CanBePlacedOutdoors": true,
+					"CanBePlacedIndoors": true,
+					"IsLamp": true,
+					"Texture": "Mods\\Jok.BiggerMachines.Example\\cobalt-box",
+					"SpriteIndex": 0,
+					"ContextTags": null,
+					"CustomFields": {
+						"Jok.BiggerMachines.Dimensions": "3,3"
+					}
+				},
+				"Jok.BiggerCraftables.Joja": {
+					"Name": "Wide Joja",
+					"DisplayName": "{{i18n:Jok.BiggerCraftables.Joja.name}}",
+					"Description": "{{i18n:Jok.BiggerCraftables.Joja.description}}",
+					"Price": 900000,
+					"Fragility": 0,
+					"CanBePlacedOutdoors": true,
+					"CanBePlacedIndoors": true,
+					"IsLamp": true,
+					"Texture": "Mods\\Jok.BiggerMachines.Example\\joja-wide",
+					"SpriteIndex": 0,
+					"ContextTags": null,
+					"CustomFields": {
+						"Jok.BiggerMachines.Dimensions": "2,1",
+						"Jok.BiggerMachines.IsChest": "true"
+					}
+				},
+				"Jok.BiggerCraftables.JojaUltra": {
+					"Name": "Ultra Wide Joja",
+					"DisplayName": "{{i18n:Jok.BiggerCraftables.JojaUltra.name}}",
+					"Description": "{{i18n:Jok.BiggerCraftables.JojaUltra.description}}",
+					"Price": 1,
+					"Fragility": 0,
+					"CanBePlacedOutdoors": true,
+					"CanBePlacedIndoors": true,
+					"IsLamp": true,
+					"Texture": "Mods\\Jok.BiggerMachines.Example\\joja-wide",
+					"SpriteIndex": 0,
+					"ContextTags": null,
+					"CustomFields": {
+						"Jok.BiggerMachines.Dimensions": "4,1",
+						"Jok.BiggerMachines.DrawShadow": "true"
+					}
+				},
+				"Jok.BiggerCraftables.JojaTall": {
+					"Name": "Tall Joja",
+					"DisplayName": "{{i18n:Jok.BiggerCraftables.JojaTall.name}}",
+					"Description": "{{i18n:Jok.BiggerCraftables.JojaTall.description}}",
+					"Price": 1,
+					"Fragility": 0,
+					"CanBePlacedOutdoors": true,
+					"CanBePlacedIndoors": true,
+					"IsLamp": true,
+					"Texture": "Mods\\Jok.BiggerMachines.Example\\joja-tall",
+					"SpriteIndex": 0,
+					"ContextTags": null,
+					"CustomFields": {
+						"Jok.BiggerMachines.Dimensions": "1,2"
+					}
+				},
+				"Jok.BiggerCraftables.Green": {
+					"Name": "Big Green Guy",
+					"DisplayName": "{{i18n:Jok.BiggerCraftables.Green.name}}",
+					"Description": "{{i18n:Jok.BiggerCraftables.Green.description}}",
+					"Price": 900,
+					"Fragility": 0,
+					"CanBePlacedOutdoors": true,
+					"CanBePlacedIndoors": true,
+					"IsLamp": true,
+					"Texture": "Mods\\Jok.BiggerMachines.Example\\green-box",
+					"SpriteIndex": 0,
+					"ContextTags": null,
+					"CustomFields": {
+						"Jok.BiggerMachines.Dimensions": "4,4",
+						"Jok.BiggerMachines.EnableTransparency": "true",
+						"Jok.BiggerMachines.DrawShadow": "true"
+					}
+				},
+				"Jok.BiggerCraftables.Shed": {
+					"Name": "Shed",
+					"DisplayName": "{{i18n:Jok.BiggerCraftables.Shed.name}}",
+					"Description": "{{i18n:Jok.BiggerCraftables.Shed.description}}",
+					"Price": 900,
+					"Fragility": 0,
+					"CanBePlacedOutdoors": true,
+					"CanBePlacedIndoors": true,
+					"IsLamp": true,
+					"Texture": "Mods\\Jok.BiggerMachines.Example\\Shed",
+					"SpriteIndex": 0,
+					"ContextTags": null,
+					"CustomFields": {
+						"Jok.BiggerMachines.Dimensions": "7,3",
+						"Jok.BiggerMachines.EnableTransparency": "true",
+						"Jok.BiggerMachines.DrawShadow": "true"
+					}
+				}
+			}
+		},
+		{
+			"Action": "Include",
+			"FromFile": "machines/machinedata.json"
+		},
+		{
+			"Action": "Load",
+			"Target": "Mods\\Jok.BiggerMachines.Example\\iridium-box, Mods\\Jok.BiggerMachines.Example\\cobalt-box, Mods\\Jok.BiggerMachines.Example\\joja-wide, Mods\\Jok.BiggerMachines.Example\\joja-tall, Mods\\Jok.BiggerMachines.Example\\green-box, Mods\\Jok.BiggerMachines.Example\\Shed",
+			"FromFile": "assets/{{TargetWithoutPath}}.png"
+		}
+	]
+}
