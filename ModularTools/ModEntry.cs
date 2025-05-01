@@ -1,10 +1,10 @@
 ﻿using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
+using GenericModConfigMenu;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using SpaceShared.APIs;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -182,7 +182,7 @@ namespace ModularTools
                     var modAssets =
                         Helper.ModContent.Load<Dictionary<string, ModularUpgradeData>>(
                             "assets/modularupgrade_data.json");
-                    var data = asset.AsDictionary<string, SpaceCore.VanillaAssetExpansion.ObjectExtensionData>().Data;
+                    var data = asset.AsDictionary<string, ModularTools.ObjectExtensionData>().Data;
                     foreach (string upgrade in modAssets.Keys)
                     {
                         data.Add(upgrade, new()
