@@ -34,7 +34,6 @@ internal sealed class ModEntry : Mod
         Instance = this;
         MonitorInst = Monitor;
         Helper = helper;
-        I18n.Init(Helper.Translation);
         Helper.Events.Content.AssetRequested += OnAssetRequested;
         Helper.Events.World.ObjectListChanged += OnObjectListChanged;
         Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
