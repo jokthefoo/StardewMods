@@ -594,7 +594,7 @@ public override void draw(SpriteBatch b)
 				b.Draw(Game1.staminaRect,
 					new Rectangle(barXPos + 44,
 						yPositionOnScreen + 14 + (int)(570f * (1f - distanceFromCatchingRock)), 8,
-						(int)(570f * distanceFromCatchingRock)), Color.Lerp(Color.Gray, Color.White, distanceFromCatchingRock));
+						(int)(570f * distanceFromCatchingRock)), Color.Lerp(Color.DarkSlateGray, Color.White, distanceFromCatchingRock));
 				
 				/// Pickaxe
 				b.Draw(miningBobberBarTextures,
