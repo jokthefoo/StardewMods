@@ -20,6 +20,8 @@ namespace FishMod
 {
 	public class MiningBobberBar : IClickableMenu
 	{
+		public static Texture2D miningBobberBarTextures;
+		
 		public bool handledFishResult;
 
 		public float uiScale;
@@ -27,6 +29,8 @@ namespace FishMod
 		public float everythingShakeTimer;
 
 		public bool treasureInBar;
+		
+		public float axeChoppingAngle;
 
 		private bool slimeInBar;
 		private bool rockInBar;
@@ -53,8 +57,8 @@ namespace FishMod
 		public float distanceFromCatchingSlime = 1f;
 		
 		public static ICue reelSound;
-
 		public static ICue unReelSound;
+		public static ICue chopSound;
 		
 		public List<TreasureInstance> treasures = new ();
 
@@ -71,6 +75,8 @@ namespace FishMod
 			this.tool = tool;
 			this.location = location;
 			this.tileLocation = tileLocation;
+			
+			axeChoppingAngle = MathHelper.ToRadians(220);
 			
 			Rock = new TreasureInstance(TreasureSprites.Rock, false, 20, 20);
 			Rock.decreaseRate = 0;
@@ -281,6 +287,7 @@ public override void update(GameTime time)
 		return;
 	}
 	fishUpdate(time);
+	SwingingAnimationUpdate(time);
 }
 
 public void fishUpdate(GameTime time)
@@ -292,7 +299,8 @@ public void fishUpdate(GameTime time)
 	                                                   Game1.oldPadState.IsButtonDown(Buttons.A)));
 	if (!wasPressing && buttonPressed)
 	{
-		Game1.playSound("fishingRodBend");
+		Game1.playSound("fishingRodBend", -100000, out ICue bend);
+		bend.Volume = 0.7f;
 	}
 
 	float gravity = buttonPressed ? -0.25f : 0.25f;
@@ -340,7 +348,7 @@ public void fishUpdate(GameTime time)
 
 	if (slimeInBar)
 	{
-		cueName = "daggerswipe";
+		cueName = "swordswipe";
 		//distanceFromCatchingSlime += 0.002f;
 		if (Slime.treasureCaught)
 		{
@@ -357,7 +365,7 @@ public void fishUpdate(GameTime time)
 		if (distanceFromCatchingSlime <= 0f)
 		{
 			tool.lastUser.health -= 10;
-			tool.lastUser.currentLocation.debris.Add(new Debris(5, new Vector2(tool.lastUser.StandingPixel.X + 8, tool.lastUser.StandingPixel.Y), Color.Red, 1f, tool.lastUser));
+			tool.lastUser.currentLocation.debris.Add(new StardewValley.Debris(5, new Vector2(tool.lastUser.StandingPixel.X + 8, tool.lastUser.StandingPixel.Y), Color.Red, 1f, tool.lastUser));
 			tool.lastUser.playNearbySoundAll("ow");
 			
 			distanceFromCatchingSlime = 1f;
@@ -409,6 +417,7 @@ public void fishUpdate(GameTime time)
 			if (cueName != "")
 			{
 				Game1.playSound(cueName, out reelSound);
+				reelSound.Volume = .8f;
 			}
 		}
 	}
@@ -438,6 +447,82 @@ public void fishUpdate(GameTime time)
 	}
 }
 
+private static class AxeAnimStates
+{
+	public const int Chop = 0;
+	public const int PullBack = 1;
+}
+
+private class Debris
+{
+	public Debris(int i, int x, int y, Vector2 vel)
+	{
+		index = i;
+		this.x = x;
+		this.y = y;
+		velocity = vel;
+	}
+	
+	public int index;
+	public int x;
+	public int y;
+	public Vector2 velocity;
+}
+		
+private List<Debris> debris = new List<Debris>();
+private int axeAnimstate = AxeAnimStates.Chop;
+private float debrisAlpha = 1.0f;
+private void SwingingAnimationUpdate(GameTime time)
+{
+	debrisAlpha -= 0.02f;
+	
+	foreach (Debris d in debris)
+	{
+		d.x += (int)d.velocity.X;
+		d.y += (int)d.velocity.Y;
+		d.y += 10;
+		//d.velocity.X -= .1f;
+		d.velocity.X = Math.Clamp(d.velocity.X, -4, 10);
+		d.velocity.Y += .1f;
+		d.velocity.Y = Math.Clamp(d.velocity.Y, -12, 0);
+	}
+	
+	switch (axeAnimstate)
+	{
+		case AxeAnimStates.Chop:
+			axeChoppingAngle += MathHelper.ToRadians(4);
+			break;
+		case AxeAnimStates.PullBack:
+			axeChoppingAngle -= MathHelper.ToRadians(1.5f);
+			break;
+	}
+	
+	if (axeChoppingAngle < MathHelper.ToRadians(230) && axeAnimstate != AxeAnimStates.Chop)
+	{
+		//start chop
+		axeAnimstate = AxeAnimStates.Chop;
+	}
+	
+	if (axeChoppingAngle > MathHelper.ToRadians(340) && axeAnimstate != AxeAnimStates.PullBack)
+	{
+		Game1.playSound("hammer", out chopSound);
+
+		//start backswing
+		axeAnimstate = AxeAnimStates.PullBack;
+		debrisAlpha = 1.0f;
+		ConstructDebris();
+	}
+}
+
+private void ConstructDebris()
+{
+	debris = new List<Debris>();
+	for (int i = 0; i < 4; i++)
+	{
+		debris.Add(new Debris(Game1.random.Next(0,9), Game1.random.Next(-10,2), Game1.random.Next(-8,9), new Vector2(Game1.random.Next(-2, 5), Game1.random.Next(-20, -10))));
+	}
+}
+
 public override void draw(SpriteBatch b)
 		{
 			// Draw order matters
@@ -450,23 +535,28 @@ public override void draw(SpriteBatch b)
 				new Vector2(26f, 78.5f) * uiScale, 4f * uiScale,
 				flipBubble ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0.001f);
 			
-			// bar background
+			int barXPos = xPositionOnScreen + 54;
+			// Pau's mining background
+			b.Draw(miningBobberBarTextures, new Vector2(barXPos, yPositionOnScreen + 300 - 18) + everythingShake,
+				new Rectangle(4, 8, 45, 156), Color.White * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 4f * uiScale,
+				SpriteEffects.None, 0.01f);
+			
+			/*// bar background
 			b.Draw(DeluxeFishingRodTool.fishingTextures, new Vector2(xPositionOnScreen + 50, yPositionOnScreen + 230) + everythingShake,
 				new Rectangle(0, 176, 42, 186), Color.White * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 4f * uiScale,
 				SpriteEffects.None, 0.01f);
 
-			int barXPos = xPositionOnScreen + 100;
 			// bar ui background
 			b.Draw(DeluxeFishingRodTool.fishingTextures, new Vector2(barXPos, yPositionOnScreen + 296) + everythingShake,
 				new Rectangle(141, 362, 29, 148), Color.White * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 4f * uiScale,
-				SpriteEffects.None, 0.01f);
+				SpriteEffects.None, 0.01f);*/
 			
 			// Gameplay bar
 			if (uiScale == 1f)
 			{
 				// These 3 are bobber bar
-				int colorIndex = 4;
-				int bobberXPos = barXPos - 62;
+				int colorIndex = -3;
+				int bobberXPos = barXPos - 10;
 				b.Draw(DeluxeFishingRodTool.fishingTextures,
 					new Vector2(bobberXPos, yPositionOnScreen + 12 + (int)bobberBarPos) + barShake +
 					everythingShake, new Rectangle(216, 447 + 10 * colorIndex, 9, 2),
@@ -496,24 +586,34 @@ public override void draw(SpriteBatch b)
 				
 				// current level of Success bar
 				b.Draw(Game1.staminaRect,
-					new Rectangle(barXPos - 10,
-						yPositionOnScreen + 4 + (int)(580f * (1f - distanceFromCatchingSlime)), 16,
-						(int)(580f * distanceFromCatchingSlime)), Color.Lerp(Color.Red, Color.LimeGreen, distanceFromCatchingSlime));
+					new Rectangle(barXPos + 54,
+						yPositionOnScreen + 14 + (int)(570f * (1f - distanceFromCatchingSlime)), 8,
+						(int)(570f * distanceFromCatchingSlime)), Color.Lerp(Color.Red, Color.LimeGreen, distanceFromCatchingSlime));
 				
 				// current level of Success bar 2
 				b.Draw(Game1.staminaRect,
-					new Rectangle(barXPos + 18,
-						yPositionOnScreen + 4 + (int)(580f * (1f - distanceFromCatchingRock)), 16,
-						(int)(580f * distanceFromCatchingRock)), Color.Lerp(Color.Gray, Color.White, distanceFromCatchingRock));
+					new Rectangle(barXPos + 44,
+						yPositionOnScreen + 14 + (int)(570f * (1f - distanceFromCatchingRock)), 8,
+						(int)(570f * distanceFromCatchingRock)), Color.Lerp(Color.Gray, Color.White, distanceFromCatchingRock));
 				
-				/*
-				// TODO add mining anim for bar?
-				b.Draw(Game1.mouseCursors,
-					new Vector2(xPositionOnScreen - 18, yPositionOnScreen + 514) + everythingShake,
-					new Rectangle(32, 657, 16, 15), Color.White, reelRotation, new Vector2(2f, 10f), 4f,
-					SpriteEffects.None, 0.9f);*/
+				/// Pickaxe
+				b.Draw(miningBobberBarTextures,
+					new Vector2(xPositionOnScreen - 45, yPositionOnScreen + 520) + everythingShake,
+					new Rectangle(81, 48, 15, 15), Color.White, axeChoppingAngle, new Vector2(4f, 10f), 4f,
+					SpriteEffects.None, 0.9f);
 
-				int xTreasureOffset = xPositionOnScreen - 26;
+				if (debrisAlpha > 0f)
+				{
+					// Debris
+					foreach(Debris d in debris)
+					{
+						b.Draw(miningBobberBarTextures,
+							new Vector2(xPositionOnScreen + d.x, yPositionOnScreen + 505 + d.y) + everythingShake,
+							new Rectangle(100 + 4 * d.index, 30, 4, 4), Color.White * debrisAlpha, axeChoppingAngle, new Vector2(0f, 0f), 4f,
+							SpriteEffects.None, 0.9f);
+					}
+				}
+				int xTreasureOffset = xPositionOnScreen - 20;
 				//draw treasures
 				foreach (var t in treasures)
 				{
