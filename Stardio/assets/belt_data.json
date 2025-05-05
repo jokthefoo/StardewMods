@@ -1,0 +1,8 @@
+{
+  "Jok.Stardio.Belt": {
+    DisplayName: "belt.name",
+    Description: "belt.description",
+    TextureIndex: 0,
+    Price: 120
+  }
+}

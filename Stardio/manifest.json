@@ -1,0 +1,10 @@
+{
+  "Name": "Stardio",
+  "Author": "Jok",
+  "Version": "1.0.0",
+  "Description": "Stardio",
+  "UniqueID": "Jok.Stardio",
+  "EntryDll": "Stardio.dll",
+  "MinimumApiVersion": "4.0.0",
+  "UpdateKeys": []
+}
