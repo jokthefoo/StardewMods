@@ -43,6 +43,10 @@ internal sealed class ModEntry : Mod
 
         HarmonyPatches.Patch(ModManifest.UniqueID);
     }
+    
+    //TODO extract some beltitem update logic into functions
+    //TODO crafting recipe/unlock
+    //TODO bigger machines
 
     private void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
     {
@@ -66,7 +70,7 @@ internal sealed class ModEntry : Mod
 
         if (beltUpdateCountdown <= 0)
         {
-            beltUpdateCountdown = TotalBeltTime / 4;
+            beltUpdateCountdown = TotalBeltTime / 2;
             BeltAnim++;
 
             if (BeltAnim > 3)
@@ -97,8 +101,6 @@ internal sealed class ModEntry : Mod
         sc.RegisterSerializerType(typeof(BeltItem));
     }
 
-    // Farmer MovePosition
-    // Farmer LerpPosition
     private void OnAssetRequested(object sender, AssetRequestedEventArgs e)
     {
         if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/FactoryItems"))

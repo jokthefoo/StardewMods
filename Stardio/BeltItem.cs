@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Netcode;
+using StardewModdingAPI;
 using StardewValley;
 using StardewValley.GameData.Machines;
 using StardewValley.Inventories;
@@ -153,30 +154,140 @@ public class BeltItem : StardewValley.Object
             {
                 tempBeltInventory = new Inventory();
                 tempBeltInventory.Add(heldObject.Value);
+                var state = MachineStateManager.GetState(outputTarget.Location, outputTarget.TileLocation);
                 
+                // try to add to chest
                 if (outputTarget is Chest outputChest)
                 {
-                    outputChest.addItem(heldObject.Value);
+                    if (outputChest.addItem(heldObject.Value) != null) 
+                    {
+                        // Chest full so drop item
+                        Game1.createItemDebris(heldObject.Value, TileLocation * 64f, -1, Location);
+                    }
+
                     outputChest.clearNulls();
                     heldObject.Value = null;
                     HeldItemPosition = 0;
-                } 
-                else if (outputTarget is BeltItem belt && belt.heldObject.Value == null)
+                    return;
+                }
+                
+                // try to push to belt
+                if (outputTarget is BeltItem belt && belt.heldObject.Value == null)
                 {
                     belt.heldObject.Value = heldObject.Value;
+
                     if (belt.currentRotation.Value != currentRotation.Value)
                     {
                         belt.HeldItemPosition = .3f;
                     }
+
                     heldObject.Value = null;
                     HeldItemPosition = 0;
-                } 
-                else if (outputTarget.AttemptAutoLoad(tempBeltInventory, Game1.player))
+                    return;
+                }
+                
+                // try to load single item
+                if (outputTarget.AttemptAutoLoad(tempBeltInventory, Game1.player))
                 {
                     heldObject.Value = null;
                     HeldItemPosition = 0;
+                    return;
                 }
-                tempBeltInventory = null;
+                
+                // try to load machine's current inventory
+                if (state.outputRule != null && state.outputTrigger != null && outputTarget.AttemptAutoLoad(state.currentInventory, Game1.player))
+                {
+                    // inventory should be emptied by auto-load
+                    state.outputRule = null;
+                    state.outputTrigger = null;
+
+                    // we don't add belt's item here
+                    // heldObject.Value = null;
+                    // HeldItemPosition = 0;
+                    return;
+                }
+                
+                MachineData machineData = outputTarget.GetMachineData();
+
+                // If we have started a rule, check if we are trying to load additional missing requirements (aka coal)
+                if (state.outputRule != null && state.outputTrigger != null &&
+                    !MachineDataUtility.HasAdditionalRequirements(state.currentInventory, machineData.AdditionalConsumedItems, out var failedRequirement))
+                {
+                    // TODO extra machine configs?
+                    foreach (MachineItemAdditionalConsumedItems requirement in machineData.AdditionalConsumedItems) 
+                    {
+                        if (ItemRegistry.QualifyItemId(requirement.ItemId) == heldObject.Value.QualifiedItemId && state.currentInventory.CountId(requirement.ItemId) < requirement.RequiredCount)
+                        {
+                            state.AddObject(heldObject.Value);
+                            
+                            // Check if we now have enough
+                            if(outputTarget.AttemptAutoLoad(state.currentInventory, Game1.player))
+                            {
+                                // inventory should be emptied by auto-load
+                                state.outputRule = null;
+                                state.outputTrigger = null;
+                            }
+
+                            heldObject.Value = null;
+                            HeldItemPosition = 0;
+                            return;
+                        }
+                    }
+                }
+
+                // auto load failed
+                // If we have started with a rule continue with that rule
+                if (state.outputRule != null && state.outputTrigger != null)
+                {
+                    if (MachineDataUtility.CanApplyOutput(outputTarget, state.outputRule, MachineOutputTrigger.ItemPlacedInMachine, heldObject.Value, Game1.player, Location, out var triggerRule,
+                            out var matchesExceptCount))
+                    {
+                        // we shouldn't get in here, this would mean we can load item but failed in earlier conditions that should succeed
+                        ModEntry.MonitorInst.Log($"Stardio failed to correctly load a machine.", LogLevel.Error);
+                        return;
+                    }
+
+                    if (matchesExceptCount && triggerRule.Id == state.outputTrigger.Id)
+                    {
+                        // add item if matching
+                        state.AddObject(heldObject.Value);
+
+                        // Check if we now have enough
+                        if(outputTarget.AttemptAutoLoad(state.currentInventory, Game1.player))
+                        {
+                            // inventory should be emptied by auto-load
+                            state.outputRule = null;
+                            state.outputTrigger = null;
+                        }
+                        
+                        heldObject.Value = null;
+                        HeldItemPosition = 0;
+                        return;
+                    }
+
+                    // if we don't add the item belt is blocked
+                    return;
+                }
+
+                // else try to start new rule
+                if (machineData != null)
+                {
+                    if (!MachineDataUtility.TryGetMachineOutputRule(this, machineData, MachineOutputTrigger.ItemPlacedInMachine, heldObject.Value, Game1.player, Location, out var outputRule,
+                            out var triggerRule, out var outputRuleIgnoringCount, out var triggerIgnoringCount))
+                    {
+                        if (outputRuleIgnoringCount != null)
+                        {
+                            // start new rule
+                            state.outputRule = outputRuleIgnoringCount;
+                            state.outputTrigger = triggerIgnoringCount;
+                            state.currentInventory.Add(heldObject.Value);
+
+                            heldObject.Value = null;
+                            HeldItemPosition = 0;
+                            return;
+                        }
+                    }
+                }
             }
 
             // Grab item
@@ -231,9 +342,13 @@ public class BeltItem : StardewValley.Object
                         }
                     }
                     
-                    // Give to belt
-                    heldObject.Value = output;
-
+                    heldObject.Value = (Object)output.getOne();
+                    output.Stack -= 1;
+                    if (output.Stack != 0)
+                    {
+                        return;
+                    }
+                    
                     MachineDataUtility.UpdateStats(machineData?.StatsToIncrementWhenHarvested, output, output.Stack);
                     inputObj.heldObject.Value = null;
                     inputObj.readyForHarvest.Value = false;
