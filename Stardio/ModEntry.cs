@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
+using Stardio;
 using Object = StardewValley.Object;
 
 namespace Jok.Stardio;
@@ -16,6 +17,7 @@ internal sealed class ModEntry : Mod
     public static IMonitor MonitorInst;
     public static IModHelper Helper;
     public static StardioConfig Config;
+    public static IExtraMachineConfigApi? EMCApi;
 
     private const string MACHINE_STATE_KEY = "Jok.Stardio.MachineState";
     //ModEntry.MonitorInst.Log($"X value: {x}", LogLevel.Info);
@@ -173,6 +175,7 @@ internal sealed class ModEntry : Mod
     {
         var sc = Helper.ModRegistry.GetApi<ISpaceCoreApi>("spacechase0.SpaceCore");
         sc.RegisterSerializerType(typeof(BeltItem));
+        EMCApi = Helper.ModRegistry.GetApi<IExtraMachineConfigApi>("selph.ExtraMachineConfig");
 
         SetupConfigs();
     }

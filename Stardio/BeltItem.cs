@@ -9,12 +9,13 @@ using StardewValley.Inventories;
 using StardewValley.ItemTypeDefinitions;
 using StardewValley.Objects;
 using StardewValley.TerrainFeatures;
+using Stardio;
 using Object = StardewValley.Object;
 
 namespace Jok.Stardio;
 
 [XmlType("Mods_Jok_BeltItem")]
-public class BeltItem : StardewValley.Object
+public class BeltItem : Object
 {
     [XmlIgnore]
     public static int BeltAnim = 0;
@@ -208,7 +209,7 @@ public class BeltItem : StardewValley.Object
         }
         
         var state = MachineStateManager.GetState(outputTarget.Location, outputTarget.TileLocation);
-        // try to load machine's current inventory
+        // try to load machine's current inventory -- belt held item isn't used here
         if (ModMachineState.IsValid(state))
         {
             tempBeltInventory = new Inventory();
@@ -226,7 +227,7 @@ public class BeltItem : StardewValley.Object
     private void TryPushToMultiInputMachine(Object outputTarget)
     {
         MachineData machineData = outputTarget.GetMachineData();
-        if (machineData == null)
+        if (machineData == null || outputTarget.heldObject.Value != null)
         {
             return;
         }
@@ -245,6 +246,14 @@ public class BeltItem : StardewValley.Object
                     heldObject.Value = null;
                     HeldItemPosition = 0;
                 }
+            } 
+            // We matched a rule that requires only one base item but has EMC additional requirements so we start the rule here
+            else if (ModEntry.EMCApi != null) 
+            {
+                // start new rule
+                MachineStateManager.CreateState(Location, outputTarget.TileLocation, outputRule, triggerRule, heldObject.Value);
+                heldObject.Value = null;
+                HeldItemPosition = 0;
             }
             return;
         }
@@ -255,23 +264,11 @@ public class BeltItem : StardewValley.Object
         // If we have started a rule, check if we are trying to load additional missing requirements (aka coal)
         if (ModMachineState.IsValid(state) && !MachineDataUtility.HasAdditionalRequirements(tempBeltInventory, machineData.AdditionalConsumedItems, out var failedRequirement))
         {
-            // TODO extra machine configs?
             foreach (MachineItemAdditionalConsumedItems requirement in machineData.AdditionalConsumedItems)
             {
                 if (ItemRegistry.QualifyItemId(requirement.ItemId) == heldObject.Value.QualifiedItemId && state.CountItemId(requirement.ItemId) < requirement.RequiredCount)
                 {
-                    state.AddObject(heldObject.Value);
-
-                    // Check if we now have enough
-                    if (outputTarget.AttemptAutoLoad(tempBeltInventory, Game1.player))
-                    {
-                        // inventory should be emptied by auto-load
-                        state.outputRule = null;
-                        state.outputTrigger = null;
-                    }
-
-                    heldObject.Value = null;
-                    HeldItemPosition = 0;
+                    AddItemToMachineStateThenCheck(state, outputTarget);
                     return;
                 }
             }
@@ -291,23 +288,51 @@ public class BeltItem : StardewValley.Object
             
             if (matchesExceptCount && triggerRule.Id == state.outputTrigger.Id && state.CountItemId(heldObject.Value.ItemId) < triggerRule.RequiredCount)
             {
-                // add item if matching
-                state.AddObject(heldObject.Value);
-
-                // Check if we now have enough
-                if (outputTarget.AttemptAutoLoad(tempBeltInventory, Game1.player))
-                {
-                    // inventory should be emptied by auto-load
-                    state.outputRule = null;
-                    state.outputTrigger = null;
-                }
-
-                heldObject.Value = null;
-                HeldItemPosition = 0;
+                AddItemToMachineStateThenCheck(state, outputTarget);
+                return;
             }
 
             // if we don't add the item belt is blocked
         }
+        
+        // If all else fails check for EMC requirements
+        if (ModMachineState.IsValid(state) && ModEntry.EMCApi != null)
+        {
+            foreach ((string extraItemId, int extraCount) in ModEntry.EMCApi.GetExtraRequirements(state.outputRule.OutputItem[0]))
+            {
+                if (CraftingRecipe.ItemMatchesForCrafting(heldObject.Value, extraItemId) && state.CountItemId(heldObject.Value.ItemId) < extraCount)
+                {
+                    AddItemToMachineStateThenCheck(state, outputTarget);
+                    return;
+                }
+            }
+
+            foreach ((string extraContextTags, int extraCount) in ModEntry.EMCApi.GetExtraTagsRequirements(state.outputRule.OutputItem[0]))
+            {
+                if (ItemContextTagManager.DoesTagQueryMatch(extraContextTags, heldObject.Value.GetContextTags() ?? new HashSet<string>()) && state.CountItemId(heldObject.Value.ItemId) < extraCount)
+                {
+                    AddItemToMachineStateThenCheck(state, outputTarget);
+                    return;
+                }
+            }
+        }
+    }
+
+    private void AddItemToMachineStateThenCheck(ModMachineState state, Object outputTarget)
+    {
+        // add item
+        state.AddObject(heldObject.Value);
+
+        // Check if we now have enough
+        if (outputTarget.AttemptAutoLoad(tempBeltInventory, Game1.player))
+        {
+            // inventory should be emptied by auto-load
+            state.outputRule = null;
+            state.outputTrigger = null;
+        }
+
+        heldObject.Value = null;
+        HeldItemPosition = 0;
     }
 
     private bool TryPushToChest(Object outputTarget)
@@ -387,6 +412,34 @@ public class BeltItem : StardewValley.Object
                 else
                 {
                     inputObj.heldObject.Value = output;
+                }
+            }
+        }
+
+        // If emc is installed check for extra outputs
+        if (ModEntry.EMCApi != null)
+        {
+            if (inputObj.heldObject.Value.heldObject.Value is Chest chest && chest.Items.Count > 0)
+            {
+                foreach (var item in chest.Items)
+                {
+                    if (item is not null)
+                    {
+                        heldObject.Value = (Object)item.getOne();
+                        item.Stack -= 1;
+                        
+                        if (item.Stack == 0)
+                        {
+                            chest.Items.Remove(item);
+                            return;
+                        }
+                        
+                        if (chest.Items.Count == 0)
+                        {
+                            inputObj.heldObject.Value.heldObject.Value = null;
+                        }
+                        return;
+                    }
                 }
             }
         }

@@ -222,6 +222,7 @@ internal sealed class ModEntry : Mod
 
     private void ParseBigMachineCustomData(BigCraftableData bigCraftableData, string itemId)
     {
+        BigMachinesList.Clear();
         if (bigCraftableData.CustomFields.TryGetValue(ModDataDimensionsKey, out string? value))
         {
             string[] dims = value.Split(",");
