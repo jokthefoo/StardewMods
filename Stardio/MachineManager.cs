@@ -1,34 +1,51 @@
 ﻿using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.GameData.Machines;
-using StardewValley.Inventories;
 using Object = StardewValley.Object;
 
 namespace Stardio;
 
 internal static class MachineStateManager
 {
-    // TODO: Save/Load 
-    public static Dictionary<GameLocation, Dictionary<Vector2, ModMachineState>?> MachineStates = new();
+    public static Dictionary<string, Dictionary<Vector2, ModMachineState>?> MachineStates;
 
-    public static ModMachineState GetState(GameLocation location, Vector2 tile)
+    public static ModMachineState? GetState(GameLocation location, Vector2 tile)
     {
-        if (MachineStates.TryGetValue(location, out var locStates))
+        if (MachineStates.TryGetValue(location.Name, out var locStates))
         {
             if (locStates.TryGetValue(tile, out var state))
             {
                 return state;
             }
         }
+        return null;
+    }
+    
+    public static void CreateState(GameLocation location, Vector2 tile, MachineOutputRule rule, MachineOutputTriggerRule trigger, Object obj)
+    {
+        var newState = new ModMachineState(rule, trigger, obj);
+        if (MachineStates.TryGetValue(location.Name, out var locStates))
+        {
+            MachineStates[location.Name][tile] = newState;
+        }
         else
         {
-            MachineStates.Add(location, new Dictionary<Vector2, ModMachineState>());
+            MachineStates.Add(location.Name, new Dictionary<Vector2, ModMachineState>());
+            MachineStates[location.Name][tile] = newState;
         }
-
-        var newState = new ModMachineState(null, null);
-        MachineStates[location][tile] = newState;
-        return newState;
     }
+}
+
+public class ModMachineStateSerialized
+{
+    public MachineOutputRule? outputRule;
+    public MachineOutputTriggerRule? outputTrigger;
+    public string currentInventory = "";
+}
+
+public class ItemListSerialized
+{
+    public List<Item> currentInventory;
 }
 
 public class ModMachineState
@@ -38,11 +55,17 @@ public class ModMachineState
         outputRule = rule;
         outputTrigger = trigger;
     }
+    
+    public ModMachineState(MachineOutputRule? rule, MachineOutputTriggerRule? trigger, Object obj)
+    {
+        outputRule = rule;
+        outputTrigger = trigger;
+        AddObject(obj);
+    }
 
     public void AddObject(Object obj)
     {
         obj.resetState();
-        currentInventory.RemoveEmptySlots();
         for (int i = 0; i < currentInventory.Count; i++)
         {
             if (currentInventory[i] != null && currentInventory[i].canStackWith(obj))
@@ -57,7 +80,34 @@ public class ModMachineState
         currentInventory.Add(obj);
     }
 
+    public static bool IsValid(ModMachineState? state)
+    {
+        if (state?.outputRule == null || state.outputTrigger == null)
+        {
+            return false;
+        }
+        return true;
+    }
+    
+    public int CountItemId(string itemId)
+    {
+        itemId = ItemRegistry.QualifyItemId(itemId);
+        if (itemId == null)
+        {
+            return 0;
+        }
+
+        foreach (var item in currentInventory)
+        {
+            if (item.QualifiedItemId == itemId)
+            {
+                return item.Stack;
+            }
+        }
+        return 0;
+    }
+
     public MachineOutputRule? outputRule;
     public MachineOutputTriggerRule? outputTrigger;
-    public Inventory currentInventory = new Inventory();
+    public List<Item> currentInventory = new();
 }

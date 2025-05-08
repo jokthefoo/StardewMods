@@ -2,5 +2,17 @@
   "belt.name": "Conveyor Belt",
   "belt.description": "Moves things.",
   
-  "belt.category.name": "Belt"
+  "belt.category.name": "Belt",
+
+
+  "config.quality.name": "Show Quality",
+  "config.quality.tooltip": "Whether to display quality of items on belts.",
+  "config.updaterate.name": "Update rate of belts",
+  "config.updaterate.tooltip": "The frequency belts check for updates in milliseconds.",
+  "config.pushplayer.name": "Belt velocity against player",
+  "config.pushplayer.tooltip": "The force that belts push the player around with.",
+  "config.speedplayer.name": "Belt player speed boost",
+  "config.speedplayer.tooltip": "The speed boost a player gets when walking \"with\" the belt.",
+  "config.rkeybind.name": "Rotate Keybind",
+  "config.rkeybind.tooltip": "Key to rotate belts, both before and after placement."
 }

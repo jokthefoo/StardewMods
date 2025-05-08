@@ -25,12 +25,29 @@ internal static class HarmonyPatches
         
         harmony.Patch(AccessTools.DeclaredMethod(typeof(Farmer), nameof(Farmer.MovePosition)),
             postfix: new HarmonyMethod(typeof(HarmonyPatches), nameof(Farmer_MovePosition_postfix)));
+        
+        harmony.Patch(AccessTools.DeclaredMethod(typeof(Object), nameof(Object.performToolAction)),
+            postfix: new HarmonyMethod(typeof(HarmonyPatches), nameof(Object_performToolAction_postfix)));
         /*
         harmony.Patch(
             AccessTools.Method(typeof(GameLocation), nameof(GameLocation.isCollidingPosition),
                 new[] { typeof(Rectangle), typeof(xTile.Dimensions.Rectangle), typeof(bool), typeof(int), typeof(bool), typeof(Character), typeof(bool), typeof(bool), typeof(bool), typeof(bool) }),
             postfix: new HarmonyMethod(typeof(HarmonyPatches), nameof(GameLocation_isCollidingPosition_postfix)));
             */
+    }
+
+    public static void Object_performToolAction_postfix(Object __instance, ref bool __result, Tool t)
+    {
+        var tileLoc = __instance.TileLocation;
+        var location = __instance.Location;
+        var state = MachineStateManager.GetState(location, tileLoc);
+        if (__result && ModMachineState.IsValid(state))
+        {
+            foreach (var item in state.currentInventory)
+            {
+                location.debris.Add(new Debris(item, tileLoc * 64f + new Vector2(32f, 32f)));
+            }
+        }
     }
 
     public static void Farmer_MovePosition_postfix(Farmer __instance, GameTime time, xTile.Dimensions.Rectangle viewport, GameLocation currentLocation)
@@ -43,8 +60,8 @@ internal static class HarmonyPatches
         if (currentLocation.objects.TryGetValue(__instance.Tile, out Object obj) && obj is BeltItem belt)
         {
             float speedBuff = 0f;
-            const float speedBuffValue = 2f; // TODO config these
-            const float pushVelocity = 1.5f;
+            float speedBuffValue = ModEntry.Config.BeltPlayerSpeedBoost;
+            float pushVelocity = ModEntry.Config.BeltPushPlayerSpeed;
             switch (belt.currentRotation.Value)
             {
                 case 0:
