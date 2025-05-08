@@ -173,11 +173,16 @@ public class BeltItem : StardewValley.Object
     private void BeltPushItem()
     {
         // Push item
-        if (heldObject.Value != null && HeldItemPosition >= 1.0f && Location.objects.TryGetValue(getTileInDirection(Direction.Forward), out var outputTarget))
+        Location.objects.TryGetValue(getTileInDirection(Direction.Forward), out var outputTarget);
+        if (outputTarget == null)
+        {
+            return;
+        }
+        
+        if (heldObject.Value != null && HeldItemPosition >= 1.0f)
         {
             tempBeltInventory = new Inventory();
             tempBeltInventory.Add(heldObject.Value);
-            var state = MachineStateManager.GetState(outputTarget.Location, outputTarget.TileLocation);
 
             // try to add to chest
             if (TryPushToChest(outputTarget))
@@ -186,7 +191,7 @@ public class BeltItem : StardewValley.Object
             }
 
             // try to push to belt
-            if (TryPushToBelt(outputTarget))
+            if (TryPushToBelt(outputTarget) || outputTarget is BeltItem)
             {
                 return;
             }
@@ -199,26 +204,27 @@ public class BeltItem : StardewValley.Object
                 return;
             }
 
-            // try to load machine's current inventory
-            if (ModMachineState.IsValid(state))
-            {
-                tempBeltInventory = new Inventory();
-                tempBeltInventory.AddRange(state.currentInventory);
-                if (outputTarget.AttemptAutoLoad(tempBeltInventory, Game1.player))
-                {
-                    // inventory should be emptied by auto-load
-                    state.outputRule = null;
-                    state.outputTrigger = null;
-                    // we don't add belt's item here
-                    return;
-                }
-            }
-
-            TryPushToMultiInputMachine(outputTarget, state);
+            TryPushToMultiInputMachine(outputTarget);
+            return;
         }
+        
+        var state = MachineStateManager.GetState(outputTarget.Location, outputTarget.TileLocation);
+        // try to load machine's current inventory
+        if (ModMachineState.IsValid(state))
+        {
+            tempBeltInventory = new Inventory();
+            tempBeltInventory.AddRange(state.currentInventory);
+            if (outputTarget.AttemptAutoLoad(tempBeltInventory, Game1.player))
+            {
+                // inventory should be emptied by auto-load
+                state.outputRule = null;
+                state.outputTrigger = null;
+            }
+        }
+
     }
 
-    private void TryPushToMultiInputMachine(Object outputTarget, ModMachineState state)
+    private void TryPushToMultiInputMachine(Object outputTarget)
     {
         MachineData machineData = outputTarget.GetMachineData();
         if (machineData == null)
@@ -226,6 +232,7 @@ public class BeltItem : StardewValley.Object
             return;
         }
 
+        var state = MachineStateManager.GetState(outputTarget.Location, outputTarget.TileLocation);
         if (!ModMachineState.IsValid(state))
         {
             // Try to start new rule

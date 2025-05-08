@@ -47,6 +47,7 @@ internal static class HarmonyPatches
             {
                 location.debris.Add(new Debris(item, tileLoc * 64f + new Vector2(32f, 32f)));
             }
+            MachineStateManager.MachineStates[location.Name].Remove(tileLoc);
         }
     }
 
