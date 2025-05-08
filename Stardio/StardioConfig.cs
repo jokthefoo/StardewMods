@@ -1,7 +1,6 @@
 ﻿using StardewModdingAPI;
-using StardewModdingAPI.Utilities;
 
-namespace Stardio;
+namespace Jok.Stardio;
 
 public sealed class StardioConfig
 {

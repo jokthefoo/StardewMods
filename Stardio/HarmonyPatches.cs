@@ -1,11 +1,9 @@
 ﻿using HarmonyLib;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
-using StardewModdingAPI;
 using StardewValley;
 using Object = StardewValley.Object;
 
-namespace Stardio;
+namespace Jok.Stardio;
 
 internal static class HarmonyPatches
 {
@@ -47,7 +45,6 @@ internal static class HarmonyPatches
             {
                 location.debris.Add(new Debris(item, tileLoc * 64f + new Vector2(32f, 32f)));
             }
-            MachineStateManager.MachineStates[location.Name].Remove(tileLoc);
         }
     }
 

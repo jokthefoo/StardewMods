@@ -4,7 +4,7 @@ using StardewValley;
 using StardewValley.ItemTypeDefinitions;
 using StardewValley.TokenizableStrings;
 
-namespace Stardio;
+namespace Jok.Stardio;
 
 public class BeltItemDataDefinition : BaseItemDataDefinition
 {

@@ -7,7 +7,7 @@ using StardewModdingAPI.Events;
 using StardewValley;
 using Object = StardewValley.Object;
 
-namespace Stardio;
+namespace Jok.Stardio;
 
 /// <summary>The mod entry point.</summary>
 internal sealed class ModEntry : Mod
@@ -39,13 +39,22 @@ internal sealed class ModEntry : Mod
         Helper.Events.Input.ButtonPressed += OnButtonPressed;
         Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
         Helper.Events.GameLoop.Saving += OnSaving;
+        Helper.Events.World.ObjectListChanged += OnObjectListChanged;
 
         ItemRegistry.AddTypeDefinition(new BeltItemDataDefinition());
         Helper.ModContent.Load<Texture2D>("assets/belts");
 
         HarmonyPatches.Patch(ModManifest.UniqueID);
     }
-    
+
+    private void OnObjectListChanged(object? sender, ObjectListChangedEventArgs e)
+    {
+        foreach (var (tileLoc, obj) in e.Removed)
+        {
+            MachineStateManager.RemoveState(e.Location, tileLoc);
+        }
+    }
+
     // TODO crafting recipe/unlock
     // TODO bigger machines -- they might need custom draw code for belts? maybe just block them specifically. -- also block furniture?
 

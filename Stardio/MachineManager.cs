@@ -3,7 +3,7 @@ using StardewValley;
 using StardewValley.GameData.Machines;
 using Object = StardewValley.Object;
 
-namespace Stardio;
+namespace Jok.Stardio;
 
 internal static class MachineStateManager
 {
@@ -19,6 +19,17 @@ internal static class MachineStateManager
             }
         }
         return null;
+    }
+    
+    public static void RemoveState(GameLocation location, Vector2 tile)
+    {
+        if (MachineStates.TryGetValue(location.Name, out var locStates))
+        {
+            if (locStates.TryGetValue(tile, out var state))
+            {
+                MachineStates[location.Name].Remove(tile);
+            }
+        }
     }
     
     public static void CreateState(GameLocation location, Vector2 tile, MachineOutputRule rule, MachineOutputTriggerRule trigger, Object obj)

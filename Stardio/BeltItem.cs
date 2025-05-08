@@ -9,10 +9,9 @@ using StardewValley.Inventories;
 using StardewValley.ItemTypeDefinitions;
 using StardewValley.Objects;
 using StardewValley.TerrainFeatures;
-using xTile.Tiles;
 using Object = StardewValley.Object;
 
-namespace Stardio;
+namespace Jok.Stardio;
 
 [XmlType("Mods_Jok_BeltItem")]
 public class BeltItem : StardewValley.Object

@@ -1,4 +1,4 @@
-namespace Stardio
+namespace Jok.Stardio
 {
     public interface ISpaceCoreApi
     { 
