@@ -29,13 +29,10 @@ public class BeltItem : Object
         { 3, new Vector2(-1, 0) }
     };
 
-    [XmlIgnore] public float HeldItemPosition = 0;
+    [XmlIgnore] public float HeldItemPosition;
     
     [XmlElement("currentRotation")]
     public readonly NetInt currentRotation = new();
-	
-    [XmlIgnore]
-    public static IInventory tempBeltInventory;
     
     public enum Direction
     {
@@ -100,13 +97,13 @@ public class BeltItem : Object
             var data = Game1.content.Load<Dictionary<string, BeltData>>($"Jok.Stardio/FactoryItems");
             return data[ItemId].DisplayName;
         }
-        catch (Exception e)
+        catch (Exception)
         {
             return "Error Item";
         }
     }
     
-    protected override Item GetOneNew() // needed for right clicking item
+    protected override Item GetOneNew() // needed for right-clicking item
     {
         return new BeltItem();
     }
@@ -171,8 +168,16 @@ public class BeltItem : Object
     // Push item
     private void BeltPushItem()
     {
+        if (heldObject.Value == null || !(HeldItemPosition >= 1.0f))
+        {
+            return;
+        }
+        
+        IInventory tempBeltInventory = new Inventory();
+        tempBeltInventory.Add(heldObject.Value);
+
         Object? outputTarget = null;
-        // Try get push target with BM first
+        // Try to get push target with BM first
         if (ModEntry.BMApi != null && ModEntry.BMApi.TryGetObjectAt(Location, getTileInDirection(Direction.Forward), out var bmObject))
         {
             outputTarget = bmObject;
@@ -189,47 +194,39 @@ public class BeltItem : Object
                 return;
             }
         }
-
-        if (heldObject.Value != null && HeldItemPosition >= 1.0f)
+            
+        // try to add to chest
+        if (TryPushToChest(outputTarget))
         {
-            tempBeltInventory = new Inventory();
-            tempBeltInventory.Add(heldObject.Value);
-
-            // try to add to chest
-            if (TryPushToChest(outputTarget))
-            {
-                return;
-            }
-
-            // try to push to belt
-            if (TryPushToBelt(outputTarget) || outputTarget is BeltItem)
-            {
-                return;
-            }
-
-            // try to load single item
-            if (outputTarget.AttemptAutoLoad(tempBeltInventory, Game1.player))
-            {
-                heldObject.Value = null;
-                HeldItemPosition = 0;
-                return;
-            }
-
-            TryPushToMultiInputMachine(outputTarget);
             return;
         }
 
-        var state = MachineStateManager.GetState(outputTarget.Location, outputTarget.TileLocation);
+        // try to push to belt
+        if (TryPushToBelt(outputTarget) || outputTarget is BeltItem)
+        {
+            return;
+        }
 
+        // try to load single item
+        if (outputTarget.AttemptAutoLoad(tempBeltInventory, Game1.player))
+        {
+            heldObject.Value = null;
+            HeldItemPosition = 0;
+            return;
+        }
+
+        TryPushToMultiInputMachine(outputTarget);
+
+        var state = MachineStateManager.GetState(outputTarget.Location, outputTarget.TileLocation);
         // try to load machine's current inventory -- belt held item isn't used here
         if (ModMachineState.IsValid(state))
         {
             tempBeltInventory = new Inventory();
-            tempBeltInventory.AddRange(state.currentInventory);
+            tempBeltInventory.AddRange(state!.currentInventory);
 
             if (outputTarget.AttemptAutoLoad(tempBeltInventory, Game1.player))
             {
-                // inventory should be emptied by auto-load
+                // inventory should be emptied by autoload
                 state.outputRule = null;
                 state.outputTrigger = null;
             }
@@ -270,8 +267,8 @@ public class BeltItem : Object
             return;
         }
 
-        tempBeltInventory = new Inventory();
-        tempBeltInventory.AddRange(state.currentInventory);
+        IInventory tempBeltInventory = new Inventory();
+        tempBeltInventory.AddRange(state!.currentInventory);
         
         // If we have started a rule, check if we are trying to load additional missing requirements (aka coal)
         if (ModMachineState.IsValid(state) && !MachineDataUtility.HasAdditionalRequirements(tempBeltInventory, machineData.AdditionalConsumedItems, out var failedRequirement))
@@ -280,13 +277,13 @@ public class BeltItem : Object
             {
                 if (ItemRegistry.QualifyItemId(requirement.ItemId) == heldObject.Value.QualifiedItemId && state.CountItemId(requirement.ItemId) < requirement.RequiredCount)
                 {
-                    AddItemToMachineStateThenCheck(state, outputTarget);
+                    AddItemToMachineStateThenCheck(tempBeltInventory, state, outputTarget);
                     return;
                 }
             }
         }
 
-        // auto load failed
+        // autoload failed
         // If we have started with a rule continue with that rule
         if (ModMachineState.IsValid(state))
         {
@@ -298,9 +295,9 @@ public class BeltItem : Object
                 return;
             }
             
-            if (matchesExceptCount && triggerRule.Id == state.outputTrigger.Id && state.CountItemId(heldObject.Value.ItemId) < triggerRule.RequiredCount)
+            if (matchesExceptCount && triggerRule.Id == state.outputTrigger!.Id && state.CountItemId(heldObject.Value.ItemId) < triggerRule.RequiredCount)
             {
-                AddItemToMachineStateThenCheck(state, outputTarget);
+                AddItemToMachineStateThenCheck(tempBeltInventory, state, outputTarget);
                 return;
             }
 
@@ -310,11 +307,11 @@ public class BeltItem : Object
         // If all else fails check for EMC requirements
         if (ModMachineState.IsValid(state) && ModEntry.EMCApi != null)
         {
-            foreach ((string extraItemId, int extraCount) in ModEntry.EMCApi.GetExtraRequirements(state.outputRule.OutputItem[0]))
+            foreach ((string extraItemId, int extraCount) in ModEntry.EMCApi.GetExtraRequirements(state.outputRule!.OutputItem[0]))
             {
                 if (CraftingRecipe.ItemMatchesForCrafting(heldObject.Value, extraItemId) && state.CountItemId(heldObject.Value.ItemId) < extraCount)
                 {
-                    AddItemToMachineStateThenCheck(state, outputTarget);
+                    AddItemToMachineStateThenCheck(tempBeltInventory, state, outputTarget);
                     return;
                 }
             }
@@ -323,14 +320,14 @@ public class BeltItem : Object
             {
                 if (ItemContextTagManager.DoesTagQueryMatch(extraContextTags, heldObject.Value.GetContextTags() ?? new HashSet<string>()) && state.CountItemId(heldObject.Value.ItemId) < extraCount)
                 {
-                    AddItemToMachineStateThenCheck(state, outputTarget);
+                    AddItemToMachineStateThenCheck(tempBeltInventory, state, outputTarget);
                     return;
                 }
             }
         }
     }
 
-    private void AddItemToMachineStateThenCheck(ModMachineState state, Object outputTarget)
+    private void AddItemToMachineStateThenCheck(IInventory tempBeltInventory, ModMachineState state, Object outputTarget)
     {
         // add item
         state.AddObject(heldObject.Value);
@@ -338,7 +335,7 @@ public class BeltItem : Object
         // Check if we now have enough
         if (outputTarget.AttemptAutoLoad(tempBeltInventory, Game1.player))
         {
-            // inventory should be emptied by auto-load
+            // inventory should be emptied by autoload
             state.outputRule = null;
             state.outputTrigger = null;
         }
@@ -393,11 +390,11 @@ public class BeltItem : Object
         // Try Grab item with BM first
         if(ModEntry.BMApi != null && ModEntry.BMApi.TryGetObjectAt(Location, getTileInDirection(Direction.Behind), out var inputObj))
         {
-            if (TryPullFromChest(inputObj))
+            if (TryPullFromChest(inputObj!))
             {
                 return;
             }
-            TryPullFromMachine(inputObj);
+            TryPullFromMachine(inputObj!);
         }
         
         // Grab item

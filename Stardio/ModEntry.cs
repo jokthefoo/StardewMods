@@ -58,7 +58,6 @@ internal sealed class ModEntry : Mod
     }
 
     // TODO normal shipping bin
-    // TODO bigger machines -- they might need custom draw code for belts? maybe just block them specifically. -- also block furniture?
     // TODO joja cola competitor
 
     private static readonly XmlSerializer ItemSerializer = new(typeof(ItemListSerialized), new []
