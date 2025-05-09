@@ -1,6 +1,6 @@
 {
   "belt.name": "Conveyor Belt",
-  "belt.description": "Moves things.",
+  "belt.description": "Moves items, can pull and push from chests and machines.",
   
   "belt.category.name": "Belt",
 

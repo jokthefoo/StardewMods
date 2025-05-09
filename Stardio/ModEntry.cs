@@ -58,6 +58,7 @@ internal sealed class ModEntry : Mod
     }
 
     // TODO crafting recipe/unlock
+    // TODO test shipping/mini shipping
     // TODO bigger machines -- they might need custom draw code for belts? maybe just block them specifically. -- also block furniture?
 
     private static readonly XmlSerializer ItemSerializer = new(typeof(ItemListSerialized), new []
@@ -274,6 +275,15 @@ internal sealed class ModEntry : Mod
         else if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/belts.png"))
         {
             e.LoadFromModFile<Texture2D>("assets/belts.png", AssetLoadPriority.Low);
+        }
+        else if (e.NameWithoutLocale.IsEquivalentTo("Data/CraftingRecipes"))
+        {
+            e.Edit(asset =>
+            {
+                var dict = asset.AsDictionary<string, string>().Data;
+                // ingredients / unused / yield / big craftable? / unlock conditions /
+                dict.Add("(Jok.Belt)Jok.Stardio.Belt", $"335 5 390 25 388 25/what/(Jok.Belt)Jok.Stardio.Belt 5/false/s farming 3/");
+            });
         }
     }
 }
