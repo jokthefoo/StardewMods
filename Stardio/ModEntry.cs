@@ -65,12 +65,6 @@ internal sealed class ModEntry : Mod
     private void OnSaving(object? sender, SavingEventArgs e)
     {
         MonitorInst.Log($"Creating save", LogLevel.Info);
-        /*
-        var json = JsonConvert.SerializeObject(MachineStateManager.MachineStates, Formatting.Indented, 
-            new JsonSerializerSettings 
-            { 
-                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
-            });*/
         
         Dictionary<string, Dictionary<Vector2, ModMachineStateSerialized>?> serialized = new Dictionary<string, Dictionary<Vector2, ModMachineStateSerialized>?>();
         foreach (var (location, locationDict) in MachineStateManager.MachineStates)
@@ -241,6 +235,15 @@ internal sealed class ModEntry : Mod
             tooltip: I18n.Config_Rkeybind_Tooltip,
             getValue: () => Config.RotateKeybind,
             setValue: value => Config.RotateKeybind = value
+        );
+        
+        // add config options
+        configMenu.AddBoolOption(
+            mod: ModManifest,
+            name: I18n.Config_Greybelts_Name,
+            tooltip: I18n.Config_Greybelts_Tooltip,
+            getValue: () => Config.GreyBelts,
+            setValue: value => Config.GreyBelts = value
         );
     }
 

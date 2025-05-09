@@ -12,4 +12,10 @@
       <PackageReference Include="Pathoschild.Stardew.ModTranslationClassBuilder" Version="2.2.0" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Update="assets\belts.png">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
 </Project>

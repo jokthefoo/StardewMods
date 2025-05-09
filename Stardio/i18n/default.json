@@ -14,5 +14,7 @@
   "config.speedplayer.name": "Belt player speed boost",
   "config.speedplayer.tooltip": "The speed boost a player gets when walking \"with\" the belt.",
   "config.rkeybind.name": "Rotate Keybind",
-  "config.rkeybind.tooltip": "Key to rotate belts, both before and after placement."
+  "config.rkeybind.tooltip": "Key to rotate belts, both before and after placement.",
+  "config.greybelts.name": "Grey Belts",
+  "config.greybelts.tooltip": "Changes sprite of belts to a more factory grey."
 }

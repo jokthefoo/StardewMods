@@ -547,16 +547,20 @@ public class BeltItem : Object
             switch (currentRotation.Value)
             {
                 case 1: // right
-                    sourceOffset = 8; // TODO 4 -- for sprite testing
+                    sourceOffset = 4;
                     break;
                 case 2: // down
-                    sourceOffset = 12; // TODO delete  -- for sprite testing
                     spriteEffects = SpriteEffects.FlipVertically;
                     break;
                 case 3: // left
                     sourceOffset = 4;
                     spriteEffects = SpriteEffects.FlipHorizontally;
                     break;
+            }
+
+            if (ModEntry.Config.GreyBelts)
+            {
+                sourceOffset += 8;
             }
             
             spriteBatch.Draw(itemData.GetTexture(),
@@ -655,28 +659,4 @@ public class BeltItem : Object
         var rot = (currentRotation.Value + (int)dir) % 4;
         return TileLocation + rotationDict[rot];
     }
-
-    ///// <summary>Update the object instance before it's placed in the world.</summary>
-    /// <param name="who">The player placing the item.</param>
-    /// <returns>Returns <c>true</c> if the item should be destroyed, or <c>false</c> if it should be set down.</returns>
-    /// <remarks>This is called on the object instance being placed, after it's already been split from the inventory stack if applicable. At this point the <see cref="P:StardewValley.Object.Location" /> and <see cref="P:StardewValley.Object.TileLocation" /> values should already be set.</remarks>
-    //public virtual bool performDropDownAction(Farmer who)
-
-    //public virtual bool performUseAction(GameLocation location)
-    
-    /// <summary>Perform an action when the user interacts with this object.</summary>
-    /// <param name="who">The player interacting with the object.</param>
-    /// <param name="justCheckingForActivity">Whether to check if an action would be performed, without actually doing it. Setting this to true may have inconsistent effects depending on the action.</param>
-    /// <returns>Returns true if the action was performed, or false if the player should pick up the item instead.</returns>
-    //public virtual bool checkForAction(Farmer who, bool justCheckingForActivity = false)
-
-    /// <summary>Check whether the object can be added to a location, and (sometimes) add it to the location.</summary>
-    /// <param name="location">The location in which to place it.</param>
-    /// <param name="x">The X tile position at which to place it.</param>
-    /// <param name="y">The Y tile position at which to place it.</param>
-    /// <param name="who">The player placing the object, if applicable.</param>
-    /// <returns>Returns whether the object should be (or was) added to the location.</returns>
-    /// <remarks>For legacy reasons, the behavior of this method is inconsistent. It'll sometimes add the object to the location itself, and sometimes expect the caller to do it.</remarks>
-    //public virtual bool placementAction(GameLocation location, int x, int y, Farmer who = null)
-
 }
