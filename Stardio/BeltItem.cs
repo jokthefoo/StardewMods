@@ -9,7 +9,6 @@ using StardewValley.Inventories;
 using StardewValley.ItemTypeDefinitions;
 using StardewValley.Objects;
 using StardewValley.TerrainFeatures;
-using Stardio;
 using Object = StardewValley.Object;
 
 namespace Jok.Stardio;

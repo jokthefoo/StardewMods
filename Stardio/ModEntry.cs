@@ -5,7 +5,6 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
-using Stardio;
 using Object = StardewValley.Object;
 
 namespace Jok.Stardio;

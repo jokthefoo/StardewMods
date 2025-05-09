@@ -51,5 +51,6 @@ public class BiggerMachinesAPI : IBiggerMachinesAPI
 
     public bool IsBiggerMachine(Object obj)
     {
+        return ModEntry.BigMachinesList.TryGetValue(obj.ItemId, out var bigMachineData);
     }
 }

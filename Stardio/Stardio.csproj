@@ -5,6 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
 	<EnableHarmony>true</EnableHarmony>
+	<RootNamespace>Jok.Stardio</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
@@ -17,5 +18,10 @@
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
     </ItemGroup>
+
+<PropertyGroup>
+   <TranslationClassBuilder_Namespace>Jok.Stardio</TranslationClassBuilder_Namespace>
+</PropertyGroup>
+
 
 </Project>
