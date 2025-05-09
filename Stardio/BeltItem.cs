@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Netcode;
 using StardewModdingAPI;
 using StardewValley;
+using StardewValley.Buildings;
 using StardewValley.GameData.Machines;
 using StardewValley.Inventories;
 using StardewValley.ItemTypeDefinitions;
@@ -168,31 +169,32 @@ public class BeltItem : Object
     // Push item
     private void BeltPushItem()
     {
-        if (heldObject.Value == null || !(HeldItemPosition >= 1.0f))
+        if (heldObject.Value == null || HeldItemPosition < 1.0f)
         {
             return;
         }
-        
+
+        var targetTile = getTileInDirection(Direction.Forward);
+
         IInventory tempBeltInventory = new Inventory();
         tempBeltInventory.Add(heldObject.Value);
 
         Object? outputTarget = null;
         // Try to get push target with BM first
-        if (ModEntry.BMApi != null && ModEntry.BMApi.TryGetObjectAt(Location, getTileInDirection(Direction.Forward), out var bmObject))
+        if (ModEntry.BMApi != null && ModEntry.BMApi.TryGetObjectAt(Location, targetTile, out var bmObject))
         {
             outputTarget = bmObject;
         }
 
+        if (outputTarget == null && Location.objects.TryGetValue(targetTile, out var normalObj))
+        {
+            outputTarget = normalObj;
+        }
+
         if (outputTarget == null)
         {
-            if (Location.objects.TryGetValue(getTileInDirection(Direction.Forward), out var normalObj))
-            {
-                outputTarget = normalObj;
-            }
-            else
-            {
-                return;
-            }
+            TryPushToShippingBin(targetTile);
+            return;
         }
             
         // try to add to chest
@@ -230,6 +232,20 @@ public class BeltItem : Object
                 state.outputRule = null;
                 state.outputTrigger = null;
             }
+        }
+    }
+
+    private void TryPushToShippingBin(Vector2 targetTile)
+    {
+        var building = Location.getBuildingAt(targetTile);
+        if (building is ShippingBin && heldObject.Value.canBeShipped())
+        {
+            var farm = Game1.getFarm();
+            farm.getShippingBin(Game1.MasterPlayer).Add(heldObject.Value);
+            farm.lastItemShipped = heldObject.Value;
+            farm.playSound("Ship");
+            heldObject.Value = null;
+            HeldItemPosition = 0;
         }
     }
 
@@ -387,27 +403,52 @@ public class BeltItem : Object
             return;
         }
 
+        var targetTile = getTileInDirection(Direction.Behind);
         // Try Grab item with BM first
-        if(ModEntry.BMApi != null && ModEntry.BMApi.TryGetObjectAt(Location, getTileInDirection(Direction.Behind), out var inputObj))
+        if(ModEntry.BMApi != null && ModEntry.BMApi.TryGetObjectAt(Location, targetTile, out var inputObj))
         {
             if (TryPullFromChest(inputObj!))
             {
                 return;
             }
             TryPullFromMachine(inputObj!);
+            return;
         }
         
         // Grab item
-        if (!Location.objects.TryGetValue(getTileInDirection(Direction.Behind), out inputObj))
+        if (Location.objects.TryGetValue(targetTile, out inputObj))
         {
             if (TryPullFromChest(inputObj))
             {
                 return;
             }
             TryPullFromMachine(inputObj);
+            return;
         }
+
+        TryPullFromFishPond(targetTile);
     }
 
+    private void TryPullFromFishPond(Vector2 targetTile)
+    {
+        var building = Location.getBuildingAt(targetTile);
+        if (building is FishPond pond && pond.output.Value is Object outputObj)
+        {
+            heldObject.Value = (Object)outputObj.getOne();
+            pond.output.Value.Stack -= 1;
+
+            if (pond.output.Value.Stack != 0)
+            {
+                return;
+            }
+            
+            pond.output.Value = null;
+            Game1.playSound("coin");
+            int bonusExperience = (int)(heldObject.Value.sellToStorePrice() * FishPond.HARVEST_OUTPUT_EXP_MULTIPLIER);
+            Game1.MasterPlayer.gainExperience(1, bonusExperience + FishPond.HARVEST_BASE_EXP);
+        }
+    }
+    
     private void TryPullFromMachine(Object inputObj)
     {
         if (inputObj == null || !inputObj.readyForHarvest.Value || inputObj is BeltItem)
@@ -521,7 +562,6 @@ public class BeltItem : Object
         }
         
         var items = inputChest.GetItemsForPlayer();
-
         foreach (var item in items)
         {
             if (!(item is Object obj))
