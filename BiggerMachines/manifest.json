@@ -1,7 +1,7 @@
 {
   "Name": "Bigger Machines",
   "Author": "Jok",
-  "Version": "1.0.0",
+  "Version": "1.0.1",
   "Description": "Bigger Machines",
   "UniqueID": "Jok.BiggerMachines",
   "EntryDll": "BiggerMachines.dll",

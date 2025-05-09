@@ -13,11 +13,12 @@ namespace Jok.Stardio;
 /// <summary>The mod entry point.</summary>
 internal sealed class ModEntry : Mod
 {
-    public static Mod Instance;
-    public static IMonitor MonitorInst;
-    public static IModHelper Helper;
-    public static StardioConfig Config;
-    public static IExtraMachineConfigApi? EMCApi;
+    internal static Mod Instance;
+    internal static IMonitor MonitorInst;
+    internal static IModHelper Helper;
+    internal static StardioConfig Config;
+    internal static IExtraMachineConfigApi? EMCApi;
+    internal static IBiggerMachinesAPI? BMApi;
 
     private const string MACHINE_STATE_KEY = "Jok.Stardio.MachineState";
     //ModEntry.MonitorInst.Log($"X value: {x}", LogLevel.Info);
@@ -57,9 +58,9 @@ internal sealed class ModEntry : Mod
         }
     }
 
-    // TODO crafting recipe/unlock
-    // TODO test shipping/mini shipping
+    // TODO normal shipping bin
     // TODO bigger machines -- they might need custom draw code for belts? maybe just block them specifically. -- also block furniture?
+    // TODO joja cola competitor
 
     private static readonly XmlSerializer ItemSerializer = new(typeof(ItemListSerialized), new []
         {typeof(Item)});
@@ -171,6 +172,7 @@ internal sealed class ModEntry : Mod
         var sc = Helper.ModRegistry.GetApi<ISpaceCoreApi>("spacechase0.SpaceCore");
         sc.RegisterSerializerType(typeof(BeltItem));
         EMCApi = Helper.ModRegistry.GetApi<IExtraMachineConfigApi>("selph.ExtraMachineConfig");
+        BMApi = Helper.ModRegistry.GetApi<IBiggerMachinesAPI>("Jok.BiggerMachines");
 
         SetupConfigs();
     }

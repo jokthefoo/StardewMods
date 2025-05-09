@@ -10,19 +10,20 @@ namespace BiggerMachines;
 /// <summary>The mod entry point.</summary>
 internal sealed class ModEntry : Mod
 {
-    public static Mod Instance;
-    public static IMonitor MonitorInst;
-    public static IModHelper Helper;
+    internal static Mod Instance;
+    internal static IMonitor MonitorInst;
+    internal static IModHelper Helper;
     //MonitorInst.Log($"X value: {x}", LogLevel.Info);
 
-    public static Dictionary<string, Dictionary<Vector2, BiggerMachine>> LocationBigMachines = new();
-    public static Dictionary<string, BiggerMachineData> BigMachinesList = new();
+    internal static Dictionary<string, Dictionary<Vector2, BiggerMachine>> LocationBigMachines = new();
+    internal static Dictionary<string, BiggerMachineData> BigMachinesList = new();
+    internal static IBiggerMachinesAPI BMApi = null!;
 
-    public const string ModDataAlphaKey = "Jok.BiggerMachines.Alpha"; // just used for internal tracking for transparency
-    public const string ModDataDimensionsKey = "Jok.BiggerMachines.Dimensions"; // dimensions of object
-    public const string ModDataFadeBehindKey = "Jok.BiggerMachines.EnableTransparency"; // transparency when player is behind
-    public const string ModDataShadowKey = "Jok.BiggerMachines.DrawShadow"; // draws a shadow similar to building shadow
-    public const string ModDataChestKey = "Jok.BiggerMachines.IsChest"; // is a chest
+    internal const string ModDataAlphaKey = "Jok.BiggerMachines.Alpha"; // just used for internal tracking for transparency
+    internal const string ModDataDimensionsKey = "Jok.BiggerMachines.Dimensions"; // dimensions of object
+    internal const string ModDataFadeBehindKey = "Jok.BiggerMachines.EnableTransparency"; // transparency when player is behind
+    internal const string ModDataShadowKey = "Jok.BiggerMachines.DrawShadow"; // draws a shadow similar to building shadow
+    internal const string ModDataChestKey = "Jok.BiggerMachines.IsChest"; // is a chest
 
     /*********
      ** Public methods
@@ -34,6 +35,7 @@ internal sealed class ModEntry : Mod
         Instance = this;
         MonitorInst = Monitor;
         Helper = helper;
+        BMApi = new BiggerMachinesAPI();
         Helper.Events.Content.AssetRequested += OnAssetRequested;
         Helper.Events.World.ObjectListChanged += OnObjectListChanged;
         Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
@@ -44,6 +46,10 @@ internal sealed class ModEntry : Mod
         }
 
         HarmonyPatches.Patch(ModManifest.UniqueID);
+    }
+    
+    public override object GetApi() {
+        return BMApi;
     }
 
     private void OnPlayerWarp(object? sender, WarpedEventArgs e)
@@ -204,6 +210,7 @@ internal sealed class ModEntry : Mod
     {
         if (e.NameWithoutLocale.IsEquivalentTo("Data/BigCraftables"))
         {
+            BigMachinesList.Clear();
             e.Edit(asset =>
             {
                 var data = asset.AsDictionary<string, BigCraftableData>().Data;
@@ -222,7 +229,6 @@ internal sealed class ModEntry : Mod
 
     private void ParseBigMachineCustomData(BigCraftableData bigCraftableData, string itemId)
     {
-        BigMachinesList.Clear();
         if (bigCraftableData.CustomFields.TryGetValue(ModDataDimensionsKey, out string? value))
         {
             string[] dims = value.Split(",");

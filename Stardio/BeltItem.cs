@@ -165,20 +165,32 @@ public class BeltItem : Object
         if (isProcessTick)
         {
             BeltPushItem();
-
             BeltPullItem();
         }
     }
-
+    
+    // Push item
     private void BeltPushItem()
     {
-        // Push item
-        Location.objects.TryGetValue(getTileInDirection(Direction.Forward), out var outputTarget);
+        Object? outputTarget = null;
+        // Try get push target with BM first
+        if (ModEntry.BMApi != null && ModEntry.BMApi.TryGetObjectAt(Location, getTileInDirection(Direction.Forward), out var bmObject))
+        {
+            outputTarget = bmObject;
+        }
+
         if (outputTarget == null)
         {
-            return;
+            if (Location.objects.TryGetValue(getTileInDirection(Direction.Forward), out var normalObj))
+            {
+                outputTarget = normalObj;
+            }
+            else
+            {
+                return;
+            }
         }
-        
+
         if (heldObject.Value != null && HeldItemPosition >= 1.0f)
         {
             tempBeltInventory = new Inventory();
@@ -207,13 +219,15 @@ public class BeltItem : Object
             TryPushToMultiInputMachine(outputTarget);
             return;
         }
-        
+
         var state = MachineStateManager.GetState(outputTarget.Location, outputTarget.TileLocation);
+
         // try to load machine's current inventory -- belt held item isn't used here
         if (ModMachineState.IsValid(state))
         {
             tempBeltInventory = new Inventory();
             tempBeltInventory.AddRange(state.currentInventory);
+
             if (outputTarget.AttemptAutoLoad(tempBeltInventory, Game1.player))
             {
                 // inventory should be emptied by auto-load
@@ -221,7 +235,6 @@ public class BeltItem : Object
                 state.outputTrigger = null;
             }
         }
-
     }
 
     private void TryPushToMultiInputMachine(Object outputTarget)
@@ -373,21 +386,35 @@ public class BeltItem : Object
 
     private void BeltPullItem()
     {
-        // Grab item
-        if (heldObject.Value == null && Location.objects.TryGetValue(getTileInDirection(Direction.Behind), out var inputObj))
+        if (heldObject.Value != null)
+        {
+            return;
+        }
+
+        // Try Grab item with BM first
+        if(ModEntry.BMApi != null && ModEntry.BMApi.TryGetObjectAt(Location, getTileInDirection(Direction.Behind), out var inputObj))
         {
             if (TryPullFromChest(inputObj))
             {
                 return;
             }
-
+            TryPullFromMachine(inputObj);
+        }
+        
+        // Grab item
+        if (!Location.objects.TryGetValue(getTileInDirection(Direction.Behind), out inputObj))
+        {
+            if (TryPullFromChest(inputObj))
+            {
+                return;
+            }
             TryPullFromMachine(inputObj);
         }
     }
 
     private void TryPullFromMachine(Object inputObj)
     {
-        if (!inputObj.readyForHarvest.Value || inputObj is BeltItem)
+        if (inputObj == null || !inputObj.readyForHarvest.Value || inputObj is BeltItem)
         {
             return;
         }
@@ -638,6 +665,7 @@ public class BeltItem : Object
 
         if (wasPlaced)
         {
+            //TODO curved belts?
             //grab neighbors
         }
 
