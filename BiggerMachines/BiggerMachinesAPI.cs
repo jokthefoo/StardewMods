@@ -8,7 +8,6 @@ public class BiggerMachinesAPI : IBiggerMachinesAPI
     public bool TryGetObjectAt(GameLocation location, Vector2 tile, out Object? outObject)
     {
         outObject = null;
-        
         // Check normal items first
         if (location.objects.TryGetValue(tile, out Object? obj))
         {
@@ -38,14 +37,19 @@ public class BiggerMachinesAPI : IBiggerMachinesAPI
         return false;
     }
 
-    public Rectangle? GetBiggerMachineTextureSourceRect(Object obj)
+    public bool GetBiggerMachineTextureSourceRect(Object obj, out Rectangle sourceRect)
     {
-        if (obj == null || !obj.bigCraftable.Value || !ModEntry.BigMachinesList.TryGetValue(obj.ItemId, out var bigMachineData))
-        {
-            return null;
-        }
-
         var itemData = ItemRegistry.GetDataOrErrorItem(obj.QualifiedItemId);
-        return new Rectangle(0, 0, bigMachineData.Width * 16, itemData.GetTexture().Height);
+        if (!obj.bigCraftable.Value || !ModEntry.BigMachinesList.TryGetValue(obj.ItemId, out var bigMachineData))
+        {
+            sourceRect = itemData.GetSourceRect();
+            return false;
+        }
+        sourceRect = new Rectangle(0, 0, bigMachineData.Width * 16, itemData.GetTexture().Height);
+        return true;
+    }
+
+    public bool IsBiggerMachine(Object obj)
+    {
     }
 }

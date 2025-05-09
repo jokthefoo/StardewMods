@@ -637,8 +637,28 @@ public class BeltItem : Object
             // Draw item
             ParsedItemData heldItemData = ItemRegistry.GetDataOrErrorItem(heldObject.Value.QualifiedItemId);
             Texture2D texture = heldItemData.GetTexture();
-            spriteBatch.Draw(texture, Game1.GlobalToLocal(Game1.viewport, new Vector2(x * 64 + xOffset, y * 64 + 8 + yOffset)), heldItemData.GetSourceRect(), Color.White, 0f,
-                new Vector2(8f, 8f), 4f, SpriteEffects.None, base_sort + 1E-05f);
+            Rectangle? sourceRect = heldItemData.GetSourceRect();
+            float heldScale = 4f;
+            
+            // Random extra draw support for Bigger Machines
+            if (ModEntry.BMApi != null && ModEntry.BMApi.GetBiggerMachineTextureSourceRect(heldObject.Value, out var bmSourceRect))
+            {
+                if (Math.Abs(bmSourceRect.Width / 16f - 1) < 0.01f)
+                {
+                    heldScale /= bmSourceRect.Height / 16f;
+                }
+                if (Math.Abs(bmSourceRect.Height / 16f - 2) < 0.04f)
+                {
+                    yOffset += 32;
+                }
+                sourceRect = bmSourceRect;
+                heldScale /= bmSourceRect.Width / 16f;
+                xOffset -= 16;
+                yOffset += 16;
+            }
+            
+            spriteBatch.Draw(texture, Game1.GlobalToLocal(Game1.viewport, new Vector2(x * 64 + xOffset, y * 64 + 8 + yOffset)), sourceRect, Color.White, 0f,
+                new Vector2(8f, 8f), heldScale, SpriteEffects.None, base_sort + 1E-05f);
 
             StackDrawType drawType = StackDrawType.Hide;
             /* if (heldObject.Value.Stack > 1) // Draw stack count
