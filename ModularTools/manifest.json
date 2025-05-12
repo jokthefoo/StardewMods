@@ -1,7 +1,7 @@
 {
   "Name": "Modular Tools",
   "Author": "Jok",
-  "Version": "1.0.0",
+  "Version": "1.0.1",
   "Description": "Modular Tools",
   "UniqueID": "Jok.ModularTools",
   "EntryDll": "ModularTools.dll",

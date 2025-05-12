@@ -92,5 +92,12 @@
     TextureIndex: 13,
     Price: 5000,
     AllowedTools: ["hoe", "pickaxe", "axe"]
+  },
+  "Jok.ModularTools.Earth": {
+    DisplayName: "modularupgrade.earth.name",
+    Description: "modularupgrade.earth.description",
+    TextureIndex: 14,
+    Price: 250,
+    AllowedTools: ["hoe"]
   }
 }

@@ -44,8 +44,11 @@
   "modularupgrade.fire.description": "Install into an Axe or Pickaxe to increase the heat of the tool (get coal from trees instead of wood, or extra coal when mining).",
 
   "modularupgrade.air.name": "Air Upgrade",
-  "modularupgrade.air.description": "Install into a Tool to gain a small speed boost after using the tool.",
-  
+  "modularupgrade.air.description": "Install into a Tool to gain a small speed boost after use.",
+
   "modularupgrade.air2.name": "Wind Upgrade",
-  "modularupgrade.air2.description": "Install into a Tool to gain a speed boost after using the tool."
+  "modularupgrade.air2.description": "Install into a Tool to gain a speed boost after use.",
+  
+  "modularupgrade.earth.name": "Earth Upgrade",
+  "modularupgrade.earth.description": "Install into a Hoe to automatically apply fertilizer from your inventory after use."
 }

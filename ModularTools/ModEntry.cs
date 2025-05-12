@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.ComponentModel;
+using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
 using GenericModConfigMenu;
@@ -29,6 +30,7 @@ namespace ModularTools
         public static IModHelper Helper;
         public static Texture2D UpgradeTextures;
         private static string shouldWaterDirtKey = "Jok.ModularTools.WaterDirt";
+        private static bool PrismaticTools = false;
         
         public override void Entry(IModHelper helper)
         {
@@ -40,7 +42,6 @@ namespace ModularTools
             Helper.Events.GameLoop.GameLaunched += OnGameLaunched;
             Helper.Events.Content.AssetRequested += OnAssetRequested;
             Helper.Events.GameLoop.DayStarted += OnDayStarted;
-            //Helper.Events.Input.ButtonPressed += OnButtonPressed;
             Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
             Helper.ConsoleCommands.Add("modulartools_attachment_slots_reset", "Resets all tools to their default attachment slot count for the mod (1 per upgrade).\n\nUsage: modulartools_attachment_slots_reset", UpdateAttachmentSlotsForTools);
             
@@ -52,18 +53,6 @@ namespace ModularTools
             Config = helper.ReadConfig<ModConfig>();
             HarmonyPatches();
         }
-
-        /*
-        private void OnButtonPressed(object? sender, ButtonPressedEventArgs e)
-        {
-            if (e.Button == SButton.C)
-            {
-                if (Game1.player.CurrentTool is not null)
-                {
-                    Game1.player.CurrentTool.AttachmentSlotsCount += 1;
-                }
-            }
-        }*/
 
         private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
         {
@@ -85,7 +74,14 @@ namespace ModularTools
             {
                 if (item is Tool tool && IsAllowedTool(tool))
                 {
-                    tool.AttachmentSlotsCount = tool.UpgradeLevel;
+                    if (PrismaticTools && tool.UpgradeLevel > 10)
+                    {
+                        tool.AttachmentSlotsCount = 5;
+                    }
+                    else
+                    {
+                        tool.AttachmentSlotsCount = tool.UpgradeLevel;
+                    }
                 }
                 return true;
             });
@@ -118,6 +114,9 @@ namespace ModularTools
         {
             var sc = Helper.ModRegistry.GetApi<ISpaceCoreApi>("spacechase0.SpaceCore");
             sc.RegisterSerializerType(typeof(ModularUpgradeItem));
+            
+            PrismaticTools = Helper.ModRegistry.IsLoaded("iargue.PrismaticToolsContinued");
+            
             SetupModConfigs();
         }
          private void SetupModConfigs()
@@ -211,6 +210,7 @@ namespace ModularTools
                     dict.Add(MUQIds.Luck, $"335 2 CaveJelly 1/what/{MUQIds.Luck}/false/s Fishing 4/");
                     dict.Add(MUQIds.Air, $"337 2 253 5/what/{MUQIds.Air}/false/s Combat 5/");
                     dict.Add(MUQIds.Fire, $"336 2 382 15 82 1/what/{MUQIds.Fire}/false/s Foraging 3/");
+                    dict.Add(MUQIds.Earth, $"335 2 368 15/what/{MUQIds.Earth}/false/s Farming 4/");
                     
                     dict.Add(MUQIds.WidthHeight, $"337 5 {MUQIds.Width} 1 {MUQIds.Length} 1/what/{MUQIds.WidthHeight}/false/s Farming 9/");
                     dict.Add(MUQIds.Power2, $"337 5 {MUQIds.Power} 2/what/{MUQIds.Power2}/false/s Foraging 9/");
@@ -224,7 +224,7 @@ namespace ModularTools
         private void HarmonyPatches()
         {
             var harmony = new Harmony(ModManifest.UniqueID);
-
+            
             // Attaching
             Type[] types = { typeof(int), typeof(SpriteBatch), typeof(int), typeof(int) };
             var originalToolsMethod = typeof(Tool).GetMethod("DrawAttachmentSlot",
@@ -267,16 +267,34 @@ namespace ModularTools
                 prefix: new HarmonyMethod(typeof(ModEntry), nameof(ToolDraw_prefix))
             );
             
-            // Luck, Power, and Speed Upgrades
+            // Luck, and Speed Upgrades
             harmony.Patch(
-                original: AccessTools.Method(typeof(Tool), nameof(Tool.DoFunction),
-                    new Type[] { typeof(GameLocation), typeof(int), typeof(int), typeof(int), typeof(Farmer) }),
-                prefix: new HarmonyMethod(typeof(ModEntry), nameof(ToolDoFunction_prefix)));
+                original: AccessTools.Method(typeof(Tool), nameof(Tool.DoFunction), new Type[] { typeof(GameLocation), typeof(int), typeof(int), typeof(int), typeof(Farmer) }),
+                prefix: new HarmonyMethod(AccessTools.Method(typeof(ModEntry), nameof(ToolDoFunction_prefix))));
 
             harmony.Patch(
                 original: AccessTools.Method(typeof(Tool), nameof(Tool.DoFunction),
                     new Type[] { typeof(GameLocation), typeof(int), typeof(int), typeof(int), typeof(Farmer) }),
-                postfix: new HarmonyMethod(typeof(ModEntry), nameof(ToolDoFunction_postfix)));
+                postfix: new HarmonyMethod(AccessTools.Method(typeof(ModEntry), nameof(ToolDoFunction_postfix))));
+            
+            // Power upgrades
+            harmony.Patch(
+                original: AccessTools.Method(typeof(Pickaxe), nameof(Pickaxe.DoFunction),
+                    new Type[] { typeof(GameLocation), typeof(int), typeof(int), typeof(int), typeof(Farmer) }),
+                prefix: new HarmonyMethod(typeof(ModEntry), nameof(PickaxeDoFunction_prefix)));
+            harmony.Patch(
+                original: AccessTools.Method(typeof(Pickaxe), nameof(Pickaxe.DoFunction),
+                    new Type[] { typeof(GameLocation), typeof(int), typeof(int), typeof(int), typeof(Farmer) }),
+                postfix: new HarmonyMethod(typeof(ModEntry), nameof(PickaxeDoFunction_postfix)));
+            
+            harmony.Patch(
+                original: AccessTools.Method(typeof(Axe), nameof(Axe.DoFunction),
+                    new Type[] { typeof(GameLocation), typeof(int), typeof(int), typeof(int), typeof(Farmer) }),
+                prefix: new HarmonyMethod(typeof(ModEntry), nameof(AxeDoFunction_prefix)));
+            harmony.Patch(
+                original: AccessTools.Method(typeof(Axe), nameof(Axe.DoFunction),
+                    new Type[] { typeof(GameLocation), typeof(int), typeof(int), typeof(int), typeof(Farmer) }),
+                postfix: new HarmonyMethod(typeof(ModEntry), nameof(AxeDoFunction_postfix)));
             
             // Range upgrade
             Type[] tileAffectedTypes = { typeof(Vector2), typeof(int), typeof(Farmer) };
@@ -284,7 +302,7 @@ namespace ModularTools
                 BindingFlags.Instance | BindingFlags.NonPublic, null, tileAffectedTypes, null);
             harmony.Patch(
                 original: originalTilesAffected,
-                postfix: new HarmonyMethod(typeof(ModEntry), nameof(Post_tilesAffected)));
+                postfix: new HarmonyMethod(AccessTools.Method(typeof(ModEntry), nameof(Post_tilesAffected)), priority: Priority.Last));
 
             // Water upgrade
             harmony.Patch(
@@ -469,29 +487,43 @@ namespace ModularTools
             }
         }
         
-        public static void ToolDoFunction_prefix(Tool __instance, out int __state, GameLocation location, int x, int y, int power, Farmer who)
+        public static void PickaxeDoFunction_prefix(Pickaxe __instance, out int __state, GameLocation location, int x, int y, int power, Farmer who)
         {
             __state = __instance.UpgradeLevel;
+            __instance.UpgradeLevel = GetToolStrength(__instance);
+        }
+        
+        public static void PickaxeDoFunction_postfix(Pickaxe __instance, int __state, GameLocation location, int x, int y, int power, Farmer who)
+        {
+            __instance.UpgradeLevel = __state;
+        }
+
+        public static void AxeDoFunction_prefix(Axe __instance, out int __state, GameLocation location, int x, int y, int power, Farmer who)
+        {
+            __state = __instance.UpgradeLevel;
+            __instance.UpgradeLevel = GetToolStrength(__instance);
+        }
+        public static void AxeDoFunction_postfix(Axe __instance, int __state, GameLocation location, int x, int y, int power, Farmer who)
+        {
+            __instance.UpgradeLevel = __state;
+        }
+        
+        public static void ToolDoFunction_prefix(Tool __instance, GameLocation location, int x, int y, int power, Farmer who)
+        {
             if (!IsAllowedTool(__instance))
             {
                 return;
-            }
-
-            if (GetHasAttachmentQualifiedItemID(__instance, MUQIds.Power) || GetHasAttachmentQualifiedItemID(__instance, MUQIds.Power2))
-            {
-                __instance.UpgradeLevel = GetToolStrength(__instance);
             }
             who.luckLevel.Value += Utility.getStringCountInList(GetAttachmentQualifiedItemIDs(__instance), MUQIds.Luck);
             who.luckLevel.Value += Utility.getStringCountInList(GetAttachmentQualifiedItemIDs(__instance), MUQIds.Luck2) * 2;
         }
         
-        public static void ToolDoFunction_postfix(Tool __instance, int __state, GameLocation location, int x, int y, int power, Farmer who)
+        public static void ToolDoFunction_postfix(Tool __instance, GameLocation location, int x, int y, int power, Farmer who)
         {
             if (!IsAllowedTool(__instance))
             {
                 return;
             }
-            __instance.UpgradeLevel = __state;
             who.luckLevel.Value -= Utility.getStringCountInList(GetAttachmentQualifiedItemIDs(__instance), MUQIds.Luck);
             who.luckLevel.Value -= Utility.getStringCountInList(GetAttachmentQualifiedItemIDs(__instance), MUQIds.Luck2) * 2;
             ApplyAirBuff(__instance, who);
@@ -748,7 +780,7 @@ namespace ModularTools
                 }
             }
         }
-        
+
         public static void ToolActionWhenPurchased_postfix(Tool __instance, Tool __state, string shopId)
         {
             if (!IsAllowedTool(__state))
@@ -757,13 +789,13 @@ namespace ModularTools
             }
 
             Tool tool = Game1.player.toolBeingUpgraded.Value;
-            
+
             if (tool is WateringCan wateringCan)
             {
                 wateringCan.waterCanMax = 40;
                 wateringCan.WaterLeft = 40;
             }
-            tool.AttachmentSlotsCount = tool.UpgradeLevel;
+            tool.AttachmentSlotsCount = __state.AttachmentSlotsCount + 1;
 
             foreach (Object o in __state.attachments)
             {
@@ -923,7 +955,7 @@ namespace ModularTools
             return matcher.InstructionEnumeration();
         }
         
-        public static void HoeWatering(Farmer who, Vector2 tileLocation)
+        public static void HoeWateringAndFertilizer(Farmer who, Vector2 tileLocation)
         {
             if (!IsAllowedTool(who.CurrentTool))
             {
@@ -934,14 +966,56 @@ namespace ModularTools
             {
                 if (GetHasAttachmentQualifiedItemID(who.CurrentTool, MUQIds.Water))
                 {
-                    //dirt.modData[shouldWaterDirtKey] = "Water";
                     dirt.state.Value = 1;
                     if (!who.CurrentTool.isEfficient.Value)
                     {
                         who.Stamina -= 2 * who.toolPower.Value - who.FarmingLevel * 0.1f;
                     }
                 }
+                
+                if (GetHasAttachmentQualifiedItemID(who.CurrentTool, MUQIds.Earth))
+                {
+                    if (TryToApplyFertilizer(who, dirt) && !who.CurrentTool.isEfficient.Value)
+                    {
+                        who.Stamina -= who.toolPower.Value - who.FarmingLevel * 0.1f;
+                    }
+                }
             }
+        }
+
+        private static bool TryToApplyFertilizer(Farmer who, HoeDirt dirt)
+        {
+            Item? fertilizer = null;
+            foreach (var item in who.Items)
+            {
+                if (item is null)
+                {
+                    continue;
+                }
+                
+                if (item.Category == Object.fertilizerCategory)
+                {
+                    fertilizer = item;
+                    break;
+                }
+            }
+
+            if (fertilizer == null || !dirt.CanApplyFertilizer(fertilizer.QualifiedItemId))
+            {
+                return false;
+            }
+            
+            if (dirt.plant(fertilizer.ItemId, who, isFertilizer: true))
+            {
+                fertilizer.Stack -= 1;
+
+                if (fertilizer.Stack <= 0)
+                {
+                    who.removeItemFromInventory(fertilizer);
+                }
+                return true;
+            }
+            return false;
         }
         
         public static IEnumerable<CodeInstruction> Hoe_DoFunctionTranspiler(IEnumerable<CodeInstruction> instructions,
@@ -950,7 +1024,7 @@ namespace ModularTools
             CodeMatcher matcher = new(instructions, generator);
             MethodInfo tilePassable = AccessTools.Method(typeof(GameLocation), nameof(GameLocation.isTilePassable),  new[] { typeof(xTile.Dimensions.Location), typeof(xTile.Dimensions.Rectangle) });
             MethodInfo makeHoeDirt = AccessTools.Method(typeof(GameLocation), nameof(GameLocation.makeHoeDirt));
-            MethodInfo hoeWatering = AccessTools.Method(typeof(ModEntry), nameof(HoeWatering));
+            MethodInfo hoeWatering = AccessTools.Method(typeof(ModEntry), nameof(HoeWateringAndFertilizer));
 
             return matcher.MatchStartForward(
                     new CodeMatch(OpCodes.Callvirt, tilePassable),

@@ -18,4 +18,5 @@ public static class MUQIds
     public const string Air2 = "(Jok.MU)Jok.ModularTools.Air2";
     public const string Speed2 = "(Jok.MU)Jok.ModularTools.Speed2";
     public const string Luck2 = "(Jok.MU)Jok.ModularTools.Luck2";
+    public const string Earth = "(Jok.MU)Jok.ModularTools.Earth";
 }
