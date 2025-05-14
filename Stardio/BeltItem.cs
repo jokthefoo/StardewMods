@@ -46,6 +46,8 @@ public class BeltItem : Object
     public override string DisplayName => GetDisplayName();
     public string Description { get; set; }
     public override string TypeDefinitionId => "(Jok.Belt)";
+
+    private int beltSpriteRotationOffset = 0;
     
     public readonly NetString objName = new();
     public BeltItem()
@@ -82,10 +84,16 @@ public class BeltItem : Object
         return true;
     }
 
-    public void rotate()
+    public void rotate(bool ghostRotate = false)
     {
         currentRotation.Value += 1;
         currentRotation.Value %= 4;
+
+        if (!ghostRotate)
+        {
+            CheckForCurve();
+            UpdateNeighborCurves();
+        }
     }
 
     private string GetDisplayName()
@@ -384,11 +392,6 @@ public class BeltItem : Object
         {
             belt.heldObject.Value = heldObject.Value;
 
-            if (belt.currentRotation.Value != currentRotation.Value)
-            {
-                belt.HeldItemPosition = .3f;
-            }
-
             heldObject.Value = null;
             HeldItemPosition = 0;
             return true;
@@ -398,7 +401,7 @@ public class BeltItem : Object
 
     private void BeltPullItem()
     {
-        if (heldObject.Value != null)
+        if (heldObject.Value != null || beltSpriteRotationOffset != 0)
         {
             return;
         }
@@ -607,29 +610,71 @@ public class BeltItem : Object
 
             var spriteEffects = SpriteEffects.None;
             int sourceOffset = 0;
+            int curveSpriteOffset = 0;
             switch (currentRotation.Value)
             {
                 case 1: // right
                     sourceOffset = 4;
+                    curveSpriteOffset = 4;
+                    if (beltSpriteRotationOffset == -1) // left turn
+                    {
+                        curveSpriteOffset += 8;
+                        spriteEffects = SpriteEffects.FlipHorizontally;
+                    }
                     break;
                 case 2: // down
                     spriteEffects = SpriteEffects.FlipVertically;
+                    if (beltSpriteRotationOffset == -1) // left turn
+                    {
+                        curveSpriteOffset = 20;
+                        spriteEffects = SpriteEffects.FlipVertically;
+                    }
+                    if (beltSpriteRotationOffset == 1) // right turn
+                    {
+                        curveSpriteOffset = 12;
+                        spriteEffects = SpriteEffects.None;
+                    }
                     break;
                 case 3: // left
                     sourceOffset = 4;
                     spriteEffects = SpriteEffects.FlipHorizontally;
+                    curveSpriteOffset = 4;
+                    if (beltSpriteRotationOffset == 1) // right turn
+                    {
+                        curveSpriteOffset += 8;
+                        spriteEffects = SpriteEffects.None;
+                    }
                     break;
+                case 0: // up
+                    sourceOffset = 0;
+                    if (beltSpriteRotationOffset == -1) // left turn
+                    {
+                        curveSpriteOffset = 12;
+                        spriteEffects = SpriteEffects.FlipVertically;
+                    }
+                    if (beltSpriteRotationOffset == 1) // right turn
+                    {
+                        curveSpriteOffset = 20;
+                        spriteEffects = SpriteEffects.None;
+                    }
+                    break;
+            }
+
+            if (beltSpriteRotationOffset == 0)
+            {
+                //no curve
+                curveSpriteOffset = 0;
             }
 
             if (ModEntry.Config.GreyBelts)
             {
-                sourceOffset += 8;
+                sourceOffset += 16;
             }
             
             spriteBatch.Draw(itemData.GetTexture(),
                 Game1.GlobalToLocal(Game1.viewport, new Vector2(x * 64 + 32, y * 64 + 32) + shake),
-                itemData.GetSourceRect(sourceOffset, BeltAnim), Color.White * alpha, 0f, new Vector2(8f, 8f), scale.Y > 1f ? getScale().Y : 4f, spriteEffects,
-                (isPassable() ? bounds.Top : bounds.Center.Y) / 10000f);
+                itemData.GetSourceRect(sourceOffset + curveSpriteOffset, BeltAnim), Color.White * alpha, 0f, new Vector2(8f, 8f), scale.Y > 1f ? getScale().Y : 4f, spriteEffects,
+                (isPassable() ? bounds.Top - 50 : bounds.Center.Y) / 10000f);
             
             
             if (heldObject.Value == null)
@@ -645,22 +690,75 @@ public class BeltItem : Object
             {
                 yOffset -= 48;
             }
-            
+
             switch (currentRotation.Value)
             {
                 case 0: // up
-                    yOffset -= 64 * HeldItemPosition - 32 - 8;
-                    xOffset += 32;
+                    if (HeldItemPosition < .5f && beltSpriteRotationOffset == 1) // right turn -- we need yoffset to pretend we are going up until > .5 then go right
+                    {
+                        xOffset -= 64 * HeldItemPosition - 64;
+                    } 
+                    else if (HeldItemPosition < .5f && beltSpriteRotationOffset == -1) // left turn -- we need yoffset to pretend we are going down until > .5 then go right
+                    {
+                        xOffset += 64 * HeldItemPosition;
+                    }
+                    else if (beltSpriteRotationOffset != 0)
+                    {
+                        yOffset -= 48 * HeldItemPosition - 24;
+                        xOffset += 32;
+                    }
+                    else
+                    {
+                        yOffset -= 64 * HeldItemPosition - 40;
+                        xOffset += 32;
+                    }
                     break;
                 case 1: // right
-                    xOffset += 64 * HeldItemPosition;
+                    if (HeldItemPosition < .5f && beltSpriteRotationOffset == 1) // right turn -- we need yoffset to pretend we are going up until > .5 then go right
+                    {
+                        yOffset -= 80 * HeldItemPosition - 40;
+                        xOffset += 32;
+                    } 
+                    else if (HeldItemPosition < .5f && beltSpriteRotationOffset == -1) // left turn -- we need yoffset to pretend we are going down until > .5 then go right
+                    {
+                        yOffset += 64 * HeldItemPosition - 32;
+                        xOffset += 32;
+                    }
+                    else
+                    {
+                        xOffset += 64 * HeldItemPosition;
+                    }
                     break;
                 case 2: // down
-                    yOffset += 64 * HeldItemPosition - 32;
-                    xOffset += 32;
+                    if (HeldItemPosition < .5f && beltSpriteRotationOffset == 1) // right turn -- we need xoffset to pretend we are going to the right until > .5 then go down
+                    {
+                        xOffset += 64 * HeldItemPosition;
+                    } 
+                    else if (HeldItemPosition < .5f && beltSpriteRotationOffset == -1) // left turn -- we need xoffset to pretend we are going to the left until > .5 then go down
+                    {
+                        xOffset -= 64 * HeldItemPosition - 64;
+                    }
+                    else
+                    {
+                        yOffset += 64 * HeldItemPosition - 32;
+                        xOffset += 32;
+                    }
                     break;
                 case 3: // left
-                    xOffset -= 64 * HeldItemPosition - 64;
+                    if (HeldItemPosition < .5f && beltSpriteRotationOffset == 1) // right turn -- we need yoffset to pretend we are going down until > .5 then go left
+                    {
+                        yOffset += 64 * HeldItemPosition - 32;
+                        xOffset += 32;
+                    } 
+                    else if (HeldItemPosition < .5f && beltSpriteRotationOffset == -1) // left turn -- we need yoffset to pretend we are going up until > .5 then go left
+                    {
+                        yOffset -= 80 * HeldItemPosition - 40;
+                        xOffset += 32;
+                    }
+                    else
+                    {
+                        xOffset -= 64 * HeldItemPosition - 64;
+                    }
                     break;
             }
             
@@ -718,14 +816,70 @@ public class BeltItem : Object
     public override bool placementAction(GameLocation location, int x, int y, Farmer who = null)
     {
         bool wasPlaced = base.placementAction(location, x, y, who);
-
         if (wasPlaced)
         {
-            //TODO curved belts?
-            //grab neighbors
+            if (location.objects.TryGetValue(getTileInDirection(Direction.Forward), out Object obj) && obj is BeltItem otherBelt)
+            {
+                otherBelt.CheckForCurve();
+            }
         }
-
         return wasPlaced;
+    }
+
+    private void UpdateNeighborCurves()
+    {
+        UpdateNeighborCurves(TileLocation);
+    }
+    
+    public void UpdateNeighborCurves(Vector2 tileLoc)
+    {
+        if (Location.objects.TryGetValue(getTileInDirection(Direction.Forward, tileLoc), out Object obj1) && obj1 is BeltItem forwardBelt)
+        {
+            forwardBelt.CheckForCurve();
+        }
+        if (Location.objects.TryGetValue(getTileInDirection(Direction.Right, tileLoc), out Object obj2) && obj2 is BeltItem rightBelt)
+        {
+            rightBelt.CheckForCurve();
+        }
+        if (Location.objects.TryGetValue(getTileInDirection(Direction.Left, tileLoc), out Object obj3) && obj3 is BeltItem leftBelt)
+        {
+            leftBelt.CheckForCurve();
+        }
+        if (Location.objects.TryGetValue(getTileInDirection(Direction.Behind, tileLoc), out Object obj4) && obj4 is BeltItem backBelt)
+        {
+            backBelt.CheckForCurve();
+        }
+    }
+
+    public void CheckForCurve()
+    {
+        // If belt behind then default
+        if (Location.objects.TryGetValue(getTileInDirection(Direction.Behind), out Object backObj) && backObj is BeltItem backBelt && IsOtherBeltFacingMe(backBelt))
+        {
+            beltSpriteRotationOffset = 0;
+            return;
+        }
+        
+        bool foundLeft = Location.objects.TryGetValue(getTileInDirection(Direction.Left), out Object leftObj) && leftObj is BeltItem leftBelt && IsOtherBeltFacingMe(leftBelt);
+        bool foundRight = Location.objects.TryGetValue(getTileInDirection(Direction.Right), out Object rightObj) &&  rightObj is BeltItem rightBelt && IsOtherBeltFacingMe(rightBelt);
+
+        // if belts on both sides then default
+        if (foundLeft && foundRight)
+        {
+            beltSpriteRotationOffset = 0;
+        } 
+        else if (foundRight)
+        {
+            beltSpriteRotationOffset = 1;
+        } 
+        else if (foundLeft)
+        {
+            beltSpriteRotationOffset = -1;
+        }
+        else
+        {
+            beltSpriteRotationOffset = 0;
+        }
     }
 
     public override bool performToolAction(Tool t)
@@ -738,9 +892,19 @@ public class BeltItem : Object
         return returnVal;
     }
 
-    private Vector2 getTileInDirection(Direction dir)
+    public Vector2 getTileInDirection(Direction dir, Vector2 tileLoc)
     {
         var rot = (currentRotation.Value + (int)dir) % 4;
-        return TileLocation + rotationDict[rot];
+        return tileLoc + rotationDict[rot];
+    }
+    
+    private Vector2 getTileInDirection(Direction dir)
+    {
+        return getTileInDirection(dir, TileLocation);
+    }
+    
+    private bool IsOtherBeltFacingMe(BeltItem otherBelt)
+    {
+        return TileLocation == otherBelt.getTileInDirection(Direction.Forward);
     }
 }

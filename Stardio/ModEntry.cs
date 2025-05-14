@@ -48,12 +48,28 @@ internal sealed class ModEntry : Mod
 
         HarmonyPatches.Patch(ModManifest.UniqueID);
     }
+    
+    // TODO splitter
+    // TODO junction, insta tele to other side if space available else wait
 
     private void OnObjectListChanged(object? sender, ObjectListChangedEventArgs e)
     {
         foreach (var (tileLoc, obj) in e.Removed)
         {
             MachineStateManager.RemoveState(e.Location, tileLoc);
+
+            if (obj is BeltItem belt)
+            {
+                belt.UpdateNeighborCurves(tileLoc);
+            }
+        }
+        
+        foreach (var (tileLoc, obj) in e.Added)
+        {
+            if (obj is BeltItem belt)
+            {
+                belt.CheckForCurve();
+            }
         }
     }
 
@@ -123,7 +139,7 @@ internal sealed class ModEntry : Mod
         {
             if (Game1.player.ActiveItem is BeltItem belt)
             {
-                belt.rotate();
+                belt.rotate(true);
             }
             else if (Game1.player.currentLocation.objects.TryGetValue(e.Cursor.Tile, out Object obj) && obj is BeltItem belt2)
             {
