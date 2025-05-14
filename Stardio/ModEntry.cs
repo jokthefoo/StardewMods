@@ -57,7 +57,6 @@ internal sealed class ModEntry : Mod
         }
     }
 
-    // TODO normal shipping bin
     // TODO joja cola competitor
 
     private static readonly XmlSerializer ItemSerializer = new(typeof(ItemListSerialized), new []
@@ -151,16 +150,14 @@ internal sealed class ModEntry : Mod
             isProcessTick = true;
         }
 
-        if (Game1.currentLocation == null)
+        foreach (GameLocation location in Game1.locations)
         {
-            return;
-        }
-
-        foreach (Object obj in Game1.player.currentLocation.objects.Values)
-        {
-            if (obj is BeltItem belt)
+            foreach (Object obj in location.objects.Values)
             {
-                belt.beltUpdate(isProcessTick);
+                if (obj is BeltItem belt)
+                {
+                    belt.beltUpdate(isProcessTick);
+                }
             }
         }
     }

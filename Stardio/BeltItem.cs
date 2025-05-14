@@ -152,7 +152,7 @@ public class BeltItem : Object
             return;
         }
         
-        if (heldObject.Value != null)
+        if (heldObject.Value != null && HeldItemPosition < 1.0f)
         {
             HeldItemPosition += 1.0f / Math.Clamp(ModEntry.Config.BeltUpdateMS, 10, ModEntry.Config.BeltUpdateMS);
             readyForHarvest.Value = true;
