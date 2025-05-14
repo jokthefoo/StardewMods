@@ -44,7 +44,8 @@ namespace ModularTools
             Helper.Events.GameLoop.DayStarted += OnDayStarted;
             Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
             Helper.ConsoleCommands.Add("modulartools_attachment_slots_reset", "Resets all tools to their default attachment slot count for the mod (1 per upgrade).\n\nUsage: modulartools_attachment_slots_reset", UpdateAttachmentSlotsForTools);
-            
+            Helper.ConsoleCommands.Add("modulartools_remove_all_attachments", "WARNING Removes all attachment slots (and attached upgrades) from all tools. Should only be used when removing mod mid-playthrough.\n\nUsage: modulartools_remove_all_attachments", RemoveAllAttachmentsFromTools);
+
             var def = new ModularUpgradeDefinition();
             ItemRegistry.ItemTypes.Add(def);
             Helper.Reflection.GetField<Dictionary<string, IItemDataDefinition>>(typeof(ItemRegistry), "IdentifierLookup").GetValue()[def.Identifier] = def;
@@ -67,7 +68,19 @@ namespace ModularTools
                 Game1.player.mailReceived.Add("Jok.ModularTools.Started");
             }
         }
-
+        
+        private void RemoveAllAttachmentsFromTools(string command, string[] args)
+        {
+            Utility.ForEachItem(item =>
+            {
+                if (item is Tool tool && IsAllowedTool(tool))
+                {
+                    tool.AttachmentSlotsCount = 0;
+                }
+                return true;
+            });
+        }
+        
         private void UpdateAttachmentSlotsForTools(string command, string[] args)
         {
             Utility.ForEachItem(item =>
@@ -354,20 +367,28 @@ namespace ModularTools
             PropertyInfo tradeItemAmount = AccessTools.Property(typeof(ToolUpgradeData), nameof(ToolUpgradeData.TradeItemAmount));
             MethodInfo clintUpgradeAmount = AccessTools.Method(typeof(ModEntry), nameof(ClintUpgradeBarAmount));
 
-            return matcher.MatchStartForward(
-                    new CodeMatch(OpCodes.Ldc_I4_5),
-                    new CodeMatch(OpCodes.Stfld, tradeItemAmount),
-                    new CodeMatch(OpCodes.Stelem_Ref),
-                    new CodeMatch(OpCodes.Stloc_1),
-                    new CodeMatch(OpCodes.Ldloc_0),
-                    new CodeMatch(OpCodes.Brfalse_S)
-                )
-                .ThrowIfNotMatch($"Could not find tool entry point for {nameof(Tree_tickUpdateTranspiler)}")
-                .RemoveInstruction() // remove 5
-                .InsertAndAdvance(
-                    new CodeInstruction(OpCodes.Call, clintUpgradeAmount) // load bar amount
+            try
+            {
+                return matcher.MatchStartForward(
+                        new CodeMatch(OpCodes.Ldc_I4_5),
+                        new CodeMatch(OpCodes.Stfld, tradeItemAmount),
+                        new CodeMatch(OpCodes.Stelem_Ref),
+                        new CodeMatch(OpCodes.Stloc_1),
+                        new CodeMatch(OpCodes.Ldloc_0),
+                        new CodeMatch(OpCodes.Brfalse_S)
+                    )
+                    .ThrowIfNotMatch($"Could not find tool entry point for {nameof(Tree_tickUpdateTranspiler)}")
+                    .RemoveInstruction() // remove 5
+                    .InsertAndAdvance(
+                        new CodeInstruction(OpCodes.Call, clintUpgradeAmount) // load bar amount
                     ) 
-                .InstructionEnumeration();
+                    .InstructionEnumeration();
+            }
+            catch (Exception ex)
+            {
+                MonitorInst.Log($"Failed in {nameof(GetToolUpgradeDataTranspiler)}:\n{ex}", LogLevel.Error);
+                return matcher.InstructionEnumeration(); // run original logic
+            }
         }
         
         public static int ClintUpgradeBarAmount()
@@ -385,30 +406,38 @@ namespace ModularTools
             CodeMatcher matcher = new(instructions, generator);
             MethodInfo typeToDrop = AccessTools.Method(typeof(ModEntry), nameof(AxeFireUpgradeDropType));
             MethodInfo amountToDrop = AccessTools.Method(typeof(ModEntry), nameof(AxeFireUpgradeDropAmount));
-
-            return matcher.MatchStartForward(
-                    new CodeMatch(OpCodes.Add),
-                    new CodeMatch(OpCodes.Ldloc_1),
-                    new CodeMatch(OpCodes.Ldfld),
-                    new CodeMatch(OpCodes.Conv_I4),
-                    new CodeMatch(OpCodes.Ldloc_S), // num to drop
-                    new CodeMatch(OpCodes.Ldc_I4_1), // true for resource
-                    new CodeMatch(OpCodes.Ldc_I4_M1),
-                    new CodeMatch(OpCodes.Ldc_I4_0),
-                    new CodeMatch(OpCodes.Ldloca_S)
-                )
-                .ThrowIfNotMatch($"Could not find tool entry point for {nameof(Tree_tickUpdateTranspiler)}")
-                .Advance(-11) // right before we load "12" for wood
-                .RemoveInstruction() // remove 12
-                .InsertAndAdvance(
-                    new CodeInstruction(OpCodes.Ldloc_S, 9), // load farmer for our call
-                    new CodeInstruction(OpCodes.Call, typeToDrop) // load type of dropped resource
-                ).Advance(15)
-                .InsertAndAdvance(
-                    new CodeInstruction(OpCodes.Ldloc_S, 9), // load farmer for our call, also stealing original amount
-                    new CodeInstruction(OpCodes.Call, amountToDrop) // load amount of dropped resource
-                )
-                .InstructionEnumeration();
+            
+            try
+            {
+                return matcher.MatchStartForward(
+                        new CodeMatch(OpCodes.Add),
+                        new CodeMatch(OpCodes.Ldloc_1),
+                        new CodeMatch(OpCodes.Ldfld),
+                        new CodeMatch(OpCodes.Conv_I4),
+                        new CodeMatch(OpCodes.Ldloc_S), // num to drop
+                        new CodeMatch(OpCodes.Ldc_I4_1), // true for resource
+                        new CodeMatch(OpCodes.Ldc_I4_M1),
+                        new CodeMatch(OpCodes.Ldc_I4_0),
+                        new CodeMatch(OpCodes.Ldloca_S)
+                    )
+                    .ThrowIfNotMatch($"Could not find tool entry point for {nameof(Tree_tickUpdateTranspiler)}")
+                    .Advance(-11) // right before we load "12" for wood
+                    .RemoveInstruction() // remove 12
+                    .InsertAndAdvance(
+                        new CodeInstruction(OpCodes.Ldloc_S, 9), // load farmer for our call
+                        new CodeInstruction(OpCodes.Call, typeToDrop) // load type of dropped resource
+                    ).Advance(15)
+                    .InsertAndAdvance(
+                        new CodeInstruction(OpCodes.Ldloc_S, 9), // load farmer for our call, also stealing original amount
+                        new CodeInstruction(OpCodes.Call, amountToDrop) // load amount of dropped resource
+                    )
+                    .InstructionEnumeration();
+            }
+            catch (Exception ex)
+            {
+                MonitorInst.Log($"Failed in {nameof(Tree_tickUpdateTranspiler)}:\n{ex}", LogLevel.Error);
+                return matcher.InstructionEnumeration(); // run original logic
+            }
         }
         
         public static int AxeFireUpgradeDropAmount(int amount, Farmer farmer)
@@ -911,27 +940,34 @@ namespace ModularTools
             CodeMatcher matcher = new(instructions, generator);
             MethodInfo attachmentSlots = AccessTools.PropertyGetter(typeof(Item), nameof(Item.attachmentSlots));
             MethodInfo adjustHeight = AccessTools.Method(typeof(ModEntry), nameof(AdjustHoverMenuHeight));
-
-            // Transpile height for tools
-            matcher.MatchStartForward(
-                    new CodeMatch(OpCodes.Ldloc_2), // load height
-                    new CodeMatch(OpCodes.Ldc_I4_S, (sbyte)68), // 68 
-                    new CodeMatch(OpCodes.Ldarg_S, (byte)9), // hover item
-                    new CodeMatch(OpCodes.Callvirt, attachmentSlots), // get hover item slot count
-                    new CodeMatch(OpCodes.Mul), // 68 * slot count
-                    new CodeMatch(OpCodes.Add), // add to height
-                    new CodeMatch(OpCodes.Stloc_2) // store into height
-                )
-                .ThrowIfNotMatch($"Could not find tool entry point for {nameof(IClickableMenu_drawHoverTextTranspiler)}")
-                .Advance(1)
-                .RemoveInstruction() // remove 68
-                .Advance(1)
-                .RemoveInstruction() // remove get attach slots
-                .InsertAndAdvance(
-                    new CodeInstruction(OpCodes.Call, adjustHeight) // returns int height
-                ).RemoveInstruction(); // remove mul
-
             
+            try
+            {
+                // Transpile height for tools
+                matcher.MatchStartForward(
+                        new CodeMatch(OpCodes.Ldloc_2), // load height
+                        new CodeMatch(OpCodes.Ldc_I4_S, (sbyte)68), // 68 
+                        new CodeMatch(OpCodes.Ldarg_S, (byte)9), // hover item
+                        new CodeMatch(OpCodes.Callvirt, attachmentSlots), // get hover item slot count
+                        new CodeMatch(OpCodes.Mul), // 68 * slot count
+                        new CodeMatch(OpCodes.Add), // add to height
+                        new CodeMatch(OpCodes.Stloc_2) // store into height
+                    )
+                    .ThrowIfNotMatch($"Could not find tool entry point for {nameof(IClickableMenu_drawHoverTextTranspiler)}")
+                    .Advance(1)
+                    .RemoveInstruction() // remove 68
+                    .Advance(1)
+                    .RemoveInstruction() // remove get attach slots
+                    .InsertAndAdvance(
+                        new CodeInstruction(OpCodes.Call, adjustHeight) // returns int height
+                    ).RemoveInstruction(); // remove mul
+            }
+            catch (Exception ex)
+            {
+                MonitorInst.Log($"Failed in {nameof(IClickableMenu_drawHoverTextTranspiler)}:\n{ex}", LogLevel.Error);
+            }
+
+            /*
             MethodInfo getToolForgeLevels = AccessTools.Method(typeof(Tool), nameof(Tool.GetTotalForgeLevels));
             var myJump = generator.DefineLabel();
             // Transpile height for weapons
@@ -950,7 +986,7 @@ namespace ModularTools
                 new CodeInstruction(OpCodes.Ldloc_2),
                 new CodeInstruction(OpCodes.Add),
                 new CodeInstruction(OpCodes.Stloc_2)
-            );
+            );*/
 
             return matcher.InstructionEnumeration();
         }
@@ -1026,22 +1062,30 @@ namespace ModularTools
             MethodInfo makeHoeDirt = AccessTools.Method(typeof(GameLocation), nameof(GameLocation.makeHoeDirt));
             MethodInfo hoeWatering = AccessTools.Method(typeof(ModEntry), nameof(HoeWateringAndFertilizer));
 
-            return matcher.MatchStartForward(
-                    new CodeMatch(OpCodes.Callvirt, tilePassable),
-                    new CodeMatch(OpCodes.Brfalse),
-                    new CodeMatch(OpCodes.Ldarg_1),
-                    new CodeMatch(OpCodes.Ldloc_S), // tileLocation
-                    new CodeMatch(OpCodes.Ldc_I4_0),
-                    new CodeMatch(OpCodes.Callvirt, makeHoeDirt),
-                    new CodeMatch(OpCodes.Brfalse)
-                )
-                .ThrowIfNotMatch($"Could not find tool entry point for {nameof(Hoe_DoFunctionTranspiler)}")
-                .Advance(7)
-                .InsertAndAdvance(
-                    new CodeInstruction(OpCodes.Ldarg_S, (byte)5), // Farmer
-                    new CodeInstruction(OpCodes.Ldloc_S, (byte)4), // tileLocation
-                    new CodeInstruction(OpCodes.Call, hoeWatering)
-                ).InstructionEnumeration();
+            try
+            {
+                return matcher.MatchStartForward(
+                        new CodeMatch(OpCodes.Callvirt, tilePassable),
+                        new CodeMatch(OpCodes.Brfalse),
+                        new CodeMatch(OpCodes.Ldarg_1),
+                        new CodeMatch(OpCodes.Ldloc_S), // tileLocation
+                        new CodeMatch(OpCodes.Ldc_I4_0),
+                        new CodeMatch(OpCodes.Callvirt, makeHoeDirt),
+                        new CodeMatch(OpCodes.Brfalse)
+                    )
+                    .ThrowIfNotMatch($"Could not find tool entry point for {nameof(Hoe_DoFunctionTranspiler)}")
+                    .Advance(7)
+                    .InsertAndAdvance(
+                        new CodeInstruction(OpCodes.Ldarg_S, (byte)5), // Farmer
+                        new CodeInstruction(OpCodes.Ldloc_S, (byte)4), // tileLocation
+                        new CodeInstruction(OpCodes.Call, hoeWatering)
+                    ).InstructionEnumeration();
+            }
+            catch (Exception ex)
+            {
+                MonitorInst.Log($"Failed in {nameof(Hoe_DoFunctionTranspiler)}:\n{ex}", LogLevel.Error);
+                return matcher.InstructionEnumeration(); // run original logic
+            }
         }
         
         internal static bool DrawAttachmentSlot_prefix(Tool __instance, int slot, SpriteBatch b, int x, int y)
