@@ -1,0 +1,4 @@
+{
+  "belt.name": "Conveyor Belt",
+  "belt.description": "Moves items, can pull and push from chests and machines.",
+}

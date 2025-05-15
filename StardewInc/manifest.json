@@ -1,0 +1,10 @@
+{
+  "Name": "Stardew Inc.",
+  "Author": "Jok",
+  "Version": "1.0.0",
+  "Description": "Stardew Inc.",
+  "UniqueID": "Jok.StardewInc",
+  "EntryDll": "StardewInc.dll",
+  "MinimumApiVersion": "4.0.0",
+  "UpdateKeys": []
+}

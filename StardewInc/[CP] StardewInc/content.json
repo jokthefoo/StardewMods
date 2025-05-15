@@ -1,0 +1,23 @@
+﻿{
+  "Format": "2.6.0",
+  "Changes": [
+    {
+      "LogName": "Load Assets",
+      "Action": "Load",
+      "Target": "Mods/{{ModId}}/miner, Mods/{{ModId}}/forge, Mods/{{ModId}}/items",
+      "FromFile": "Assets/{{TargetWithoutPath}}.png"
+    },
+    {
+      "Action": "Include",
+      "FromFile": "assets/forge.json"
+    },
+    {
+      "Action": "Include",
+      "FromFile": "assets/miner.json"
+    },
+    {
+      "Action": "Include",
+      "FromFile": "assets/ore.json"
+    }
+  ]
+}

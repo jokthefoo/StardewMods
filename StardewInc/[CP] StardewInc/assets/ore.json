@@ -1,0 +1,39 @@
+{
+  "Changes" : [
+    {
+      "LogName": "Adding items",
+      "Action": "EditData",
+      "Target": "Data/Objects",
+      "Entries": {
+        "{{ModId}}.BauxiteStone":
+        {
+          "Name": "{{ModId}}.BauxiteStone",
+          "DisplayName": "{{i18n:{{ModId}}.BauxiteStone.name}}",
+          "Description": "{{i18n:{{ModId}}.BauxiteStone.description}}",
+          "Type": "Litter",
+          "Edibility": "-300",
+          "Category": -999,
+          "Price": "0",
+          "Texture": "Mods\\{{ModId}}\\items",
+          "SpriteIndex": 0
+        },
+        "{{ModId}}.BauxiteOre": {
+          "Name": "{{ModId}}.BauxiteOre",
+          "DisplayName": "{{i18n:{{ModId}}.BauxiteOre.name}}",
+          "Description": "{{i18n:{{ModId}}.BauxiteOre.description}}",
+          "Type": "Basic",
+          "Category": -15,
+          "Price": 10,
+          "Texture": "Mods\\{{ModId}}\\items",
+          "SpriteIndex": 1,
+          "Edibility": -300,
+          "ContextTags": [
+            "color_copper",
+            "ore_item",
+            "use_reverse_name_for_sorting"
+          ]
+        }
+      }
+    },
+  ]
+}

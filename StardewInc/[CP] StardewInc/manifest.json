@@ -1,0 +1,11 @@
+﻿{
+  "Name": "Stardew Inc.",
+  "Author": "Jok",
+  "Version": "1.0.0",
+  "Description": "Stardew Inc.",
+  "UniqueID": "Jok.StardewInc.CP",
+  "UpdateKeys": [],
+  "ContentPackFor": {
+    "UniqueID": "Pathoschild.ContentPatcher"
+  }
+}
