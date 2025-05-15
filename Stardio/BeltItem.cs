@@ -734,7 +734,7 @@ public class BeltItem : Object
                 return;
             }
             
-            float base_sort = (y + 1) * 64 / 10000f + tileLocation.X / 50000f;
+            float base_sort = y * 64 / 10000f + tileLocation.X / 50000f;
             float yOffset = 4f * (float)Math.Round(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 250.0), 2); // makes it bob
             float xOffset = 0f;
 

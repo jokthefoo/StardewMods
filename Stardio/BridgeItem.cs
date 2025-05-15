@@ -110,7 +110,7 @@ public class BridgeItem : Object
             spriteBatch.Draw(itemData.GetTexture(),
                 Game1.GlobalToLocal(Game1.viewport, new Vector2(x * 64 + 32, y * 64 + 32) + shake),
                 itemData.GetSourceRect(sourceOffset), Color.White * alpha, 0f, new Vector2(8f, 8f), scale.Y > 1f ? getScale().Y : 4f, spriteEffects,
-                (isPassable() ? bounds.Top + 50 : bounds.Center.Y + 50) / 10000f);
+                (isPassable() ? bounds.Top : bounds.Center.Y + 1) / 10000f);
         }
     }
 
