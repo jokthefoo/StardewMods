@@ -31,6 +31,16 @@ public class BeltItemDataDefinition : BaseItemDataDefinition
 
     public override Item CreateItem(ParsedItemData data)
     {
+        if(data.ItemId == "Jok.Stardio.Bridge")
+        {
+            return new BridgeItem(data.ItemId);
+        }
+        
+        if(data.ItemId == "Jok.Stardio.Splitter")
+        {
+            return new SplitterItem(data.ItemId);
+        }
+            
         return new BeltItem(data.ItemId);
     }
 

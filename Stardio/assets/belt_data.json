@@ -2,7 +2,22 @@
   "Jok.Stardio.Belt": {
     DisplayName: "belt.name",
     Description: "belt.description",
+    Texture: "Jok.Stardio/belts.png",
     TextureIndex: 0,
+    Price: 120
+  },
+  "Jok.Stardio.Bridge": {
+    DisplayName: "bridge.name",
+    Description: "bridge.description",
+    Texture: "Jok.Stardio/otherbelts.png",
+    TextureIndex: 0,
+    Price: 120
+  },
+  "Jok.Stardio.Splitter": {
+    DisplayName: "splitter.name",
+    Description: "splitter.description",
+    Texture: "Jok.Stardio/otherbelts.png",
+    TextureIndex: 4,
     Price: 120
   }
 }

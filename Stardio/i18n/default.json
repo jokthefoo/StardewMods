@@ -1,6 +1,12 @@
 {
   "belt.name": "Conveyor Belt",
   "belt.description": "Moves items, can pull and push from chests and machines.",
+
+  "bridge.name": "Bridge",
+  "bridge.description": "Bridges across a vertical and horizontal belt.",
+  
+  "splitter.name": "Splitter",
+  "splitter.description": "Splits items that come into it evenly to all belts coming out of it.",
   
   "belt.category.name": "Belt",
 

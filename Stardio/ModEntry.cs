@@ -45,6 +45,7 @@ internal sealed class ModEntry : Mod
 
         ItemRegistry.AddTypeDefinition(new BeltItemDataDefinition());
         Helper.ModContent.Load<Texture2D>("assets/belts");
+        Helper.ModContent.Load<Texture2D>("assets/otherbelts");
 
         HarmonyPatches.Patch(ModManifest.UniqueID);
     }
@@ -161,6 +162,12 @@ internal sealed class ModEntry : Mod
             if (BeltItem.BeltAnim > 3)
             {
                 BeltItem.BeltAnim = 0;
+                BridgeItem.BridgeAnim += 1;
+            }
+            
+            if (BridgeItem.BridgeAnim > 3)
+            {
+                BridgeItem.BridgeAnim = 0;
             }
 
             isProcessTick = true;
@@ -173,6 +180,12 @@ internal sealed class ModEntry : Mod
                 if (obj is BeltItem belt)
                 {
                     belt.beltUpdate(isProcessTick);
+                    continue;
+                }
+                
+                if (obj is SplitterItem splitter)
+                {
+                    splitter.splitterUpdate(isProcessTick);
                 }
             }
         }
@@ -182,6 +195,8 @@ internal sealed class ModEntry : Mod
     {
         var sc = Helper.ModRegistry.GetApi<ISpaceCoreApi>("spacechase0.SpaceCore");
         sc.RegisterSerializerType(typeof(BeltItem));
+        sc.RegisterSerializerType(typeof(BridgeItem));
+        sc.RegisterSerializerType(typeof(SplitterItem));
         EMCApi = Helper.ModRegistry.GetApi<IExtraMachineConfigApi>("selph.ExtraMachineConfig");
         BMApi = Helper.ModRegistry.GetApi<IBiggerMachinesAPI>("Jok.BiggerMachines");
 
@@ -251,6 +266,7 @@ internal sealed class ModEntry : Mod
             setValue: value => Config.RotateKeybind = value
         );
         
+        /*
         // add config options
         configMenu.AddBoolOption(
             mod: ModManifest,
@@ -258,7 +274,7 @@ internal sealed class ModEntry : Mod
             tooltip: I18n.Config_Greybelts_Tooltip,
             getValue: () => Config.GreyBelts,
             setValue: value => Config.GreyBelts = value
-        );
+        );*/
     }
 
     private void OnAssetRequested(object sender, AssetRequestedEventArgs e)
@@ -274,6 +290,7 @@ internal sealed class ModEntry : Mod
                 {
                     var bd = new BeltData()
                     {
+                        Texture = modAssets[id].Texture,
                         TextureIndex = modAssets[id].TextureIndex,
                         DisplayName = I18n.GetByKey(modAssets[id].DisplayName),
                         Description = I18n.GetByKey(modAssets[id].Description),
@@ -289,6 +306,10 @@ internal sealed class ModEntry : Mod
         {
             e.LoadFromModFile<Texture2D>("assets/belts.png", AssetLoadPriority.Low);
         }
+        else if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/otherbelts.png"))
+        {
+            e.LoadFromModFile<Texture2D>("assets/otherbelts.png", AssetLoadPriority.Low);
+        }
         else if (e.NameWithoutLocale.IsEquivalentTo("Data/CraftingRecipes"))
         {
             e.Edit(asset =>
@@ -296,6 +317,7 @@ internal sealed class ModEntry : Mod
                 var dict = asset.AsDictionary<string, string>().Data;
                 // ingredients / unused / yield / big craftable? / unlock conditions /
                 dict.Add("(Jok.Belt)Jok.Stardio.Belt", $"335 5 390 25 388 25/what/(Jok.Belt)Jok.Stardio.Belt 5/false/s farming 3/");
+                dict.Add("(Jok.Belt)Jok.Stardio.Bridge", $"336 1 (Jok.Belt)Jok.Stardio.Belt 5/what/(Jok.Belt)Jok.Stardio.Bridge 1/false/s farming 5/");
             });
         }
     }

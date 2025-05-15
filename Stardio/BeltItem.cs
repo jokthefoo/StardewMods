@@ -22,7 +22,7 @@ public class BeltItem : Object
     [XmlIgnore]
     public static int beltUpdateCountdown = 0;
     
-    [XmlIgnore] private static Dictionary<int, Vector2> rotationDict = new()
+    [XmlIgnore] public static Dictionary<int, Vector2> rotationDict = new()
     {
         { 0, new Vector2(0, -1) },
         { 1, new Vector2(1, 0) },
@@ -34,6 +34,8 @@ public class BeltItem : Object
     
     [XmlElement("currentRotation")]
     public readonly NetInt currentRotation = new();
+    
+    [XmlIgnore] private IInventory tempBeltInventory = new Inventory();
     
     public enum Direction
     {
@@ -183,8 +185,7 @@ public class BeltItem : Object
         }
 
         var targetTile = getTileInDirection(Direction.Forward);
-
-        IInventory tempBeltInventory = new Inventory();
+        tempBeltInventory.Clear();
         tempBeltInventory.Add(heldObject.Value);
 
         Object? outputTarget = null;
@@ -213,6 +214,18 @@ public class BeltItem : Object
 
         // try to push to belt
         if (TryPushToBelt(outputTarget) || outputTarget is BeltItem)
+        {
+            return;
+        }
+        
+        // try to push to bridge
+        if (TryPushToBridge(outputTarget) || outputTarget is BridgeItem)
+        {
+            return;
+        }
+        
+        // try to push to splitter
+        if (TryPushToSplitter(outputTarget) || outputTarget is SplitterItem)
         {
             return;
         }
@@ -386,6 +399,45 @@ public class BeltItem : Object
         return false;
     }
     
+    private bool TryPushToBridge(Object outputTarget)
+    {
+        if (outputTarget is BridgeItem bridge)
+        {
+            var targetTile = getTileInDirection(Direction.Forward, bridge.TileLocation);
+            if (!Location.objects.TryGetValue(targetTile, out var obj))
+            {
+                return false;
+            }
+
+            if (obj is BeltItem belt && belt.heldObject.Value == null && belt.ValidPushFrom(currentRotation.Value))
+            {
+                belt.heldObject.Value = heldObject.Value;
+                heldObject.Value = null;
+                HeldItemPosition = 0;
+                return true;
+            }
+
+            if (obj is BridgeItem)
+            {
+                return TryPushToBridge(obj);
+            }
+        }
+        return false;
+    }
+    
+    private bool TryPushToSplitter(Object outputTarget)
+    {
+        if (outputTarget is SplitterItem splitter && splitter.heldObject.Value == null)
+        {
+            splitter.heldObject.Value = heldObject.Value;
+
+            heldObject.Value = null;
+            HeldItemPosition = 0;
+            return true;
+        }
+        return false;
+    }
+    
     private bool TryPushToBelt(Object outputTarget)
     {
         if (outputTarget is BeltItem belt && belt.heldObject.Value == null && belt.ValidPushFrom(currentRotation.Value))
@@ -454,7 +506,7 @@ public class BeltItem : Object
     
     private void TryPullFromMachine(Object inputObj)
     {
-        if (inputObj == null || !inputObj.readyForHarvest.Value || inputObj is BeltItem)
+        if (inputObj == null || !inputObj.readyForHarvest.Value || inputObj is BeltItem || inputObj is SplitterItem)
         {
             return;
         }
@@ -666,10 +718,10 @@ public class BeltItem : Object
                 curveSpriteOffset = 0;
             }
 
-            if (ModEntry.Config.GreyBelts)
+            /*if (ModEntry.Config.GreyBelts)
             {
                 sourceOffset += 16;
-            }
+            }*/
             
             spriteBatch.Draw(itemData.GetTexture(),
                 Game1.GlobalToLocal(Game1.viewport, new Vector2(x * 64 + 32, y * 64 + 32) + shake),
@@ -854,14 +906,17 @@ public class BeltItem : Object
     public void CheckForCurve()
     {
         // If belt behind then default
-        if (Location.objects.TryGetValue(getTileInDirection(Direction.Behind), out Object backObj) && backObj is BeltItem backBelt && IsOtherBeltFacingMe(backBelt))
+        if (Location.objects.TryGetValue(getTileInDirection(Direction.Behind), out Object backObj))
         {
-            beltSpriteRotationOffset = 0;
-            return;
+            if ((backObj is BeltItem backBelt && IsOtherBeltFacingMe(backBelt)) || backObj is SplitterItem || backObj is BridgeItem)
+            {
+                beltSpriteRotationOffset = 0;
+                return;
+            }
         }
         
-        bool foundLeft = Location.objects.TryGetValue(getTileInDirection(Direction.Left), out Object leftObj) && leftObj is BeltItem leftBelt && IsOtherBeltFacingMe(leftBelt);
-        bool foundRight = Location.objects.TryGetValue(getTileInDirection(Direction.Right), out Object rightObj) &&  rightObj is BeltItem rightBelt && IsOtherBeltFacingMe(rightBelt);
+        bool foundLeft = Location.objects.TryGetValue(getTileInDirection(Direction.Left), out Object leftObj) && ((leftObj is BeltItem leftBelt && IsOtherBeltFacingMe(leftBelt)) || leftObj is SplitterItem || leftObj is BridgeItem);
+        bool foundRight = Location.objects.TryGetValue(getTileInDirection(Direction.Right), out Object rightObj) && ((rightObj is BeltItem rightBelt && IsOtherBeltFacingMe(rightBelt)) || rightObj is SplitterItem || rightObj is BridgeItem);
 
         // if belts on both sides then default
         if (foundLeft && foundRight)
