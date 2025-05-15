@@ -383,7 +383,7 @@ public class BeltItem : Object
 
     private bool TryPushToChest(Object outputTarget)
     {
-        if (outputTarget is Chest outputChest)
+        if (outputTarget is Chest outputChest && !outputChest.GetMutex().IsLocked())
         {
             if (outputChest.addItem(heldObject.Value) != null)
             {
@@ -611,7 +611,7 @@ public class BeltItem : Object
 
     private bool TryPullFromChest(Object inputObj)
     {
-        if (inputObj is not Chest inputChest)
+        if (inputObj is not Chest inputChest || inputChest.GetMutex().IsLocked())
         {
             return false;
         }
