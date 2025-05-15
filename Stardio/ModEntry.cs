@@ -49,9 +49,6 @@ internal sealed class ModEntry : Mod
 
         HarmonyPatches.Patch(ModManifest.UniqueID);
     }
-    
-    // TODO splitter
-    // TODO junction, insta tele to other side if space available else wait
 
     private void OnObjectListChanged(object? sender, ObjectListChangedEventArgs e)
     {
@@ -73,8 +70,6 @@ internal sealed class ModEntry : Mod
             }
         }
     }
-
-    // TODO joja cola competitor
 
     private static readonly XmlSerializer ItemSerializer = new(typeof(ItemListSerialized), new []
         {typeof(Item)});
