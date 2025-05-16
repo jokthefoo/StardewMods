@@ -6,6 +6,7 @@ using GenericModConfigMenu;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Netcode;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
@@ -274,6 +275,19 @@ namespace ModularTools
             harmony.Patch(
                 original: AccessTools.Method(typeof(Tool), nameof(Tool.actionWhenPurchased), new Type[] { typeof(string) }),
                 postfix: new HarmonyMethod(typeof(ModEntry), nameof(ToolActionWhenPurchased_postfix)));
+
+            if (Helper.ModRegistry.IsLoaded("Digus.MailServicesMod"))
+            {
+                try { 
+                    var IMailServices = AccessTools.TypeByName("MailServicesMod.ToolUpgradeController");
+                    harmony.Patch(
+                        original: IMailServices.GetMethod("TryToSendTool",  BindingFlags.Static | BindingFlags.NonPublic),
+                        prefix: new HarmonyMethod(typeof(ModEntry), nameof(MailServicesMod_prefix)));
+                    harmony.Patch(
+                        original: IMailServices.GetMethod("TryToSendTool",  BindingFlags.Static | BindingFlags.NonPublic),
+                        postfix: new HarmonyMethod(typeof(ModEntry), nameof(MailServicesMod_postfix)));
+                } catch { }
+            }
             
             harmony.Patch(
                 original: AccessTools.Method(typeof(Tool), nameof(Tool.draw)),
@@ -604,6 +618,12 @@ namespace ModularTools
                     strength += 2;
                 }
             }
+            
+            if (strength >= 5) // super boost past iridium
+            {
+                strength = 25;
+            }
+
             return strength;
         }
         
@@ -790,6 +810,39 @@ namespace ModularTools
         public static bool IsAllowedTool(Item tool)
         {
             return tool is WateringCan or Hoe or Pickaxe or Axe;
+        }
+        
+        public static void MailServicesMod_prefix(out Tool __state)
+        {
+            __state = null;
+            if (!IsAllowedTool(Game1.player.CurrentTool))
+            {
+                return;
+            }
+            __state = Game1.player.CurrentTool;
+        }
+        
+        public static void MailServicesMod_postfix(Tool __state)
+        {
+            Tool tool = Game1.player.toolBeingUpgraded.Value;
+            if (!IsAllowedTool(__state) || tool == null)
+            {
+                return;
+            }
+
+            if (tool is WateringCan wateringCan)
+            {
+                wateringCan.waterCanMax = 40;
+                wateringCan.WaterLeft = 40;
+            }
+            tool.AttachmentSlotsCount = __state.AttachmentSlotsCount + 1;
+            foreach (Object o in __state.attachments)
+            {
+                if (o is not null)
+                {
+                    tool.attach((Object)o.getOne());
+                }
+            }
         }
         
         public static void ToolActionWhenPurchased_prefix(Tool __instance, out Tool __state, string shopId)
