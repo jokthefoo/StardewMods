@@ -1104,7 +1104,16 @@ namespace ModularTools
             Texture2D texture = Game1.menuTexture;
             Rectangle sourceRect = Game1.getSourceRectForStandardTileSheet(Game1.menuTexture, 10);
             b.Draw(texture, pixel, sourceRect, Color.White, 0f, Vector2.Zero, 1f, SpriteEffects.None, 0.86f);
-            __instance.attachments[slot]?.drawInMenu(b, pixel, 1f);
+
+            if (__instance.attachments.Length > slot)
+            {
+                __instance.attachments[slot]?.drawInMenu(b, pixel, 1f);
+            } 
+            else if (__instance.attachments.Length <= slot)
+            {
+                __instance.attachments.SetCount(__instance.AttachmentSlotsCount);
+            }
+            
             return false;
         }
     }
