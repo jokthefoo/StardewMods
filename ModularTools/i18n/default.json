@@ -50,5 +50,5 @@
   "modularupgrade.air2.description": "Install into a Tool to gain a speed boost after use.",
   
   "modularupgrade.earth.name": "Earth Upgrade",
-  "modularupgrade.earth.description": "Install into a Hoe to automatically apply fertilizer from your inventory after use."
+  "modularupgrade.earth.description": "Install into a Hoe to automatically apply fertilizer from your inventory after use. Or install into an axe to automatically replant tree seeds from your inventory (if matching felled tree)"
 }

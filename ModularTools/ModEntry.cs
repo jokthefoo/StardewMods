@@ -13,6 +13,7 @@ using StardewValley;
 using StardewValley.Buffs;
 using StardewValley.Enchantments;
 using StardewValley.GameData.Tools;
+using StardewValley.GameData.WildTrees;
 using StardewValley.Internal;
 using StardewValley.ItemTypeDefinitions;
 using StardewValley.Menus;
@@ -268,6 +269,7 @@ namespace ModularTools
                 original: AccessTools.Method(typeof(Tool), nameof(Tool.attach), new Type[] { typeof(Object) }),
                 postfix: new HarmonyMethod(typeof(ModEntry), nameof(attachOrDetach_postfix)));
             
+            // Upgrade tool
             harmony.Patch(
                 original: AccessTools.Method(typeof(Tool), nameof(Tool.actionWhenPurchased), new Type[] { typeof(string) }),
                 prefix: new HarmonyMethod(typeof(ModEntry), nameof(ToolActionWhenPurchased_prefix)));
@@ -352,6 +354,14 @@ namespace ModularTools
                 original: AccessTools.Method(typeof(Tree), nameof(Tree.tickUpdate),
                     new Type[] { typeof(GameTime) }),
                 transpiler: new HarmonyMethod(typeof(ModEntry), nameof(Tree_tickUpdateTranspiler)));
+            
+            // Earth for axe
+            Type[] performTreeFallTypes = { typeof(Tool), typeof(int), typeof(Vector2) };
+            var originalTreeFall = typeof(Tree).GetMethod("performTreeFall",
+                BindingFlags.Instance | BindingFlags.NonPublic, null, performTreeFallTypes, null);
+            harmony.Patch(
+                original: originalTreeFall,
+                postfix: new HarmonyMethod(AccessTools.Method(typeof(ModEntry), nameof(Tree_PerformTreeFall_postfix))));
             
             // Tool prices
             harmony.Patch(
@@ -484,7 +494,55 @@ namespace ModularTools
             }
             return wood;
         }
+
+        public static void Tree_PerformTreeFall_postfix(Tree __instance, Tool t, int explosion, Vector2 tileLocation)
+        {
+            if (__instance.stump.Value && __instance.health.Value < -99f && t != null && t.getLastFarmerToUse() != null && GetHasAttachmentQualifiedItemID(t,MUQIds.Earth))
+            {
+                TryToPlantTreeSeed(t.getLastFarmerToUse(), __instance, tileLocation);
+            }
+        }
         
+        private static bool TryToPlantTreeSeed(Farmer who, Tree tree, Vector2 tileLocation)
+        {
+            Item? treeSeed = null;
+            WildTreeData data = tree.GetData();
+            foreach (var item in who.Items)
+            {
+                if (item is null)
+                {
+                    continue;
+                }
+                
+                if (item.QualifiedItemId == data.SeedItemId || item.ItemId == data.SeedItemId)
+                {
+                    treeSeed = item;
+                    break;
+                }
+            }
+
+            if (treeSeed == null)
+            {
+                return false;
+            }
+
+            GameLocation environment = who.currentLocation;
+            if (!environment.IsNoSpawnTile(tileLocation, "Tree") && environment.isTileLocationOpen(tileLocation))
+            {
+                treeSeed.Stack -= 1;
+                if (treeSeed.Stack <= 0)
+                {
+                    who.removeItemFromInventory(treeSeed);
+                }
+                Game1.stats.Increment("wildtreesplanted");
+                environment.terrainFeatures.Remove(tileLocation);
+                environment.terrainFeatures.Add(tileLocation, new Tree(tree.treeType.Value, 0));
+                environment.playSound("dirtyHit", null, null);
+                return true;
+            }
+            return false;
+        }
+
         public static void OnStoneDestroyed_postfix(GameLocation __instance, string stoneId, int x, int y, Farmer who)
         {
             Tool t = who.CurrentTool;

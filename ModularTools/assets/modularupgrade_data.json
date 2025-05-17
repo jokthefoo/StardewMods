@@ -98,6 +98,6 @@
     Description: "modularupgrade.earth.description",
     TextureIndex: 14,
     Price: 250,
-    AllowedTools: ["hoe"]
+    AllowedTools: ["hoe", "axe"]
   }
 }
