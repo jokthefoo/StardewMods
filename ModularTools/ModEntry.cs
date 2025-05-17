@@ -277,6 +277,12 @@ namespace ModularTools
             harmony.Patch(
                 original: AccessTools.Method(typeof(Tool), nameof(Tool.actionWhenPurchased), new Type[] { typeof(string) }),
                 postfix: new HarmonyMethod(typeof(ModEntry), nameof(ToolActionWhenPurchased_postfix)));
+            
+            var GetOneCopyFromTool = typeof(Tool).GetMethod("GetOneCopyFrom",
+                BindingFlags.Instance | BindingFlags.NonPublic, null, new Type[] { typeof(Item) }, null);
+            harmony.Patch(
+                original: GetOneCopyFromTool,
+                postfix: new HarmonyMethod(typeof(ModEntry), nameof(ToolGetOneCopyFrom_postfix)));
 
             if (Helper.ModRegistry.IsLoaded("Digus.MailServicesMod"))
             {
@@ -374,6 +380,25 @@ namespace ModularTools
                 original: AccessTools.Method(typeof(BaseEnchantment), nameof(BaseEnchantment.GetEnchantmentFromItem),
                     new Type[] { typeof(Item), typeof(Item)}),
                 postfix: new HarmonyMethod(typeof(ModEntry), nameof(GetEnchantmentFromItem_postfix)));
+        }
+
+        public static void ToolGetOneCopyFrom_postfix(Tool __instance, Item source)
+        {
+            if (!IsAllowedTool(source))
+            {
+                return;
+            }
+
+            if (source is Tool fromTool)
+            {
+                foreach (var o in fromTool.attachments)
+                {
+                    if (o is not null)
+                    {
+                        __instance.attach((Object)o.getOne());
+                    }
+                }
+            }
         }
         
         public static void GetEnchantmentFromItem_postfix(BaseEnchantment __instance, ref BaseEnchantment __result, Item base_item, Item item)
