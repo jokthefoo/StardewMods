@@ -8,10 +8,6 @@
           "Name": "Miner",
           "DisplayName": "{{i18n:{{ModId}}.Miner.name}}",
           "Description": "{{i18n:{{ModId}}.Miner.description}}",
-          "Price": 900,
-          "Fragility": 0,
-          "CanBePlacedOutdoors": true,
-          "CanBePlacedIndoors": true,
           "Texture": "Mods\\{{ModId}}\\miner",
           "SpriteIndex": 0,
           "CustomFields": {
@@ -30,25 +26,18 @@
               "Id": "Default",
               "Triggers": [
                 {
-                  "Id": "DayUpdate",
-                  "Trigger": "DayUpdate"
+                  "Id": "MachinePutDown, OutputCollected",
+                  "Trigger": "MachinePutDown, OutputCollected"
                 }
               ],
               "OutputItem": [
                 {
-                  "OutputMethod": "StardewValley.Object, Stardew Valley: OutputSolarPanel",
-                  "MinStack": -1,
-                  "MaxStack": -1
+                  "OutputMethod": "Jok.StardewInc.ModEntry, StardewInc: OutputMiner"
                 }
               ],
-              "MinutesUntilReady": -1,
-              "DaysUntilReady": -1
+              "MinutesUntilReady": 10
             }
-          ],
-          "WorkingEffectChance": 0.33,
-          "AllowLoadWhenFull": true,
-          "WobbleWhileWorking": true,
-          "AllowFairyDust": true
+          ]
         }
       }
     }

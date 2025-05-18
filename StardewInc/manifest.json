@@ -6,5 +6,15 @@
   "UniqueID": "Jok.StardewInc",
   "EntryDll": "StardewInc.dll",
   "MinimumApiVersion": "4.0.0",
-  "UpdateKeys": []
+  "UpdateKeys": [],
+  "Dependencies": [
+    {
+      "UniqueID": "selph.ExtraMachineConfig",
+      "IsRequired": true
+    },
+    {
+      "UniqueID": "Jok.Stardio",
+      "IsRequired": true
+    }
+  ]
 }

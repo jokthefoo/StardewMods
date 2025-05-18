@@ -4,7 +4,7 @@
     {
       "LogName": "Load Assets",
       "Action": "Load",
-      "Target": "Mods/{{ModId}}/miner, Mods/{{ModId}}/forge, Mods/{{ModId}}/items",
+      "Target": "Mods/{{ModId}}/miner, Mods/{{ModId}}/forge, Mods/{{ModId}}/items, Mods/{{ModId}}/refinery",
       "FromFile": "Assets/{{TargetWithoutPath}}.png"
     },
     {
@@ -17,7 +17,11 @@
     },
     {
       "Action": "Include",
-      "FromFile": "assets/ore.json"
+      "FromFile": "assets/refinery.json"
+    },
+    {
+      "Action": "Include",
+      "FromFile": "assets/objects.json"
     }
   ]
 }

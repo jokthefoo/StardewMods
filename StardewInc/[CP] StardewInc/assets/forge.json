@@ -8,10 +8,6 @@
           "Name": "Forge",
           "DisplayName": "{{i18n:{{ModId}}.Forge.name}}",
           "Description": "{{i18n:{{ModId}}.Forge.description}}",
-          "Price": 900,
-          "Fragility": 0,
-          "CanBePlacedOutdoors": true,
-          "CanBePlacedIndoors": true,
           "Texture": "Mods\\{{ModId}}\\forge",
           "SpriteIndex": 0,
           "CustomFields": {
@@ -25,10 +21,27 @@
       "Target": "Data/Machines",
       "Entries": {
         "(BC){{ModId}}.Forge": {
-          "HasInput": false,
-          "HasOutput": false,
-          "InteractMethod": null,
           "OutputRules": [
+            {
+              "Id": "Default_AluminumScrap",
+              "Triggers": [
+                {
+                  "Id": "ItemPlacedInMachine",
+                  "Trigger": "ItemPlacedInMachine",
+                  "RequiredItemId": "(O){{ModId}}.AluminumScrap",
+                  "RequiredCount": 10
+                }
+              ],
+              "OutputItem": [
+                {
+                  "Id": "(O){{ModId}}.AluminumBar",
+                  "ItemId": "(O){{ModId}}.AluminumBar",
+                  "MinStack": 2,
+                  "MaxStack": 3
+                }
+              ],
+              "MinutesUntilReady": 120
+            },
             {
               "Id": "Default_CopperOre",
               "Triggers": [
@@ -39,7 +52,6 @@
                   "RequiredCount": 25
                 }
               ],
-              "UseFirstValidOutput": false,
               "OutputItem": [
                 {
                   "Id": "(O)334",
@@ -167,8 +179,7 @@
                   "Id": "(O)910",
                   "ItemId": "(O)910",
                   "MinStack": 5,
-                  "MaxStack": 6,
-                  "ModData": null
+                  "MaxStack": 6
                 }
               ],
               "MinutesUntilReady": 140
@@ -181,7 +192,6 @@
               "InvalidCountMessage": "[LocalizedText Strings\\1_6_Strings:HeavyFurnace_coal]"
             }
           ],
-          "ReadyTimeModifierMode": "Stack",
           "InvalidCountMessage": "[LocalizedText Strings\\1_6_Strings:HeavyFurnace_ores]",
           "LoadEffects": [
             {
@@ -211,6 +221,29 @@
                   "Frames": 4,
                   "Loops": 10,
                   "PositionOffset": "0, -10",
+                  "Flicker": false,
+                  "Flip": false,
+                  "SortOffset": 0.0,
+                  "AlphaFade": 0.005,
+                  "Scale": 0.25,
+                  "ScaleChange": 0.0,
+                  "Rotation": 0.0,
+                  "RotationChange": 0.0,
+                  "Color": null
+                },{
+                  "Id": "Default",
+                  "Condition": null,
+                  "Texture": "TileSheets\\animations",
+                  "SourceRect": {
+                    "X": 0,
+                    "Y": 1920,
+                    "Width": 64,
+                    "Height": 64
+                  },
+                  "Interval": 50.0,
+                  "Frames": 4,
+                  "Loops": 10,
+                  "PositionOffset": "16, -10",
                   "Flicker": false,
                   "Flip": false,
                   "SortOffset": 0.0,
@@ -261,21 +294,39 @@
                   "Rotation": 0.0,
                   "RotationChange": 0.0,
                   "Color": null
+                },{
+                  "Id": "Default",
+                  "Condition": null,
+                  "Texture": "TileSheets\\animations",
+                  "SourceRect": {
+                    "X": 0,
+                    "Y": 1920,
+                    "Width": 64,
+                    "Height": 64
+                  },
+                  "Interval": 50.0,
+                  "Frames": 4,
+                  "Loops": 10,
+                  "PositionOffset": "16, -10",
+                  "Flicker": false,
+                  "Flip": false,
+                  "SortOffset": 0.0,
+                  "AlphaFade": 0.005,
+                  "Scale": 0.25,
+                  "ScaleChange": 0.0,
+                  "Rotation": 0.0,
+                  "RotationChange": 0.0,
+                  "Color": null
                 }
               ]
             }
           ],
           "WorkingEffectChance": 0.165,
-          "AllowLoadWhenFull": false,
-          "WobbleWhileWorking": true,
           "LightWhileWorking": {
             "Radius": 1.5,
             "Color": "DarkCyan"
           },
-          "ShowNextIndexWhileWorking": true,
-          "ShowNextIndexWhenReady": false,
-          "AllowFairyDust": true,
-          "CustomFields": null
+          "ShowNextIndexWhileWorking": true
         }
       }
     }

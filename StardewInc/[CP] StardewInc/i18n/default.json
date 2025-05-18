@@ -1,7 +1,37 @@
 {
-  "Jok.StardewInc.Forge.name": "Forge",
+  "Jok.StardewInc.Forge.name": "Smelter",
   "Jok.StardewInc.Forge.description": "More powerful furnace that can achieve much higher temperatures.",
   
   "Jok.StardewInc.Miner.name": "Miner",
-  "Jok.StardewInc.Miner.description": "Can mine ores from the ground."
+  "Jok.StardewInc.Miner.description": "Can mine ores from the ground.",
+
+  "Jok.StardewInc.Refinery.name": "Refinery",
+  "Jok.StardewInc.Refinery.description": "Used for processing with liquids.",
+  "Jok.StardewInc.Refinery.Washing.Invalid": "Requires a large milk for washing.",
+  "Jok.StardewInc.Refinery.Scrap.Invalid": "Requires 3 copper bars for filtering.",
+  
+
+  "Jok.StardewInc.BauxiteStone.name": "Bauxite Stone",
+  "Jok.StardewInc.BauxiteStone.description": "Hey how did you get this?",
+  
+  "Jok.StardewInc.BauxiteOre.name": "Bauxite Ore",
+  "Jok.StardewInc.BauxiteOre.description": "An ore that can be processed into Aluminum.",
+
+  "Jok.StardewInc.AluminumScrap.name": "Aluminum Scrap",
+  "Jok.StardewInc.AluminumScrap.description": "Can be smelted into Aluminum Bars.",
+
+  "Jok.StardewInc.AluminumBar.name": "Aluminum Bar",
+  "Jok.StardewInc.AluminumBar.description": "A bar of pure Aluminum.",
+
+  "Jok.StardewInc.AluminumPlate.name": "Aluminum Plate",
+  "Jok.StardewInc.AluminumPlate.description": "A flattened plate of pure Aluminum.",
+
+  "Jok.StardewInc.EmptyCan.name": "Empty Can",
+  "Jok.StardewInc.EmptyCan.description": "A empty liquid vessel.",
+
+  "Jok.StardewInc.FilledCan.name": "Stardew Cola",
+  "Jok.StardewInc.FilledCan.description": "A delightfully refreshing beverage.",
+  
+  "Jok.StardewInc.WashedBauxite.name": "Washed Bauxite",
+  "Jok.StardewInc.WashedBauxite.description": "A liquid mix of Bauxite ore and water."
 }

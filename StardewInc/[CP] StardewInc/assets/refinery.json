@@ -1,0 +1,126 @@
+{
+  "Changes": [
+    {
+      "Action": "EditData",
+      "Target": "Data/BigCraftables",
+      "Entries": {
+        "{{ModId}}.Refinery": {
+          "Name": "Refinery",
+          "DisplayName": "{{i18n:{{ModId}}.Refinery.name}}",
+          "Description": "{{i18n:{{ModId}}.Refinery.description}}",
+          "Texture": "Mods\\{{ModId}}\\refinery",
+          "SpriteIndex": 0,
+          "CustomFields": {
+            "Jok.BiggerMachines.Dimensions": "2,2"
+          }
+        }
+      }
+    },
+    {
+      "LogName": "Add Extra Outputs for refinery",
+      "Action": "EditData",
+      "Target": "selph.ExtraMachineConfig/ExtraOutputs",
+      "Entries": {
+        "QuartzExtra": {
+          "Id": "QuartzExtra",
+          "ItemId": "(O)80",
+        }
+      },
+    },
+    {
+      "Action": "EditData",
+      "Target": "Data/Machines",
+      "Entries": {
+        "(BC){{ModId}}.Refinery": {
+          "OutputRules": [
+            {
+              "Id": "Default_AluminaSolution",
+              "Triggers": [
+                {
+                  "Id": "ItemPlacedInMachine",
+                  "Trigger": "ItemPlacedInMachine",
+                  "RequiredItemId": "(O){{ModId}}.BauxiteOre",
+                  "RequiredCount": 5
+                }
+              ],
+              "OutputItem": [
+                {
+                  "Id": "(O){{ModId}}.WashedBauxite",
+                  "ItemId": "(O){{ModId}}.WashedBauxite",
+                  "MinStack": 3,
+                  "CustomData": {
+                    "selph.ExtraMachineConfig.RequirementId.1": "(O)186", // large milk
+                    "selph.ExtraMachineConfig.RequirementInvalidMsg": "{{i18n:{{ModId}}.Refinery.Washing.Invalid}}",
+                    "selph.ExtraMachineConfig.ExtraOutputIds": "QuartzExtra"
+                  }
+                }
+              ],
+              "MinutesUntilReady": 120
+            },
+            {
+              "Id": "Default_AluminaScrap",
+              "Triggers": [
+                {
+                  "Id": "ItemPlacedInMachine",
+                  "Trigger": "ItemPlacedInMachine",
+                  "RequiredItemId": "(O){{ModId}}.WashedBauxite",
+                  "RequiredCount": 6
+                }
+              ],
+              "OutputItem": [
+                {
+                  "Id": "(O){{ModId}}.AluminumScrap",
+                  "ItemId": "(O){{ModId}}.AluminumScrap",
+                  "MinStack": 4,
+                  "CustomData": {
+                    "selph.ExtraMachineConfig.RequirementId.1": "(O)334", // copper bar
+                    "selph.ExtraMachineConfig.RequirementCount.1": 3,
+                    "selph.ExtraMachineConfig.RequirementInvalidMsg": "{{i18n:{{ModId}}.Refinery.Scrap.Invalid}}"
+                  }
+                }
+              ],
+              "MinutesUntilReady": 120
+            }
+          ],
+          "LoadEffects": [
+            {
+              "Id": "Default",
+              "Sounds": [
+                {
+                  "Id": "fireball",
+                  "Delay": 0
+                }
+              ],
+              "Interval": 100,
+              "Frames": [
+                2,
+                3,
+                4,
+                5
+              ]
+            }
+          ],
+          "WorkingEffects": [
+            {
+              "Id": "Default",
+              "Sounds": [
+                {
+                  "Id": "fireball",
+                  "Delay": 0
+                }
+              ],
+              "Interval": 100,
+              "Frames": [
+                2,
+                3,
+                4,
+                5
+              ]
+            }
+          ],
+          WorkingEffectChance: 1
+        },
+      }
+    }
+  ]
+}
