@@ -68,6 +68,16 @@ public abstract class IBeltPushing : Object
         {
             outputTarget = normalObj;
         }
+        
+        // Try push item with FM
+        if (ModEntry.FMApi != null && outputTarget == null)
+        {
+            Furniture? fm = Location.GetFurnitureAt(targetTile);
+            if (fm != null && ModEntry.FMApi.IsFurnitureMachine(fm))
+            {
+                outputTarget = fm;
+            }
+        }
 
         if (outputTarget == null)
         {

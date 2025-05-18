@@ -18,6 +18,7 @@ internal sealed class ModEntry : Mod
     internal static StardioConfig Config;
     internal static IExtraMachineConfigApi? EMCApi;
     internal static IBiggerMachinesAPI? BMApi;
+    internal static IFurnitureMachineApi? FMApi;
 
     private const string MACHINE_STATE_KEY = "Jok.Stardio.MachineState";
     //ModEntry.MonitorInst.Log($"X value: {x}", LogLevel.Info);
@@ -52,6 +53,10 @@ internal sealed class ModEntry : Mod
 
     private void OnObjectListChanged(object? sender, ObjectListChangedEventArgs e)
     {
+        if (!Context.IsMainPlayer)
+        {
+            return;
+        }
         foreach (var (tileLoc, obj) in e.Removed)
         {
             MachineStateManager.RemoveState(e.Location, tileLoc);
@@ -75,6 +80,10 @@ internal sealed class ModEntry : Mod
         {typeof(Item)});
     private void OnSaving(object? sender, SavingEventArgs e)
     {
+        if (!Context.IsMainPlayer)
+        {
+            return;
+        }
         MonitorInst.Log($"Creating save", LogLevel.Info);
         
         Dictionary<string, Dictionary<Vector2, ModMachineStateSerialized>?> serialized = new Dictionary<string, Dictionary<Vector2, ModMachineStateSerialized>?>();
@@ -106,6 +115,11 @@ internal sealed class ModEntry : Mod
     
     private void OnSaveLoaded(object sender, SaveLoadedEventArgs e)
     {
+        if (!Context.IsMainPlayer)
+        {
+            return;
+        }
+        
         var stateData = Helper.Data.ReadSaveData<Dictionary<string, Dictionary<Vector2, ModMachineStateSerialized>?>>(MACHINE_STATE_KEY);
         if (stateData == null)
         {
@@ -168,6 +182,10 @@ internal sealed class ModEntry : Mod
             isProcessTick = true;
         }
 
+        if (!Context.IsMainPlayer)
+        {
+            return;
+        }
         foreach (GameLocation location in Game1.locations)
         {
             foreach (Object obj in location.objects.Values)
@@ -194,6 +212,7 @@ internal sealed class ModEntry : Mod
         sc.RegisterSerializerType(typeof(SplitterItem));
         EMCApi = Helper.ModRegistry.GetApi<IExtraMachineConfigApi>("selph.ExtraMachineConfig");
         BMApi = Helper.ModRegistry.GetApi<IBiggerMachinesAPI>("Jok.BiggerMachines");
+        FMApi = Helper.ModRegistry.GetApi<IFurnitureMachineApi>("selph.FurnitureMachine");
 
         SetupConfigs();
     }

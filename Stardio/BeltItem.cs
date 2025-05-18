@@ -175,6 +175,18 @@ public class BeltItem : IBeltPushing
             TryPullFromMachine(inputObj);
             return;
         }
+        
+        // Try Grab item with FM
+        if (ModEntry.FMApi != null)
+        {
+            Furniture? fm = Location.GetFurnitureAt(targetTile);
+            if (fm != null && ModEntry.FMApi.IsFurnitureMachine(fm))
+            {
+                inputObj = fm;
+                TryPullFromMachine(inputObj);
+            }
+            return;
+        }
 
         TryPullFromFishPond(targetTile);
     }
@@ -237,7 +249,7 @@ public class BeltItem : IBeltPushing
             {
                 foreach (var item in chest.Items)
                 {
-                    if (item is not null)
+                    if (item is not null && item is Object)
                     {
                         heldObject.Value = (Object)item.getOne();
                         item.Stack -= 1;
@@ -256,6 +268,11 @@ public class BeltItem : IBeltPushing
                     }
                 }
             }
+        }
+
+        if (output is not Object)
+        {
+            return;
         }
 
         heldObject.Value = (Object)output.getOne();
