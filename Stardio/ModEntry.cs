@@ -212,23 +212,12 @@ internal sealed class ModEntry : Mod
         );
 
         // add config options
-        configMenu.AddBoolOption(
+        configMenu.AddKeybind(
             mod: ModManifest,
-            name: I18n.Config_Quality_Name,
-            tooltip: I18n.Config_Quality_Tooltip,
-            getValue: () => Config.ShowQualityOnBelts,
-            setValue: value => Config.ShowQualityOnBelts = value
-        );
-        
-        configMenu.AddNumberOption(
-            mod: ModManifest,
-            name: I18n.Config_Updaterate_Name,
-            tooltip: I18n.Config_Updaterate_Tooltip,
-            getValue: () => Config.BeltUpdateMS,
-            setValue: value => Config.BeltUpdateMS = value,
-            min: 10,
-            max: 1000,
-            interval: 5
+            name: I18n.Config_Rkeybind_Name,
+            tooltip: I18n.Config_Rkeybind_Tooltip,
+            getValue: () => Config.RotateKeybind,
+            setValue: value => Config.RotateKeybind = value
         );
         
         configMenu.AddNumberOption(
@@ -253,12 +242,23 @@ internal sealed class ModEntry : Mod
             interval: .1f
         );
         
-        configMenu.AddKeybind(
+        configMenu.AddBoolOption(
             mod: ModManifest,
-            name: I18n.Config_Rkeybind_Name,
-            tooltip: I18n.Config_Rkeybind_Tooltip,
-            getValue: () => Config.RotateKeybind,
-            setValue: value => Config.RotateKeybind = value
+            name: I18n.Config_Quality_Name,
+            tooltip: I18n.Config_Quality_Tooltip,
+            getValue: () => Config.ShowQualityOnBelts,
+            setValue: value => Config.ShowQualityOnBelts = value
+        );
+        
+        configMenu.AddNumberOption(
+            mod: ModManifest,
+            name: I18n.Config_Updaterate_Name,
+            tooltip: I18n.Config_Updaterate_Tooltip,
+            getValue: () => Config.BeltUpdateMS,
+            setValue: value => Config.BeltUpdateMS = value,
+            min: 10,
+            max: 1000,
+            interval: 5
         );
         
         /*
