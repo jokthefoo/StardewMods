@@ -313,6 +313,7 @@ internal sealed class ModEntry : Mod
                 // ingredients / unused / yield / big craftable? / unlock conditions /
                 dict.Add("(Jok.Belt)Jok.Stardio.Belt", $"335 5 390 25 388 25/what/(Jok.Belt)Jok.Stardio.Belt 5/false/s farming 3/");
                 dict.Add("(Jok.Belt)Jok.Stardio.Bridge", $"336 1 (Jok.Belt)Jok.Stardio.Belt 5/what/(Jok.Belt)Jok.Stardio.Bridge 1/false/s farming 5/");
+                dict.Add("(Jok.Belt)Jok.Stardio.Splitter", $"336 1 (Jok.Belt)Jok.Stardio.Belt 5/what/(Jok.Belt)Jok.Stardio.Splitter 1/false/s farming 5/");
             });
         }
     }

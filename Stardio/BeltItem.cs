@@ -2,11 +2,9 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Netcode;
-using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Buildings;
 using StardewValley.GameData.Machines;
-using StardewValley.Inventories;
 using StardewValley.ItemTypeDefinitions;
 using StardewValley.Objects;
 using StardewValley.TerrainFeatures;
@@ -15,41 +13,18 @@ using Object = StardewValley.Object;
 namespace Jok.Stardio;
 
 [XmlType("Mods_Jok_BeltItem")]
-public class BeltItem : Object
+public class BeltItem : IBeltPushing
 {
     [XmlIgnore]
     public static int BeltAnim = 0;
     [XmlIgnore]
     public static int beltUpdateCountdown = 0;
     
-    [XmlIgnore] public static Dictionary<int, Vector2> rotationDict = new()
-    {
-        { 0, new Vector2(0, -1) },
-        { 1, new Vector2(1, 0) },
-        { 2, new Vector2(0, 1) },
-        { 3, new Vector2(-1, 0) }
-    };
-
-    [XmlIgnore] public float HeldItemPosition;
-    
-    [XmlElement("currentRotation")]
-    public readonly NetInt currentRotation = new();
-    
-    [XmlIgnore] private IInventory tempBeltInventory = new Inventory();
-    
-    public enum Direction
-    {
-        Forward = 0,
-        Left = 3,
-        Right = 1,
-        Behind = 2
-    };
-
+    [XmlElement("spriveCurveOffset")]
+    public readonly NetInt beltSpriteRotationOffset = new();
     public override string DisplayName => GetDisplayName();
     public string Description { get; set; }
     public override string TypeDefinitionId => "(Jok.Belt)";
-
-    private int beltSpriteRotationOffset = 0;
     
     public readonly NetString objName = new();
     public BeltItem()
@@ -150,11 +125,6 @@ public class BeltItem : Object
         return false;
     }
 
-    public override void updateWhenCurrentLocation(GameTime time)
-    {
-        base.updateWhenCurrentLocation(time);
-    }
-
     public void beltUpdate(bool isProcessTick)
     {
         if (Location == null)
@@ -171,289 +141,14 @@ public class BeltItem : Object
         
         if (isProcessTick)
         {
-            BeltPushItem();
+            PushItem(Direction.Forward);
             BeltPullItem();
         }
-    }
-    
-    // Push item
-    private void BeltPushItem()
-    {
-        if (heldObject.Value == null || HeldItemPosition < 1.0f)
-        {
-            return;
-        }
-
-        var targetTile = getTileInDirection(Direction.Forward);
-        tempBeltInventory.Clear();
-        tempBeltInventory.Add(heldObject.Value);
-
-        Object? outputTarget = null;
-        // Try to get push target with BM first
-        if (ModEntry.BMApi != null && ModEntry.BMApi.TryGetObjectAt(Location, targetTile, out var bmObject))
-        {
-            outputTarget = bmObject;
-        }
-
-        if (outputTarget == null && Location.objects.TryGetValue(targetTile, out var normalObj))
-        {
-            outputTarget = normalObj;
-        }
-
-        if (outputTarget == null)
-        {
-            TryPushToShippingBin(targetTile);
-            return;
-        }
-            
-        // try to add to chest
-        if (TryPushToChest(outputTarget))
-        {
-            return;
-        }
-
-        // try to push to belt
-        if (TryPushToBelt(outputTarget) || outputTarget is BeltItem)
-        {
-            return;
-        }
-        
-        // try to push to bridge
-        if (TryPushToBridge(outputTarget) || outputTarget is BridgeItem)
-        {
-            return;
-        }
-        
-        // try to push to splitter
-        if (TryPushToSplitter(outputTarget) || outputTarget is SplitterItem)
-        {
-            return;
-        }
-
-        // try to load single item
-        if (outputTarget.AttemptAutoLoad(tempBeltInventory, Game1.player))
-        {
-            heldObject.Value = null;
-            HeldItemPosition = 0;
-            return;
-        }
-
-        TryPushToMultiInputMachine(outputTarget);
-
-        var state = MachineStateManager.GetState(outputTarget.Location, outputTarget.TileLocation);
-        // try to load machine's current inventory -- belt held item isn't used here
-        if (ModMachineState.IsValid(state))
-        {
-            tempBeltInventory = new Inventory();
-            tempBeltInventory.AddRange(state!.currentInventory);
-
-            if (outputTarget.AttemptAutoLoad(tempBeltInventory, Game1.player))
-            {
-                // inventory should be emptied by autoload
-                state.outputRule = null;
-                state.outputTrigger = null;
-            }
-        }
-    }
-
-    private void TryPushToShippingBin(Vector2 targetTile)
-    {
-        var building = Location.getBuildingAt(targetTile);
-        if (building is ShippingBin && heldObject.Value.canBeShipped())
-        {
-            var farm = Game1.getFarm();
-            farm.getShippingBin(Game1.MasterPlayer).Add(heldObject.Value);
-            farm.lastItemShipped = heldObject.Value;
-            farm.playSound("Ship");
-            heldObject.Value = null;
-            HeldItemPosition = 0;
-        }
-    }
-
-    private void TryPushToMultiInputMachine(Object outputTarget)
-    {
-        MachineData machineData = outputTarget.GetMachineData();
-        if (machineData == null || outputTarget.heldObject.Value != null)
-        {
-            return;
-        }
-
-        var state = MachineStateManager.GetState(outputTarget.Location, outputTarget.TileLocation);
-        if (!ModMachineState.IsValid(state))
-        {
-            // Try to start new rule
-            if (!MachineDataUtility.TryGetMachineOutputRule(this, machineData, MachineOutputTrigger.ItemPlacedInMachine, heldObject.Value, Game1.player, Location, out var outputRule,
-                    out var triggerRule, out var outputRuleIgnoringCount, out var triggerIgnoringCount))
-            {
-                if (outputRuleIgnoringCount != null)
-                {
-                    // start new rule
-                    MachineStateManager.CreateState(Location, outputTarget.TileLocation, outputRuleIgnoringCount, triggerIgnoringCount, heldObject.Value);
-                    heldObject.Value = null;
-                    HeldItemPosition = 0;
-                }
-            } 
-            // We matched a rule that requires only one base item but has EMC additional requirements so we start the rule here
-            else if (ModEntry.EMCApi != null) 
-            {
-                // start new rule
-                MachineStateManager.CreateState(Location, outputTarget.TileLocation, outputRule, triggerRule, heldObject.Value);
-                heldObject.Value = null;
-                HeldItemPosition = 0;
-            }
-            return;
-        }
-
-        IInventory tempBeltInventory = new Inventory();
-        tempBeltInventory.AddRange(state!.currentInventory);
-        
-        // If we have started a rule, check if we are trying to load additional missing requirements (aka coal)
-        if (ModMachineState.IsValid(state) && !MachineDataUtility.HasAdditionalRequirements(tempBeltInventory, machineData.AdditionalConsumedItems, out var failedRequirement))
-        {
-            foreach (MachineItemAdditionalConsumedItems requirement in machineData.AdditionalConsumedItems)
-            {
-                if (ItemRegistry.QualifyItemId(requirement.ItemId) == heldObject.Value.QualifiedItemId && state.CountItemId(requirement.ItemId) < requirement.RequiredCount)
-                {
-                    AddItemToMachineStateThenCheck(tempBeltInventory, state, outputTarget);
-                    return;
-                }
-            }
-        }
-
-        // autoload failed
-        // If we have started with a rule continue with that rule
-        if (ModMachineState.IsValid(state))
-        {
-            if (MachineDataUtility.CanApplyOutput(outputTarget, state.outputRule, MachineOutputTrigger.ItemPlacedInMachine, heldObject.Value, Game1.player, Location, out var triggerRule,
-                    out var matchesExceptCount))
-            {
-                // we shouldn't get in here, this would mean we can load item but failed in earlier conditions that should succeed
-                ModEntry.MonitorInst.Log($"Stardio failed to correctly load a machine.", LogLevel.Error);
-                return;
-            }
-            
-            if (matchesExceptCount && triggerRule.Id == state.outputTrigger!.Id && state.CountItemId(heldObject.Value.ItemId) < triggerRule.RequiredCount)
-            {
-                AddItemToMachineStateThenCheck(tempBeltInventory, state, outputTarget);
-                return;
-            }
-
-            // if we don't add the item belt is blocked
-        }
-        
-        // If all else fails check for EMC requirements
-        if (ModMachineState.IsValid(state) && ModEntry.EMCApi != null)
-        {
-            foreach ((string extraItemId, int extraCount) in ModEntry.EMCApi.GetExtraRequirements(state.outputRule!.OutputItem[0]))
-            {
-                if (CraftingRecipe.ItemMatchesForCrafting(heldObject.Value, extraItemId) && state.CountItemId(heldObject.Value.ItemId) < extraCount)
-                {
-                    AddItemToMachineStateThenCheck(tempBeltInventory, state, outputTarget);
-                    return;
-                }
-            }
-
-            foreach ((string extraContextTags, int extraCount) in ModEntry.EMCApi.GetExtraTagsRequirements(state.outputRule.OutputItem[0]))
-            {
-                if (ItemContextTagManager.DoesTagQueryMatch(extraContextTags, heldObject.Value.GetContextTags() ?? new HashSet<string>()) && state.CountItemId(heldObject.Value.ItemId) < extraCount)
-                {
-                    AddItemToMachineStateThenCheck(tempBeltInventory, state, outputTarget);
-                    return;
-                }
-            }
-        }
-    }
-
-    private void AddItemToMachineStateThenCheck(IInventory tempBeltInventory, ModMachineState state, Object outputTarget)
-    {
-        // add item
-        state.AddObject(heldObject.Value);
-
-        // Check if we now have enough
-        if (outputTarget.AttemptAutoLoad(tempBeltInventory, Game1.player))
-        {
-            // inventory should be emptied by autoload
-            state.outputRule = null;
-            state.outputTrigger = null;
-        }
-
-        heldObject.Value = null;
-        HeldItemPosition = 0;
-    }
-
-    private bool TryPushToChest(Object outputTarget)
-    {
-        if (outputTarget is Chest outputChest && !outputChest.GetMutex().IsLocked())
-        {
-            if (outputChest.addItem(heldObject.Value) != null)
-            {
-                // Chest full so drop item
-                Game1.createItemDebris(heldObject.Value, TileLocation * 64f, -1, Location);
-            }
-
-            outputChest.clearNulls();
-            heldObject.Value = null;
-            HeldItemPosition = 0;
-            return true;
-        }
-        return false;
-    }
-    
-    private bool TryPushToBridge(Object outputTarget)
-    {
-        if (outputTarget is BridgeItem bridge)
-        {
-            var targetTile = getTileInDirection(Direction.Forward, bridge.TileLocation);
-            if (!Location.objects.TryGetValue(targetTile, out var obj))
-            {
-                return false;
-            }
-
-            if (obj is BeltItem belt && belt.heldObject.Value == null && belt.ValidPushFrom(currentRotation.Value))
-            {
-                belt.heldObject.Value = heldObject.Value;
-                heldObject.Value = null;
-                HeldItemPosition = 0;
-                return true;
-            }
-
-            if (obj is BridgeItem)
-            {
-                return TryPushToBridge(obj);
-            }
-        }
-        return false;
-    }
-    
-    private bool TryPushToSplitter(Object outputTarget)
-    {
-        if (outputTarget is SplitterItem splitter && splitter.heldObject.Value == null)
-        {
-            splitter.heldObject.Value = heldObject.Value;
-
-            heldObject.Value = null;
-            HeldItemPosition = 0;
-            return true;
-        }
-        return false;
-    }
-    
-    private bool TryPushToBelt(Object outputTarget)
-    {
-        if (outputTarget is BeltItem belt && belt.heldObject.Value == null && belt.ValidPushFrom(currentRotation.Value))
-        {
-            belt.heldObject.Value = heldObject.Value;
-
-            heldObject.Value = null;
-            HeldItemPosition = 0;
-            return true;
-        }
-        return false;
     }
 
     private void BeltPullItem()
     {
-        if (heldObject.Value != null || beltSpriteRotationOffset != 0)
+        if (heldObject.Value != null || beltSpriteRotationOffset.Value != 0)
         {
             return;
         }
@@ -668,7 +363,7 @@ public class BeltItem : Object
                 case 1: // right
                     sourceOffset = 4;
                     curveSpriteOffset = 4;
-                    if (beltSpriteRotationOffset == -1) // left turn
+                    if (beltSpriteRotationOffset.Value == -1) // left turn
                     {
                         curveSpriteOffset += 8;
                         spriteEffects = SpriteEffects.FlipHorizontally;
@@ -676,12 +371,12 @@ public class BeltItem : Object
                     break;
                 case 2: // down
                     spriteEffects = SpriteEffects.FlipVertically;
-                    if (beltSpriteRotationOffset == -1) // left turn
+                    if (beltSpriteRotationOffset.Value == -1) // left turn
                     {
                         curveSpriteOffset = 20;
                         spriteEffects = SpriteEffects.FlipVertically;
                     }
-                    if (beltSpriteRotationOffset == 1) // right turn
+                    if (beltSpriteRotationOffset.Value == 1) // right turn
                     {
                         curveSpriteOffset = 12;
                         spriteEffects = SpriteEffects.None;
@@ -691,7 +386,7 @@ public class BeltItem : Object
                     sourceOffset = 4;
                     spriteEffects = SpriteEffects.FlipHorizontally;
                     curveSpriteOffset = 4;
-                    if (beltSpriteRotationOffset == 1) // right turn
+                    if (beltSpriteRotationOffset.Value == 1) // right turn
                     {
                         curveSpriteOffset += 8;
                         spriteEffects = SpriteEffects.None;
@@ -699,12 +394,12 @@ public class BeltItem : Object
                     break;
                 case 0: // up
                     sourceOffset = 0;
-                    if (beltSpriteRotationOffset == -1) // left turn
+                    if (beltSpriteRotationOffset.Value == -1) // left turn
                     {
                         curveSpriteOffset = 12;
                         spriteEffects = SpriteEffects.FlipVertically;
                     }
-                    if (beltSpriteRotationOffset == 1) // right turn
+                    if (beltSpriteRotationOffset.Value == 1) // right turn
                     {
                         curveSpriteOffset = 20;
                         spriteEffects = SpriteEffects.None;
@@ -712,7 +407,7 @@ public class BeltItem : Object
                     break;
             }
 
-            if (beltSpriteRotationOffset == 0)
+            if (beltSpriteRotationOffset.Value == 0)
             {
                 //no curve
                 curveSpriteOffset = 0;
@@ -726,7 +421,7 @@ public class BeltItem : Object
             spriteBatch.Draw(itemData.GetTexture(),
                 Game1.GlobalToLocal(Game1.viewport, new Vector2(x * 64 + 32, y * 64 + 32) + shake),
                 itemData.GetSourceRect(sourceOffset + curveSpriteOffset, BeltAnim), Color.White * alpha, 0f, new Vector2(8f, 8f), scale.Y > 1f ? getScale().Y : 4f, spriteEffects,
-                (isPassable() ? bounds.Top - 50 : bounds.Center.Y) / 10000f);
+                (isPassable() ? bounds.Top - 100 : bounds.Center.Y) / 10000f);
             
             
             if (heldObject.Value == null)
@@ -746,15 +441,15 @@ public class BeltItem : Object
             switch (currentRotation.Value)
             {
                 case 0: // up
-                    if (HeldItemPosition < .5f && beltSpriteRotationOffset == 1) // right turn -- we need yoffset to pretend we are going up until > .5 then go right
+                    if (HeldItemPosition < .5f && beltSpriteRotationOffset.Value == 1) // right turn -- we need yoffset to pretend we are going up until > .5 then go right
                     {
                         xOffset -= 64 * HeldItemPosition - 64;
                     } 
-                    else if (HeldItemPosition < .5f && beltSpriteRotationOffset == -1) // left turn -- we need yoffset to pretend we are going down until > .5 then go right
+                    else if (HeldItemPosition < .5f && beltSpriteRotationOffset.Value == -1) // left turn -- we need yoffset to pretend we are going down until > .5 then go right
                     {
                         xOffset += 64 * HeldItemPosition;
                     }
-                    else if (beltSpriteRotationOffset != 0)
+                    else if (beltSpriteRotationOffset.Value != 0)
                     {
                         yOffset -= 48 * HeldItemPosition - 24;
                         xOffset += 32;
@@ -766,12 +461,12 @@ public class BeltItem : Object
                     }
                     break;
                 case 1: // right
-                    if (HeldItemPosition < .5f && beltSpriteRotationOffset == 1) // right turn -- we need yoffset to pretend we are going up until > .5 then go right
+                    if (HeldItemPosition < .5f && beltSpriteRotationOffset.Value == 1) // right turn -- we need yoffset to pretend we are going up until > .5 then go right
                     {
                         yOffset -= 80 * HeldItemPosition - 40;
                         xOffset += 32;
                     } 
-                    else if (HeldItemPosition < .5f && beltSpriteRotationOffset == -1) // left turn -- we need yoffset to pretend we are going down until > .5 then go right
+                    else if (HeldItemPosition < .5f && beltSpriteRotationOffset.Value == -1) // left turn -- we need yoffset to pretend we are going down until > .5 then go right
                     {
                         yOffset += 64 * HeldItemPosition - 32;
                         xOffset += 32;
@@ -782,11 +477,11 @@ public class BeltItem : Object
                     }
                     break;
                 case 2: // down
-                    if (HeldItemPosition < .5f && beltSpriteRotationOffset == 1) // right turn -- we need xoffset to pretend we are going to the right until > .5 then go down
+                    if (HeldItemPosition < .5f && beltSpriteRotationOffset.Value == 1) // right turn -- we need xoffset to pretend we are going to the right until > .5 then go down
                     {
                         xOffset += 64 * HeldItemPosition;
                     } 
-                    else if (HeldItemPosition < .5f && beltSpriteRotationOffset == -1) // left turn -- we need xoffset to pretend we are going to the left until > .5 then go down
+                    else if (HeldItemPosition < .5f && beltSpriteRotationOffset.Value == -1) // left turn -- we need xoffset to pretend we are going to the left until > .5 then go down
                     {
                         xOffset -= 64 * HeldItemPosition - 64;
                     }
@@ -797,12 +492,12 @@ public class BeltItem : Object
                     }
                     break;
                 case 3: // left
-                    if (HeldItemPosition < .5f && beltSpriteRotationOffset == 1) // right turn -- we need yoffset to pretend we are going down until > .5 then go left
+                    if (HeldItemPosition < .5f && beltSpriteRotationOffset.Value == 1) // right turn -- we need yoffset to pretend we are going down until > .5 then go left
                     {
                         yOffset += 64 * HeldItemPosition - 32;
                         xOffset += 32;
                     } 
-                    else if (HeldItemPosition < .5f && beltSpriteRotationOffset == -1) // left turn -- we need yoffset to pretend we are going up until > .5 then go left
+                    else if (HeldItemPosition < .5f && beltSpriteRotationOffset.Value == -1) // left turn -- we need yoffset to pretend we are going up until > .5 then go left
                     {
                         yOffset -= 80 * HeldItemPosition - 40;
                         xOffset += 32;
@@ -910,7 +605,7 @@ public class BeltItem : Object
         {
             if ((backObj is BeltItem backBelt && IsOtherBeltFacingMe(backBelt)) || backObj is SplitterItem || backObj is BridgeItem)
             {
-                beltSpriteRotationOffset = 0;
+                beltSpriteRotationOffset.Value = 0;
                 return;
             }
         }
@@ -921,19 +616,19 @@ public class BeltItem : Object
         // if belts on both sides then default
         if (foundLeft && foundRight)
         {
-            beltSpriteRotationOffset = 0;
+            beltSpriteRotationOffset.Value = 0;
         } 
         else if (foundRight)
         {
-            beltSpriteRotationOffset = 1;
+            beltSpriteRotationOffset.Value = 1;
         } 
         else if (foundLeft)
         {
-            beltSpriteRotationOffset = -1;
+            beltSpriteRotationOffset.Value = -1;
         }
         else
         {
-            beltSpriteRotationOffset = 0;
+            beltSpriteRotationOffset.Value = 0;
         }
     }
 
@@ -945,17 +640,6 @@ public class BeltItem : Object
             Location.debris.Add(new Debris(heldObject.Value, tileLocation.Value * 64f + new Vector2(32f, 32f)));
         }
         return returnVal;
-    }
-
-    public Vector2 getTileInDirection(Direction dir, Vector2 tileLoc)
-    {
-        var rot = (currentRotation.Value + (int)dir) % 4;
-        return tileLoc + rotationDict[rot];
-    }
-    
-    private Vector2 getTileInDirection(Direction dir)
-    {
-        return getTileInDirection(dir, TileLocation);
     }
     
     private bool IsOtherBeltFacingMe(BeltItem otherBelt)

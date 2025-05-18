@@ -2,22 +2,20 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Netcode;
-using StardewModdingAPI;
 using StardewValley;
 using Object = StardewValley.Object;
 
 namespace Jok.Stardio;
 
 [XmlType("Mods_Jok_SplitterItem")]
-public class SplitterItem : Object
+public class SplitterItem : IBeltPushing
 {
     public override string DisplayName => GetDisplayName();
     public string Description { get; set; }
     public override string TypeDefinitionId => "(Jok.Belt)";
     
     [XmlIgnore]
-    private BeltItem.Direction nextDirection = BeltItem.Direction.Forward;
-    [XmlIgnore] public float HeldItemPosition;
+    private Direction nextDirection = Direction.Forward;
 
     public readonly NetString objName = new();
     
@@ -100,9 +98,9 @@ public class SplitterItem : Object
             return;
         }
         
-        if (heldObject.Value != null && HeldItemPosition < .4f)
+        if (heldObject.Value != null && HeldItemPosition < 1.0f)
         {
-            HeldItemPosition += 1.0f / Math.Clamp(ModEntry.Config.BeltUpdateMS, 10, ModEntry.Config.BeltUpdateMS);
+            HeldItemPosition += 4.0f / Math.Clamp(ModEntry.Config.BeltUpdateMS, 10, ModEntry.Config.BeltUpdateMS);
             readyForHarvest.Value = true;
         }
         HeldItemPosition = Math.Clamp(HeldItemPosition, 0.0f, 1.0f);
@@ -113,40 +111,36 @@ public class SplitterItem : Object
             {
                 return;
             }
-            nextDirection = (BeltItem.Direction)((int)nextDirection % 4);
-            // try to push to belt
-            if (TryPushToBelt(nextDirection++))
+            nextDirection = (Direction)((int)nextDirection % 4);
+            // try to push
+            PushItem(nextDirection++);
+            if (heldObject.Value == null)
             {
                 return;
             }
-            if (TryPushToBelt(nextDirection++))
+            PushItem(nextDirection++);
+            if (heldObject.Value == null)
             {
                 return;
             }
-            if (TryPushToBelt(nextDirection++))
+            PushItem(nextDirection++);
+            if (heldObject.Value == null)
             {
                 return;
             }
-            if (TryPushToBelt(nextDirection++))
-            {
-                return;
-            }
+            PushItem(nextDirection++);
         }
     }
-    
-    private bool TryPushToBelt(BeltItem.Direction dir)
-    {
-        var targetTile = getTileInDirection(dir);
-        if (Location.objects.TryGetValue(targetTile, out var outputTarget))
-        {
-            if (outputTarget is BeltItem belt && belt.heldObject.Value == null && belt.getTileInDirection(BeltItem.Direction.Forward, belt.TileLocation) != TileLocation)
-            {
-                belt.heldObject.Value = heldObject.Value;
 
-                heldObject.Value = null;
-                HeldItemPosition = 0;
-                return true;
-            }
+    protected override bool TryPushToBelt(Object outputTarget)
+    {
+        if (outputTarget is BeltItem belt && belt.heldObject.Value == null && belt.getTileInDirection(Direction.Forward, belt.TileLocation) != TileLocation)
+        {
+            belt.heldObject.Value = heldObject.Value;
+
+            heldObject.Value = null;
+            HeldItemPosition = 0;
+            return true;
         }
         return false;
     }
@@ -206,32 +200,21 @@ public class SplitterItem : Object
     
     public void UpdateNeighborCurves(Vector2 tileLoc)
     {
-        if (Location.objects.TryGetValue(getTileInDirection(BeltItem.Direction.Forward, tileLoc), out Object obj1) && obj1 is BeltItem forwardBelt)
+        if (Location.objects.TryGetValue(getTileInDirection(Direction.Forward, tileLoc), out Object obj1) && obj1 is BeltItem forwardBelt)
         {
             forwardBelt.CheckForCurve();
         }
-        if (Location.objects.TryGetValue(getTileInDirection(BeltItem.Direction.Right, tileLoc), out Object obj2) && obj2 is BeltItem rightBelt)
+        if (Location.objects.TryGetValue(getTileInDirection(Direction.Right, tileLoc), out Object obj2) && obj2 is BeltItem rightBelt)
         {
             rightBelt.CheckForCurve();
         }
-        if (Location.objects.TryGetValue(getTileInDirection(BeltItem.Direction.Left, tileLoc), out Object obj3) && obj3 is BeltItem leftBelt)
+        if (Location.objects.TryGetValue(getTileInDirection(Direction.Left, tileLoc), out Object obj3) && obj3 is BeltItem leftBelt)
         {
             leftBelt.CheckForCurve();
         }
-        if (Location.objects.TryGetValue(getTileInDirection(BeltItem.Direction.Behind, tileLoc), out Object obj4) && obj4 is BeltItem backBelt)
+        if (Location.objects.TryGetValue(getTileInDirection(Direction.Behind, tileLoc), out Object obj4) && obj4 is BeltItem backBelt)
         {
             backBelt.CheckForCurve();
         }
-    }
-
-    public Vector2 getTileInDirection(BeltItem.Direction dir, Vector2 tileLoc)
-    {
-        var rot = (int)dir % 4;
-        return tileLoc + BeltItem.rotationDict[rot];
-    }
-    
-    private Vector2 getTileInDirection(BeltItem.Direction dir)
-    {
-        return getTileInDirection(dir, TileLocation);
     }
 }
