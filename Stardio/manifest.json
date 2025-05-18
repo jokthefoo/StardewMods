@@ -6,7 +6,7 @@
   "UniqueID": "Jok.Stardio",
   "EntryDll": "Stardio.dll",
   "MinimumApiVersion": "4.0.0",
-  "UpdateKeys": ["Nexus:33581"],
+  "UpdateKeys": ["Nexus:34075"],
   "Dependencies": [
     {
       "UniqueID": "spacechase0.SpaceCore",
