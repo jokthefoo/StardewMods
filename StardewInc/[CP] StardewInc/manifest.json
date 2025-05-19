@@ -9,17 +9,21 @@
     "UniqueID": "Pathoschild.ContentPatcher"
   },
   "Dependencies": [
-  {
-    "UniqueID": "selph.ExtraMachineConfig",
-    "IsRequired": true
-  },
-  {
-    "UniqueID": "Jok.StardewInc",
-    "IsRequired": true
-  },
-  { 
-    "UniqueID": "Pathoschild.ContentPatcher",
-    "IsRequired": true
-  }
-]
+    {
+      "UniqueID": "selph.ExtraMachineConfig",
+      "IsRequired": true
+    },
+    {
+      "UniqueID": "mistyspring.ItemExtensions",
+      "IsRequired": true
+    },
+    {
+      "UniqueID": "Pathoschild.ContentPatcher",
+      "IsRequired": false
+    },
+    {
+      "UniqueID": "Jok.StardewInc",
+      "IsRequired": false
+    }
+  ]
 }

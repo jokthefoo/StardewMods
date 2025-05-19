@@ -13,10 +13,15 @@
       "IsRequired": true
     },
     {
-      "UniqueID": "Jok.Stardio",
+      "UniqueID": "mistyspring.ItemExtensions",
       "IsRequired": true
     },
-    { "UniqueID": "Pathoschild.ContentPatcher", 
+    {
+      "UniqueID": "Pathoschild.ContentPatcher",
+      "IsRequired": false
+    },
+    {
+      "UniqueID": "Jok.Stardio",
       "IsRequired": false
     }
   ]

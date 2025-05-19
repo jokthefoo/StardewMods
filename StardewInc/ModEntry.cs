@@ -45,15 +45,19 @@ internal sealed class ModEntry : Mod
         Helper.Events.World.ObjectListChanged += OnObjectListChanged;
 
         HarmonyPatches.Patch(ModManifest.UniqueID);
-    }
-    
-    // TODO crafting recipes and item prices
-    
-    // TODO add bauxite stone to mines -- probably skull or volcano both?
-    // TODO new location with mine-able ground ores --- on farm instead? (probably spots for all (most) types, area unlocks progressively)
-    
+    }    
     // TODO water?
     // TODO washedbauxite sprite / make it a liquid
+    
+    // TODO mail on first bauxite ore
+    // TODO unlock refinery when shipped 20 bauxite ore
+    // TODO unlock smeltery when shipped 4 aluminum scrap
+    // TODO unlock shaper when shipped 2 aluminum bar
+    
+    // TODO unlock filler when shipped any syrup and 1 aluminum sheet
+    
+    
+    // TODO new location with mine-able ground ores --- on farm instead? (probably spots for all (most) types, area unlocks progressively)
     
     // TODO all processing times
     
