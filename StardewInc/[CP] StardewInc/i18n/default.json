@@ -10,12 +10,12 @@
   "Jok.StardewInc.CP.Refinery.Washing.Invalid": "Requires a large milk for washing.",
   "Jok.StardewInc.CP.Refinery.Scrap.Invalid": "Requires 3 copper bars for filtering.",
 
-  "Jok.StardewInc.CP.SyrupMaker.name": "Syrup Maker",
+  "Jok.StardewInc.CP.SyrupMaker.name": "Syrup Mixer",
   "Jok.StardewInc.CP.SyrupMaker.description": "Used for creating syrups from fruits.",
   "Jok.StardewInc.CP.SyrupMaker.Invalid": "Requires 5 of a fruit, sugar, and liquid.",
   "Jok.StardewInc.CP.Syrup.flavoredname": "%PRESERVED_DISPLAY_NAME Syrup",
   
-  "Jok.StardewInc.CP.Filler.name": "Can Filler",
+  "Jok.StardewInc.CP.Filler.name": "Soda Sealer",
   "Jok.StardewInc.CP.Filler.description": "Used for filling empty cans with syrup and carbonated water.",
   "Jok.StardewInc.CP.Filler.Invalid": "Requires 1 syrup, 10 empty cans, and liquid.",
   

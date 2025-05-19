@@ -50,6 +50,8 @@ internal sealed class ModEntry : Mod
         HarmonyPatches.Patch(ModManifest.UniqueID);
     }
     
+    // TODO Metal Shaper machine
+    
     // TODO bigger machines in menu sizing bug
     
     // TODO add bauxite stone to mines -- probably skull or volcano both?
@@ -58,6 +60,7 @@ internal sealed class ModEntry : Mod
     // TODO crafting recipes
     
     // TODO water?
+    // TODO washedbauxite sprite / make it a liquid
     
     // TODO progression system
     
