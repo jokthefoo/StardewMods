@@ -430,11 +430,6 @@ public class BeltItem : IBeltPushing
                 curveSpriteOffset = 0;
             }
 
-            /*if (ModEntry.Config.GreyBelts)
-            {
-                sourceOffset += 16;
-            }*/
-            
             spriteBatch.Draw(itemData.GetTexture(),
                 Game1.GlobalToLocal(Game1.viewport, new Vector2(x * 64 + 32, y * 64 + 32) + shake),
                 itemData.GetSourceRect(sourceOffset + curveSpriteOffset, BeltAnim), Color.White * alpha, 0f, new Vector2(8f, 8f), scale.Y > 1f ? getScale().Y : 4f, spriteEffects,

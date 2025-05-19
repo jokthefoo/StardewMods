@@ -1,0 +1,23 @@
+{
+  "belt.name": "传送带",
+  "belt.description": "用于移动物品，可以从箱子和机器中提取或输入物品。",
+
+  "bridge.name": "桥接器",
+  "bridge.description": "用于跨越垂直或水平传送带的桥梁。",
+
+  "splitter.name": "分流器",
+  "splitter.description": "将进入的物品平均分配到所有连接的传送带上。",
+
+  "belt.category.name": "传送带",
+
+  "config.quality.name": "显示物品品质",
+  "config.quality.tooltip": "是否在传送带上显示物品的品质。",
+  "config.updaterate.name": "传送带更新频率",
+  "config.updaterate.tooltip": "传送带检测更新的频率（以毫秒为单位）。",
+  "config.pushplayer.name": "传送带对玩家的推力",
+  "config.pushplayer.tooltip": "传送带推动玩家的力度。",
+  "config.speedplayer.name": "传送带对玩家移动加速",
+  "config.speedplayer.tooltip": "当玩家顺着传送带方向移动时获得的速度加成。",
+  "config.rkeybind.name": "旋转快捷键",
+  "config.rkeybind.tooltip": "用于旋转传送带的按键，可在放置前后使用。"
+}

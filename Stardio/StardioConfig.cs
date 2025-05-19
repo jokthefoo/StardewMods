@@ -9,5 +9,5 @@ public sealed class StardioConfig
     public float BeltPushPlayerSpeed { get; set; } = 1.5f;
     public bool ShowQualityOnBelts { get; set; } = true;
     public int BeltUpdateMS { get; set; } = 100;
-    //public bool GreyBelts { get; set; } = false;
+    public bool BrownBelts { get; set; } = true;
 }

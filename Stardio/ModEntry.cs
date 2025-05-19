@@ -47,6 +47,8 @@ internal sealed class ModEntry : Mod
         ItemRegistry.AddTypeDefinition(new BeltItemDataDefinition());
         Helper.ModContent.Load<Texture2D>("assets/belts");
         Helper.ModContent.Load<Texture2D>("assets/otherbelts");
+        Helper.ModContent.Load<Texture2D>("assets/belts2");
+        Helper.ModContent.Load<Texture2D>("assets/otherbelts2");
 
         HarmonyPatches.Patch(ModManifest.UniqueID);
     }
@@ -188,18 +190,33 @@ internal sealed class ModEntry : Mod
         }
         foreach (GameLocation location in Game1.locations)
         {
-            foreach (Object obj in location.objects.Values)
+            if (location.IsBuildableLocation())
             {
-                if (obj is BeltItem belt)
+                UpdateAllBelts(location, isProcessTick);
+                foreach (var building in location.buildings)
                 {
-                    belt.beltUpdate(isProcessTick);
-                    continue;
+                    if (building.indoors.Value != null)
+                    {
+                        UpdateAllBelts(building.indoors.Value, isProcessTick);
+                    }
                 }
+            }
+        }
+    }
+    
+    private void UpdateAllBelts(GameLocation location, bool isProcessTick)
+    {
+        foreach (Object obj in location.objects.Values)
+        {
+            if (obj is BeltItem belt)
+            {
+                belt.beltUpdate(isProcessTick);
+                continue;
+            }
                 
-                if (obj is SplitterItem splitter)
-                {
-                    splitter.splitterUpdate(isProcessTick);
-                }
+            if (obj is SplitterItem splitter)
+            {
+                splitter.splitterUpdate(isProcessTick);
             }
         }
     }
@@ -280,15 +297,17 @@ internal sealed class ModEntry : Mod
             interval: 5
         );
         
-        /*
-        // add config options
         configMenu.AddBoolOption(
             mod: ModManifest,
-            name: I18n.Config_Greybelts_Name,
-            tooltip: I18n.Config_Greybelts_Tooltip,
-            getValue: () => Config.GreyBelts,
-            setValue: value => Config.GreyBelts = value
-        );*/
+            name: I18n.Config_Brownbelts_Name,
+            tooltip: I18n.Config_Brownbelts_Tooltip,
+            getValue: () => Config.BrownBelts,
+            setValue: value =>
+            {
+                Config.BrownBelts = value;
+                Helper.GameContent.InvalidateCache($"{ModManifest.UniqueID}/belts.png");
+                Helper.GameContent.InvalidateCache($"{ModManifest.UniqueID}/otherbelts.png");
+            });
     }
 
     private void OnAssetRequested(object sender, AssetRequestedEventArgs e)
@@ -318,11 +337,25 @@ internal sealed class ModEntry : Mod
         }
         else if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/belts.png"))
         {
-            e.LoadFromModFile<Texture2D>("assets/belts.png", AssetLoadPriority.Low);
+            if (Config.BrownBelts)
+            {
+                e.LoadFromModFile<Texture2D>("assets/belts2.png", AssetLoadPriority.Low);
+            }
+            else
+            {
+                e.LoadFromModFile<Texture2D>("assets/belts.png", AssetLoadPriority.Low);
+            }
         }
         else if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/otherbelts.png"))
         {
-            e.LoadFromModFile<Texture2D>("assets/otherbelts.png", AssetLoadPriority.Low);
+            if (Config.BrownBelts)
+            {
+                e.LoadFromModFile<Texture2D>("assets/otherbelts2.png", AssetLoadPriority.Low);
+            }
+            else
+            {
+                e.LoadFromModFile<Texture2D>("assets/otherbelts.png", AssetLoadPriority.Low);
+            }
         }
         else if (e.NameWithoutLocale.IsEquivalentTo("Data/CraftingRecipes"))
         {
