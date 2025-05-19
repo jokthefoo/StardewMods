@@ -1,0 +1,112 @@
+{
+  "Changes": [
+    {
+      "Action": "EditData",
+      "Target": "Data/BigCraftables",
+      "Entries": {
+        "{{ModId}}.Shaper": {
+          "Name": "Shaper",
+          "DisplayName": "{{i18n:{{ModId}}.Shaper.name}}",
+          "Description": "{{i18n:{{ModId}}.Shaper.description}}",
+          "Texture": "Mods\\{{ModId}}\\metalpress",
+          "SpriteIndex": 0,
+          "CustomFields": {
+            "Jok.BiggerMachines.Dimensions": "3,3",
+            "Jok.BiggerMachines.EnableTransparency": "true",
+            "Jok.BiggerMachines.DrawShadow": "true"
+          }
+        }
+      }
+    },
+    {
+      "Action": "EditData",
+      "Target": "Data/Machines",
+      "Entries": {
+        "(BC){{ModId}}.Shaper": {
+          "OutputRules": [
+            {
+              "Id": "Default_AluminumPlate",
+              "Triggers": [
+                {
+                  "Id": "ItemPlacedInMachine",
+                  "Trigger": "ItemPlacedInMachine",
+                  "RequiredItemId": "(O){{ModId}}.AluminumBar",
+                  "RequiredCount": 5
+                }
+              ],
+              "OutputItem": [
+                {
+                  "Id": "(O){{ModId}}.AluminumPlate",
+                  "ItemId": "(O){{ModId}}.AluminumPlate",
+                  "MinStack": 3,
+                  "CustomData": {
+                    "selph.ExtraMachineConfig.RequirementId.1": "(O)335", // iron bar
+                    "selph.ExtraMachineConfig.RequirementCount.1": 5,
+                    "selph.ExtraMachineConfig.RequirementId.2": "(O)338", // refined quartz
+                    "selph.ExtraMachineConfig.RequirementInvalidMsg": "{{i18n:{{ModId}}.Shaper.Invalid}}"
+                  }
+                }
+              ],
+              "MinutesUntilReady": 120
+            },{
+              "Id": "Default_EmptyCan",
+              "Triggers": [
+                {
+                  "Id": "ItemPlacedInMachine",
+                  "Trigger": "ItemPlacedInMachine",
+                  "RequiredItemId": "(O){{ModId}}.AluminumPlate",
+                  "RequiredCount": 1
+                }
+              ],
+              "OutputItem": [
+                {
+                  "Id": "(O){{ModId}}.EmptyCan",
+                  "ItemId": "(O){{ModId}}.EmptyCan",
+                  "MinStack": 24
+                }
+              ],
+              "MinutesUntilReady": 120
+            }
+          ],
+          "LoadEffects": [
+            {
+              "Id": "Default",
+              "Interval": 300,
+              "Frames": [
+                1,
+                1,
+                2,
+                3,
+                4,
+                4,
+                4,
+                5,
+                1
+              ],
+              "ShakeDuration": 50
+            }
+          ],
+          "WorkingEffects": [
+            {
+              "Id": "Default",
+              "Interval": 300,
+              "Frames": [
+                1,
+                1,
+                2,
+                3,
+                4,
+                4,
+                4,
+                5,
+                1
+              ]
+            }
+          ],
+          "WorkingEffectChance": 1,
+          "WobbleWhileWorking": false
+        }
+      }
+    }
+  ]
+}

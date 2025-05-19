@@ -97,7 +97,8 @@
                 1,
                 2,
                 3
-              ]
+              ],
+              "ShakeDuration": 100
             }
           ],
           "WorkingEffects": [

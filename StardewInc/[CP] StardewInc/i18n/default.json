@@ -14,10 +14,14 @@
   "Jok.StardewInc.CP.SyrupMaker.description": "Used for creating syrups from fruits.",
   "Jok.StardewInc.CP.SyrupMaker.Invalid": "Requires 5 of a fruit, sugar, and liquid.",
   "Jok.StardewInc.CP.Syrup.flavoredname": "%PRESERVED_DISPLAY_NAME Syrup",
-  
+
   "Jok.StardewInc.CP.Filler.name": "Soda Sealer",
   "Jok.StardewInc.CP.Filler.description": "Used for filling empty cans with syrup and carbonated water.",
   "Jok.StardewInc.CP.Filler.Invalid": "Requires 1 syrup, 10 empty cans, and liquid.",
+
+  "Jok.StardewInc.CP.Shaper.name": "Metal Shaper",
+  "Jok.StardewInc.CP.Shaper.description": "Used for shaping metals into different forms.",
+  "Jok.StardewInc.CP.Shaper.Invalid": "Requires 1 refined quartz, 5 iron bars, and 5 aluminum bars.",
   
 
   "Jok.StardewInc.CP.BauxiteStone.name": "Bauxite Stone",

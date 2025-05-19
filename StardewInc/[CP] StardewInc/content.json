@@ -4,7 +4,7 @@
     {
       "LogName": "Load Assets",
       "Action": "Load",
-      "Target": "Mods/{{ModId}}/miner, Mods/{{ModId}}/forge, Mods/{{ModId}}/items, Mods/{{ModId}}/refinery, Mods/{{ModId}}/syrupmaker, Mods/{{ModId}}/filler",
+      "Target": "Mods/{{ModId}}/miner, Mods/{{ModId}}/forge, Mods/{{ModId}}/items, Mods/{{ModId}}/refinery, Mods/{{ModId}}/syrupmaker, Mods/{{ModId}}/filler, Mods/{{ModId}}/metalpress",
       "FromFile": "Assets/{{TargetWithoutPath}}.png"
     },
     {
@@ -26,6 +26,10 @@
     {
       "Action": "Include",
       "FromFile": "assets/filler.json"
+    },
+    {
+      "Action": "Include",
+      "FromFile": "assets/metalpress.json"
     },
     {
       "Action": "Include",

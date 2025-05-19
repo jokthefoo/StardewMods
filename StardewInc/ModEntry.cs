@@ -44,20 +44,13 @@ internal sealed class ModEntry : Mod
         Helper.Events.GameLoop.Saving += OnSaving;
         Helper.Events.World.ObjectListChanged += OnObjectListChanged;
 
-        //ItemRegistry.AddTypeDefinition(new BeltItemDataDefinition());
-        //Helper.ModContent.Load<Texture2D>("assets/belts");
-
         HarmonyPatches.Patch(ModManifest.UniqueID);
     }
-    
-    // TODO Metal Shaper machine
-    
-    // TODO bigger machines in menu sizing bug
     
     // TODO add bauxite stone to mines -- probably skull or volcano both?
     // TODO new location with mine-able ground ores --- on farm instead? (probably spots for all (most) types, area unlocks progressively)
     
-    // TODO crafting recipes
+    // TODO crafting recipes and item prices
     
     // TODO water?
     // TODO washedbauxite sprite / make it a liquid
