@@ -1,0 +1,92 @@
+{
+  "Changes": [
+    {
+      "Action": "EditData",
+      "Target": "Data/BigCraftables",
+      "Entries": {
+        "{{ModId}}.Filler": {
+          "Name": "Can Filler",
+          "DisplayName": "{{i18n:{{ModId}}.Filler.name}}",
+          "Description": "{{i18n:{{ModId}}.Filler.description}}",
+          "Texture": "Mods\\{{ModId}}\\filler",
+          "SpriteIndex": 0
+        }
+      }
+    },
+    {
+      "Action": "EditData",
+      "Target": "Data/Machines",
+      "Entries": {
+        "(BC){{ModId}}.Filler": {
+          "OutputRules": [
+            {
+              "Id": "Default_Soda",
+              "Triggers": [
+                {
+                  "Id": "ItemPlacedInMachine",
+                  "Trigger": "ItemPlacedInMachine",
+                  "RequiredTags": [
+                    "jok_syrup_item"
+                  ],
+                  "RequiredCount": 1
+                }
+              ],
+              "OutputItem": [
+                {
+                  "Id": "default",
+                  "ItemId": "selph.ExtraMachineConfig_FLAVORED_ITEM {{ModID}}.FilledCan DROP_IN_PRESERVE",
+                  "ObjectDisplayName": "{{Jok.StardewInc/SodaName}}",
+                  "PreserveId": "DROP_IN",
+                  "MinStack": 10,
+                  "CopyColor": true,
+                  "CustomData": {
+                    "selph.ExtraMachineConfig.RequirementId.1": "(O)186", // large milk
+                    "selph.ExtraMachineConfig.RequirementId.2": "(O){{ModId}}.EmptyCan",
+                    "selph.ExtraMachineConfig.RequirementCount.2": 10,
+                    "selph.ExtraMachineConfig.RequirementInvalidMsg": "{{i18n:{{ModId}}.Filler.Invalid}}"
+                  },
+                  "PriceModifierMode": "Stack",
+                  "PriceModifiers": [
+                    {
+                      "Modification": "Multiply",
+                      "Amount": 2
+                    }
+                  ]
+                }
+              ],
+              "MinutesUntilReady": 120
+            }
+          ],
+          "LoadEffects": [
+            {
+              "Id": "Default",
+              "Interval": 200,
+              "Frames": [
+                1,
+                2,
+                3,
+                4,
+                5
+              ]
+            }
+          ],
+          "WorkingEffects": [
+            {
+              "Id": "Default",
+              "Interval": 200,
+              "Frames": [
+                1,
+                2,
+                3,
+                4,
+                5
+              ]
+            }
+          ],
+          "WorkingEffectChance": 1,
+          "WobbleWhileWorking": false
+        }
+      }
+    }
+  ]
+}

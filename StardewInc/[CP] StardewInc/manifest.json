@@ -7,5 +7,19 @@
   "UpdateKeys": [],
   "ContentPackFor": {
     "UniqueID": "Pathoschild.ContentPatcher"
+  },
+  "Dependencies": [
+  {
+    "UniqueID": "selph.ExtraMachineConfig",
+    "IsRequired": true
+  },
+  {
+    "UniqueID": "Jok.StardewInc",
+    "IsRequired": true
+  },
+  { 
+    "UniqueID": "Pathoschild.ContentPatcher",
+    "IsRequired": true
   }
+]
 }

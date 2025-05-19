@@ -15,6 +15,9 @@
     {
       "UniqueID": "Jok.Stardio",
       "IsRequired": true
+    },
+    { "UniqueID": "Pathoschild.ContentPatcher", 
+      "IsRequired": false
     }
   ]
 }

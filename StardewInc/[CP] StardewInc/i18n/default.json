@@ -1,37 +1,49 @@
 {
-  "Jok.StardewInc.Forge.name": "Smelter",
-  "Jok.StardewInc.Forge.description": "More powerful furnace that can achieve much higher temperatures.",
+  "Jok.StardewInc.CP.Forge.name": "Smelter",
+  "Jok.StardewInc.CP.Forge.description": "More powerful furnace that can achieve much higher temperatures.",
   
-  "Jok.StardewInc.Miner.name": "Miner",
-  "Jok.StardewInc.Miner.description": "Can mine ores from the ground.",
+  "Jok.StardewInc.CP.Miner.name": "Miner",
+  "Jok.StardewInc.CP.Miner.description": "Can mine ores from the ground.",
 
-  "Jok.StardewInc.Refinery.name": "Refinery",
-  "Jok.StardewInc.Refinery.description": "Used for processing with liquids.",
-  "Jok.StardewInc.Refinery.Washing.Invalid": "Requires a large milk for washing.",
-  "Jok.StardewInc.Refinery.Scrap.Invalid": "Requires 3 copper bars for filtering.",
+  "Jok.StardewInc.CP.Refinery.name": "Refinery",
+  "Jok.StardewInc.CP.Refinery.description": "Used for processing with liquids.",
+  "Jok.StardewInc.CP.Refinery.Washing.Invalid": "Requires a large milk for washing.",
+  "Jok.StardewInc.CP.Refinery.Scrap.Invalid": "Requires 3 copper bars for filtering.",
+
+  "Jok.StardewInc.CP.SyrupMaker.name": "Syrup Maker",
+  "Jok.StardewInc.CP.SyrupMaker.description": "Used for creating syrups from fruits.",
+  "Jok.StardewInc.CP.SyrupMaker.Invalid": "Requires 5 of a fruit, sugar, and liquid.",
+  "Jok.StardewInc.CP.Syrup.flavoredname": "%PRESERVED_DISPLAY_NAME Syrup",
+  
+  "Jok.StardewInc.CP.Filler.name": "Can Filler",
+  "Jok.StardewInc.CP.Filler.description": "Used for filling empty cans with syrup and carbonated water.",
+  "Jok.StardewInc.CP.Filler.Invalid": "Requires 1 syrup, 10 empty cans, and liquid.",
   
 
-  "Jok.StardewInc.BauxiteStone.name": "Bauxite Stone",
-  "Jok.StardewInc.BauxiteStone.description": "Hey how did you get this?",
+  "Jok.StardewInc.CP.BauxiteStone.name": "Bauxite Stone",
+  "Jok.StardewInc.CP.BauxiteStone.description": "Hey how did you get this?",
   
-  "Jok.StardewInc.BauxiteOre.name": "Bauxite Ore",
-  "Jok.StardewInc.BauxiteOre.description": "An ore that can be processed into Aluminum.",
+  "Jok.StardewInc.CP.BauxiteOre.name": "Bauxite Ore",
+  "Jok.StardewInc.CP.BauxiteOre.description": "An ore that can be processed into Aluminum.",
 
-  "Jok.StardewInc.AluminumScrap.name": "Aluminum Scrap",
-  "Jok.StardewInc.AluminumScrap.description": "Can be smelted into Aluminum Bars.",
+  "Jok.StardewInc.CP.AluminumScrap.name": "Aluminum Scrap",
+  "Jok.StardewInc.CP.AluminumScrap.description": "Can be smelted into Aluminum Bars.",
 
-  "Jok.StardewInc.AluminumBar.name": "Aluminum Bar",
-  "Jok.StardewInc.AluminumBar.description": "A bar of pure Aluminum.",
+  "Jok.StardewInc.CP.AluminumBar.name": "Aluminum Bar",
+  "Jok.StardewInc.CP.AluminumBar.description": "A bar of pure Aluminum.",
 
-  "Jok.StardewInc.AluminumPlate.name": "Aluminum Plate",
-  "Jok.StardewInc.AluminumPlate.description": "A flattened plate of pure Aluminum.",
+  "Jok.StardewInc.CP.AluminumPlate.name": "Aluminum Plate",
+  "Jok.StardewInc.CP.AluminumPlate.description": "A flattened plate of pure Aluminum.",
 
-  "Jok.StardewInc.EmptyCan.name": "Empty Can",
-  "Jok.StardewInc.EmptyCan.description": "A empty liquid vessel.",
+  "Jok.StardewInc.CP.EmptyCan.name": "Empty Can",
+  "Jok.StardewInc.CP.EmptyCan.description": "A empty liquid vessel.",
 
-  "Jok.StardewInc.FilledCan.name": "Stardew Cola",
-  "Jok.StardewInc.FilledCan.description": "A delightfully refreshing beverage.",
+  "Jok.StardewInc.CP.FilledCan.name": "Stardew Cola",
+  "Jok.StardewInc.CP.FilledCan.description": "A delightfully refreshing beverage.",
+
+  "Jok.StardewInc.CP.WashedBauxite.name": "Washed Bauxite",
+  "Jok.StardewInc.CP.WashedBauxite.description": "A liquid mix of Bauxite ore and water.",
   
-  "Jok.StardewInc.WashedBauxite.name": "Washed Bauxite",
-  "Jok.StardewInc.WashedBauxite.description": "A liquid mix of Bauxite ore and water."
+  "Jok.StardewInc.CP.Syrup.name": "Syrup",
+  "Jok.StardewInc.CP.Syrup.description": "A thick sugary syrup."
 }

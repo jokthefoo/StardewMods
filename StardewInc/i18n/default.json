@@ -1,4 +1,4 @@
 {
-  "belt.name": "Conveyor Belt",
-  "belt.description": "Moves items, can pull and push from chests and machines.",
+  "Config.SodaName.name": "Soda Name",
+  "Config.SodaName.description": "The name of your soda (Will update only for new Sodas made next day)."
 }

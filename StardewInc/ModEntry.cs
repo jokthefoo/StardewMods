@@ -16,9 +16,10 @@ internal sealed class ModEntry : Mod
     internal static Mod Instance;
     internal static IMonitor MonitorInst;
     internal static IModHelper Helper;
-    internal static StardioConfig Config;
+    internal static StardewIncConfig Config;
     internal static IBiggerMachinesAPI? BMApi;
     internal static IExtraMachineConfigApi? EMCApi;
+    internal static IContentPatcherAPI? CPApi;
 
     //ModEntry.MonitorInst.Log($"X value: {x}", LogLevel.Info);
 
@@ -33,7 +34,7 @@ internal sealed class ModEntry : Mod
         MonitorInst = Monitor;
         Helper = helper;
         I18n.Init(Helper.Translation);
-        Config = Helper.ReadConfig<StardioConfig>();
+        Config = Helper.ReadConfig<StardewIncConfig>();
 
         Helper.Events.GameLoop.GameLaunched += OnGameLaunched;
         Helper.Events.Content.AssetRequested += OnAssetRequested;
@@ -49,23 +50,14 @@ internal sealed class ModEntry : Mod
         HarmonyPatches.Patch(ModManifest.UniqueID);
     }
     
-    // TODO text for items
-    
-    // TODO miner specific tile
-    // TODO miner/forge crafting recipe
-    // TODO add bauxite to forge machine data (EMC?)
+    // TODO bigger machines in menu sizing bug
     
     // TODO add bauxite stone to mines -- probably skull or volcano both?
     // TODO new location with mine-able ground ores --- on farm instead? (probably spots for all (most) types, area unlocks progressively)
     
-    // TODO processing recipes/machine data
-    
-    // TODO farmer cola
+    // TODO crafting recipes
     
     // TODO water?
-    
-    // TODO make soda
-    // TODO soda->can machine? bottler?
     
     // TODO progression system
     
@@ -100,7 +92,22 @@ internal sealed class ModEntry : Mod
         //sc.RegisterSerializerType(typeof(BeltItem));
         EMCApi = Helper.ModRegistry.GetApi<IExtraMachineConfigApi>("selph.ExtraMachineConfig");
         BMApi = Helper.ModRegistry.GetApi<IBiggerMachinesAPI>("Jok.BiggerMachines");
+        CPApi = Helper.ModRegistry.GetApi<IContentPatcherAPI>("Pathoschild.ContentPatcher");
 
+        CPApi.RegisterToken(ModManifest, "SodaName", () =>
+        {
+            // save is loaded
+            if (Context.IsWorldReady)
+                return new[] { Config.SodaName == "" ? Game1.player.Name + " Cola" : Config.SodaName };
+
+            // or save is currently loading
+            if (SaveGame.loaded?.player != null)
+                return new[] { SaveGame.loaded.player.Name };
+
+            // no save loaded (e.g. on the title screen)
+            return null;
+        });
+        
         SetupConfigs();
     }
 
@@ -113,8 +120,16 @@ internal sealed class ModEntry : Mod
         // register mod
         configMenu.Register(
             mod: ModManifest,
-            reset: () => Config = new StardioConfig(),
+            reset: () => Config = new StardewIncConfig(),
             save: () => Helper.WriteConfig(Config)
+        );
+        
+        configMenu.AddTextOption(
+            mod: ModManifest,
+            name: I18n.Config_SodaName_Name,
+            tooltip: I18n.Config_SodaName_Description,
+            getValue: () => Config.SodaName,
+            setValue: value => Config.SodaName = value
         );
     }
 
@@ -132,12 +147,12 @@ internal sealed class ModEntry : Mod
     public static Item? OutputMiner(Object machine, Item inputItem, bool probe, MachineItemOutput outputData, Farmer player, out int? overrideMinutesUntilReady)
     {
         overrideMinutesUntilReady = null;
-        if (machine.Location.IsFarm && machine.TileLocation.X > 50 && machine.TileLocation.Y > 50)
+        if (machine.Location.IsFarm && machine.TileLocation.X > 50)
         {
-            return ItemRegistry.Create("Jok.StardewInc.BauxiteOre", 10);
+            return ItemRegistry.Create("Jok.StardewInc.CP.BauxiteOre", 10);
         }
         
-        if(machine.Location.IsFarm && machine.TileLocation.X < 50 && machine.TileLocation.Y < 50)
+        if(machine.Location.IsFarm && machine.TileLocation.X < 50)
         {
             return ItemRegistry.Create("(O)380", 10);
         }

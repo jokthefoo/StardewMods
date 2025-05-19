@@ -93,10 +93,10 @@
               ],
               "Interval": 100,
               "Frames": [
+                0,
+                1,
                 2,
-                3,
-                4,
-                5
+                3
               ]
             }
           ],
@@ -111,14 +111,15 @@
               ],
               "Interval": 100,
               "Frames": [
+                0,
+                1,
                 2,
-                3,
-                4,
-                5
+                3
               ]
             }
           ],
-          WorkingEffectChance: 1
+          "WorkingEffectChance": 1,
+          "WobbleWhileWorking": false
         },
       }
     }

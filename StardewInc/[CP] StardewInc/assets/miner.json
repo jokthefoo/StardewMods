@@ -37,7 +37,27 @@
               ],
               "MinutesUntilReady": 10
             }
-          ]
+          ],
+          "WorkingEffects": [
+            {
+              "Id": "Default",
+              "Sounds": [
+                {
+                  "Id": "fireball",
+                  "Delay": 0
+                }
+              ],
+              "Interval": 100,
+              "Frames": [
+                0,
+                1,
+                2,
+                3
+              ]
+            }
+          ],
+          "WorkingEffectChance": 1,
+          "WobbleWhileWorking": false
         }
       }
     }

@@ -1,0 +1,104 @@
+{
+  "Changes": [
+    {
+      "Action": "EditData",
+      "Target": "Data/BigCraftables",
+      "Entries": {
+        "{{ModId}}.SyrupMaker": {
+          "Name": "Syrup Maker",
+          "DisplayName": "{{i18n:{{ModId}}.SyrupMaker.name}}",
+          "Description": "{{i18n:{{ModId}}.SyrupMaker.description}}",
+          "Texture": "Mods\\{{ModId}}\\syrupmaker",
+          "SpriteIndex": 0,
+          "CustomFields": {
+            "Jok.BiggerMachines.Dimensions": "2,2"
+          }
+        }
+      }
+    },
+    {
+      "Action": "EditData",
+      "Target": "Data/Machines",
+      "Entries": {
+        "(BC){{ModId}}.SyrupMaker": {
+          "OutputRules": [
+            {
+              "Id": "Default_Syrup",
+              "Triggers": [
+                {
+                  "Id": "ItemPlacedInMachine",
+                  "Trigger": "ItemPlacedInMachine",
+                  "RequiredTags": [
+                    "category_fruits"
+                  ],
+                  "RequiredCount": 5
+                }
+              ],
+              "OutputItem": [
+                {
+                  "Id": "default",
+                  "ItemId": "selph.ExtraMachineConfig_FLAVORED_ITEM {{ModID}}.Syrup DROP_IN_ID",
+                  "ObjectDisplayName": "{{i18n:{{ModId}}.Syrup.flavoredname}}",
+                  "PreserveId": "DROP_IN",
+                  "MinStack": 1,
+                  "CopyColor": true,
+                  "CustomData": {
+                    "selph.ExtraMachineConfig.RequirementId.1": "(O)186", // large milk
+                    "selph.ExtraMachineConfig.RequirementId.2": "(O)245", // sugar
+                    "selph.ExtraMachineConfig.RequirementInvalidMsg": "{{i18n:{{ModId}}.SyrupMaker.Invalid}}"
+                  },
+                  "PriceModifierMode": "Stack",
+                  "PriceModifiers": [
+                    {
+                      "Modification": "Multiply",
+                      "Amount": 7.5
+                    }
+                  ]
+                }
+              ],
+              "MinutesUntilReady": 120
+            }
+          ],
+          "LoadEffects": [
+            {
+              "Id": "Default",
+              "Sounds": [
+                {
+                  "Id": "bubbles",
+                  "Delay": 0
+                }
+              ],
+              "Interval": 400,
+              "Frames": [
+                0,
+                1,
+                2,
+                1,
+              ]
+            }
+          ],
+          "WorkingEffects": [
+            {
+              "Id": "Default",
+              "Sounds": [
+                {
+                  "Id": "bubbles",
+                  "Delay": 0
+                }
+              ],
+              "Interval": 400,
+              "Frames": [
+                0,
+                1,
+                2,
+                1
+              ]
+            }
+          ],
+          "WorkingEffectChance": 1,
+          "WobbleWhileWorking": false
+        }
+      }
+    }
+  ]
+}
