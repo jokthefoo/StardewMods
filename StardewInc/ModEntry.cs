@@ -47,13 +47,15 @@ internal sealed class ModEntry : Mod
         HarmonyPatches.Patch(ModManifest.UniqueID);
     }
     
+    // TODO crafting recipes and item prices
+    
     // TODO add bauxite stone to mines -- probably skull or volcano both?
     // TODO new location with mine-able ground ores --- on farm instead? (probably spots for all (most) types, area unlocks progressively)
     
-    // TODO crafting recipes and item prices
-    
     // TODO water?
     // TODO washedbauxite sprite / make it a liquid
+    
+    // TODO all processing times
     
     // TODO progression system
     

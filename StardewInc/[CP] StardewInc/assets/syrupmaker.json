@@ -45,6 +45,41 @@
                   "CustomData": {
                     "selph.ExtraMachineConfig.RequirementId.1": "(O)186", // large milk
                     "selph.ExtraMachineConfig.RequirementId.2": "(O)245", // sugar
+                    "selph.ExtraMachineConfig.RequirementInvalidMsg": "{{i18n:{{ModId}}.SyrupMaker.Syrup.Invalid}}"
+                  },
+                  "PriceModifierMode": "Stack",
+                  "PriceModifiers": [
+                    {
+                      "Modification": "Multiply",
+                      "Amount": 7.5
+                    }
+                  ]
+                }
+              ],
+              "MinutesUntilReady": 120
+            },{
+              "Id": "Syrup_HFCS",
+              "Triggers": [
+                {
+                  "Id": "ItemPlacedInMachine",
+                  "Trigger": "ItemPlacedInMachine",
+                  "RequiredTags": [
+                    "category_fruits"
+                  ],
+                  "RequiredCount": 5
+                }
+              ],
+              "OutputItem": [
+                {
+                  "Id": "default",
+                  "ItemId": "selph.ExtraMachineConfig_FLAVORED_ITEM {{ModID}}.Syrup DROP_IN_ID",
+                  "ObjectDisplayName": "{{i18n:{{ModId}}.Syrup.flavoredname}}",
+                  "PreserveId": "DROP_IN",
+                  "MinStack": 1,
+                  "CopyColor": true,
+                  "CustomData": {
+                    "selph.ExtraMachineConfig.RequirementId.1": "(O)186", // large milk
+                    "selph.ExtraMachineConfig.RequirementId.2": "(O){{ModId}}.HFCS", // HFCS
                     "selph.ExtraMachineConfig.RequirementInvalidMsg": "{{i18n:{{ModId}}.SyrupMaker.Invalid}}"
                   },
                   "PriceModifierMode": "Stack",
@@ -54,6 +89,30 @@
                       "Amount": 7.5
                     }
                   ]
+                }
+              ],
+              "MinutesUntilReady": 120
+            },
+            {
+              "Id": "Default_HFCS",
+              "Triggers": [
+                {
+                  "Id": "ItemPlacedInMachine",
+                  "Trigger": "ItemPlacedInMachine",
+                  "RequiredItemId": "(O){{ModId}}.DriedCorn",
+                  "RequiredCount": 1
+                }
+              ],
+              "OutputItem": [
+                {
+                  "Id": "(O){{ModId}}.HFCS",
+                  "ItemId": "(O){{ModId}}.HFCS",
+                  "MinStack": 20,
+                  "CustomData": {
+                    "selph.ExtraMachineConfig.RequirementId.1": "(O)186", // large milk
+                    "selph.ExtraMachineConfig.RequirementId.2": "(O)245", // sugar
+                    "selph.ExtraMachineConfig.RequirementInvalidMsg": "{{i18n:{{ModId}}.SyrupMaker.HFCS.Invalid}}"
+                  }
                 }
               ],
               "MinutesUntilReady": 120

@@ -12,8 +12,9 @@
 
   "Jok.StardewInc.CP.SyrupMaker.name": "Syrup Mixer",
   "Jok.StardewInc.CP.SyrupMaker.description": "Used for creating syrups from fruits.",
-  "Jok.StardewInc.CP.SyrupMaker.Invalid": "Requires 5 of a fruit, sugar, and liquid.",
+  "Jok.StardewInc.CP.SyrupMaker.Syrup.Invalid": "Requires 5 of a fruit, sugar (or HFCS), and liquid.",
   "Jok.StardewInc.CP.Syrup.flavoredname": "%PRESERVED_DISPLAY_NAME Syrup",
+  "Jok.StardewInc.CP.SyrupMaker.HFCS.Invalid": "Requires 1 dried corn, 1 sugar, and liquid.",
 
   "Jok.StardewInc.CP.Filler.name": "Soda Sealer",
   "Jok.StardewInc.CP.Filler.description": "Used for filling empty cans with syrup and carbonated water.",
@@ -47,7 +48,13 @@
 
   "Jok.StardewInc.CP.WashedBauxite.name": "Washed Bauxite",
   "Jok.StardewInc.CP.WashedBauxite.description": "A liquid mix of Bauxite ore and water.",
-  
+
   "Jok.StardewInc.CP.Syrup.name": "Syrup",
-  "Jok.StardewInc.CP.Syrup.description": "A thick sugary syrup."
+  "Jok.StardewInc.CP.Syrup.description": "A thick sugary syrup.",
+  
+  "Jok.StardewInc.CP.DriedCorn.name": "Corn kernels",
+  "Jok.StardewInc.CP.DriedCorn.description": "Dried corn kernels.",
+  
+  "Jok.StardewInc.CP.HFCS.name": "High Fructose Corn Syrup",
+  "Jok.StardewInc.CP.HFCS.description": "A widely used sweetener in processed foods and beverages."
 }
