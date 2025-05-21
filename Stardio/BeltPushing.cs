@@ -81,7 +81,14 @@ public abstract class IBeltPushing : Object
 
         if (outputTarget == null)
         {
-            TryPushToShippingBin(targetTile);
+            if (TryPushToShippingBin(targetTile))
+            {
+                return;
+            }
+            if (TryPushToBuilding(targetTile))
+            {
+                return;
+            }
             return;
         }
         
@@ -107,6 +114,13 @@ public abstract class IBeltPushing : Object
         // try to add to chest
         if (TryPushToChest(outputTarget))
         {
+            return;
+        }
+        
+        // try to add to building output chest
+        if (outputTarget.QualifiedItemId == ModEntry.OUTPUT_CHEST_QID && outputTarget.heldObject.Value is Chest chest)
+        {
+            TryPushToChest(chest);
             return;
         }
 
@@ -148,7 +162,28 @@ public abstract class IBeltPushing : Object
         }
     }
 
-    private void TryPushToShippingBin(Vector2 targetTile)
+    private bool TryPushToBuilding(Vector2 targetTile)
+    {
+        var building = Location.getBuildingAt(targetTile);
+        if (building != null && building.GetIndoors() != null)
+        {
+            foreach (var obj in building.GetIndoors().objects.Values)
+            {
+                if (obj.QualifiedItemId == ModEntry.INPUT_CHEST_QID && obj.heldObject.Value is Chest chest)
+                {
+                    if (TryPushToChest(chest))
+                    {
+                        return true;
+                    }
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+    
+    
+    private bool TryPushToShippingBin(Vector2 targetTile)
     {
         var building = Location.getBuildingAt(targetTile);
         if (building is ShippingBin && heldObject.Value.canBeShipped())
@@ -159,7 +194,9 @@ public abstract class IBeltPushing : Object
             farm.playSound("Ship");
             heldObject.Value = null;
             HeldItemPosition = 0;
+            return true;
         }
+        return false;
     }
 
     private void TryPushToMultiInputMachine(Object outputTarget)
@@ -279,8 +316,8 @@ public abstract class IBeltPushing : Object
         {
             if (outputChest.addItem(heldObject.Value) != null)
             {
-                // Chest full so drop item
-                Game1.createItemDebris(heldObject.Value, TileLocation * 64f, -1, Location);
+                // Chest full
+                return true;
             }
 
             outputChest.clearNulls();

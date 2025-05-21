@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Netcode;
+using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Buildings;
 using StardewValley.GameData.Machines;
@@ -22,6 +23,9 @@ public class BeltItem : IBeltPushing
     
     [XmlElement("spriveCurveOffset")]
     public readonly NetInt beltSpriteRotationOffset = new();
+    
+    [XmlElement("buildingSprite")]
+    public readonly NetBool beltBuildingSprite = new();
     public override string DisplayName => GetDisplayName();
     public string Description { get; set; }
     public override string TypeDefinitionId => "(Jok.Belt)";
@@ -157,22 +161,14 @@ public class BeltItem : IBeltPushing
         // Try Grab item with BM first
         if(ModEntry.BMApi != null && ModEntry.BMApi.TryGetObjectAt(Location, targetTile, out var inputObj))
         {
-            if (TryPullFromChest(inputObj!))
-            {
-                return;
-            }
-            TryPullFromMachine(inputObj!);
+            TryPullFromChestOrMachine(inputObj);
             return;
         }
         
         // Grab item
         if (Location.objects.TryGetValue(targetTile, out inputObj))
         {
-            if (TryPullFromChest(inputObj))
-            {
-                return;
-            }
-            TryPullFromMachine(inputObj);
+            TryPullFromChestOrMachine(inputObj);
             return;
         }
         
@@ -185,13 +181,55 @@ public class BeltItem : IBeltPushing
                 inputObj = fm;
                 TryPullFromMachine(inputObj);
             }
-            return;
         }
 
-        TryPullFromFishPond(targetTile);
+        if (TryPullFromFishPond(targetTile))
+        {
+            return;
+        }
+        TryPullFromBuilding(targetTile);
     }
 
-    private void TryPullFromFishPond(Vector2 targetTile)
+    private void TryPullFromChestOrMachine(Object inputObj)
+    {
+        if (inputObj.QualifiedItemId == "(BC)165" || ModEntry.IsObjectDroneHub(inputObj)) // auto grabber and drone hubs
+        {
+            if (inputObj.heldObject.Value is Chest)
+            {
+                inputObj = inputObj.heldObject.Value;
+            }
+            else
+            {
+                return;
+            }
+        }
+            
+        if (TryPullFromChest(inputObj))
+        {
+            return;
+        }
+        TryPullFromMachine(inputObj);
+    }
+    
+    private void TryPullFromBuilding(Vector2 targetTile)
+    {
+        var building = Location.getBuildingAt(targetTile);
+        if (building != null && building.GetIndoors() != null)
+        {
+            foreach (var obj in building.GetIndoors().objects.Values)
+            {
+                if (obj.QualifiedItemId == ModEntry.OUTPUT_CHEST_QID && obj.heldObject.Value is Chest chest)
+                {
+                    if (TryPullFromChest(chest))
+                    {
+                        return;
+                    }
+                }
+            }
+        }
+    }
+    
+    private bool TryPullFromFishPond(Vector2 targetTile)
     {
         var building = Location.getBuildingAt(targetTile);
         if (building is FishPond pond && pond.output.Value is Object outputObj)
@@ -201,14 +239,16 @@ public class BeltItem : IBeltPushing
 
             if (pond.output.Value.Stack != 0)
             {
-                return;
+                return true;
             }
             
             pond.output.Value = null;
             Game1.playSound("coin");
             int bonusExperience = (int)(heldObject.Value.sellToStorePrice() * FishPond.HARVEST_OUTPUT_EXP_MULTIPLIER);
             Game1.MasterPlayer.gainExperience(1, bonusExperience + FishPond.HARVEST_BASE_EXP);
+            return true;
         }
+        return false;
     }
     
     private void TryPullFromMachine(Object inputObj)
@@ -329,9 +369,10 @@ public class BeltItem : IBeltPushing
         }
         
         var items = inputChest.GetItemsForPlayer();
-        foreach (var item in items)
+
+        for (int i = items.Count - 1; i >= 0; --i)
         {
-            if (!(item is Object obj))
+            if (!(items[i] is Object obj))
             {
                 continue;
             }
@@ -430,10 +471,22 @@ public class BeltItem : IBeltPushing
                 curveSpriteOffset = 0;
             }
 
+            if (beltBuildingSprite.Value && ModEntry.Config.DroneHub)
+            {
+                float yOffset2 = 4f * (float)Math.Round(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 250.0), 2); // makes it bob
+                spriteBatch.Draw(ModEntry.dronesTexture, Game1.GlobalToLocal(Game1.viewport, new Vector2(x * 64 + 32, y * 64 - 32 + yOffset2) + shake),
+                    new Rectangle(BeltAnim * 16, 0, 16, 32), Color.White * alpha, 0f, new Vector2(8f, 8f), scale.Y > 1f ? getScale().Y : 4f, SpriteEffects.None,
+                    (isPassable() ? bounds.Top - 100 : bounds.Center.Y + 2) / 10000f);
+                spriteBatch.Draw(ModEntry.dronepadTexture, Game1.GlobalToLocal(Game1.viewport, new Vector2(x * 64 + 32, y * 64 - 32) + shake),
+                    new Rectangle(BeltAnim * 16, 0, 16, 32), Color.White * alpha, 0f, new Vector2(8f, 8f), scale.Y > 1f ? getScale().Y : 4f, SpriteEffects.None,
+                    (isPassable() ? bounds.Top - 100 : bounds.Center.Y + 1) / 10000f);
+            }
+            
             spriteBatch.Draw(itemData.GetTexture(),
-                Game1.GlobalToLocal(Game1.viewport, new Vector2(x * 64 + 32, y * 64 + 32) + shake),
-                itemData.GetSourceRect(sourceOffset + curveSpriteOffset, BeltAnim), Color.White * alpha, 0f, new Vector2(8f, 8f), scale.Y > 1f ? getScale().Y : 4f, spriteEffects,
-                (isPassable() ? bounds.Top - 100 : bounds.Center.Y) / 10000f);
+                    Game1.GlobalToLocal(Game1.viewport, new Vector2(x * 64 + 32, y * 64 + 32) + shake),
+                    itemData.GetSourceRect(sourceOffset + curveSpriteOffset, BeltAnim), Color.White * alpha, 0f, new Vector2(8f, 8f), scale.Y > 1f ? getScale().Y : 4f, spriteEffects,
+                    (isPassable() ? bounds.Top - 100 : bounds.Center.Y) / 10000f);
+            
             
             
             if (heldObject.Value == null)
@@ -569,6 +622,10 @@ public class BeltItem : IBeltPushing
 
     public override bool isPassable()
     {
+        if (ModEntry.Config.DroneHub)
+        {
+            return !beltBuildingSprite.Value;
+        }
         return true;
     }
 
@@ -613,6 +670,16 @@ public class BeltItem : IBeltPushing
     public void CheckForCurve()
     {
         // If belt behind then default
+        beltBuildingSprite.Value = false;
+        
+        var buildingBehind = Location.getBuildingAt(getTileInDirection(Direction.Behind));
+        var buildingForward = Location.getBuildingAt(getTileInDirection(Direction.Forward));
+                
+        if (buildingBehind != null && buildingBehind.modData.ContainsKey(ModEntry.BUILDING_CHEST_KEY) || buildingForward != null && buildingForward.modData.ContainsKey(ModEntry.BUILDING_CHEST_KEY))
+        {
+            beltBuildingSprite.Value = true;
+        }
+        
         if (Location.objects.TryGetValue(getTileInDirection(Direction.Behind), out Object backObj))
         {
             if ((backObj is BeltItem backBelt && IsOtherBeltFacingMe(backBelt)) || backObj is SplitterItem || backObj is BridgeItem)
@@ -633,10 +700,12 @@ public class BeltItem : IBeltPushing
         else if (foundRight)
         {
             beltSpriteRotationOffset.Value = 1;
+            beltBuildingSprite.Value = false;
         } 
         else if (foundLeft)
         {
             beltSpriteRotationOffset.Value = -1;
+            beltBuildingSprite.Value = false;
         }
         else
         {

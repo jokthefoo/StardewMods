@@ -4,9 +4,14 @@
 
   "bridge.name": "Bridge",
   "bridge.description": "Bridges across a vertical and horizontal belt.",
-  
+
   "splitter.name": "Splitter",
   "splitter.description": "Splits items that come into it evenly to all belts coming out of it.",
+
+  "inputchest.name": "Input Hub",
+  "inputchest.description": "Place this inside a building to let belts to push items into the building. Items can then be pulled from the Input Hub by belts.",
+  "outputchest.name": "Output Hub",
+  "outputchest.description": "Place this inside a building to let belts pull items out of the building. Items must be placed into the Output Hub before they can be extracted.",
   
   "belt.category.name": "Belt",
 
@@ -22,5 +27,7 @@
   "config.rkeybind.name": "Rotate Keybind",
   "config.rkeybind.tooltip": "Key to rotate belts, both before and after placement.",
   "config.brownbelts.name": "Wood Belts",
-  "config.brownbelts.tooltip": "Changes sprite of belts to a \"less industrial\" wooden version of the texture. (by vickylchq)"
+  "config.brownbelts.tooltip": "Changes sprite of belts to a \"less industrial\" wooden version of the texture. (by vickylchq)",
+  "config.dronehub.name": "Drone Hub Sprites",
+  "config.dronehub.tooltip": "Changes sprite of belts to a drone when attached to a building with a hub inside."
 }

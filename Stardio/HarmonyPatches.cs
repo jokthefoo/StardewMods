@@ -1,6 +1,8 @@
 ﻿using HarmonyLib;
 using Microsoft.Xna.Framework;
 using StardewValley;
+using StardewValley.Menus;
+using StardewValley.Objects;
 using Object = StardewValley.Object;
 
 namespace Jok.Stardio;
@@ -147,6 +149,23 @@ internal static class HarmonyPatches
         if (__state && __instance is BeltItem belt && __instance.heldObject.Value == null)
         {
             belt.HeldItemPosition = 0;
+        }
+
+        if (ModEntry.IsObjectDroneHub(__instance))
+        {
+            if (justCheckingForActivity)
+            {
+                __result = true;
+                return;
+            }
+            if (__instance.heldObject.Value is Chest chest)
+            {
+                Game1.playSound("openChest");
+                who.Halt();
+                who.freezePause = 1000;
+                Game1.activeClickableMenu = new ItemGrabMenu(chest.Items, reverseGrab: false, showReceivingMenu: true, InventoryMenu.highlightAllItems, chest.grabItemFromInventory, null, chest.grabItemFromChest, snapToBottom: false, canBeExitedWithKey: true, playRightClickSound: true, allowRightClick: true, showOrganizeButton: true, 1, null, -1, __instance);
+                __result = true;
+            }
         }
     }
 }

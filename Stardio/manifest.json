@@ -1,7 +1,7 @@
 {
   "Name": "Stardio",
   "Author": "Jok",
-  "Version": "1.0.1",
+  "Version": "1.0.2",
   "Description": "Stardio",
   "UniqueID": "Jok.Stardio",
   "EntryDll": "Stardio.dll",
@@ -11,6 +11,6 @@
     {
       "UniqueID": "spacechase0.SpaceCore",
       "IsRequired": true
-    },
+    }
   ]
 }

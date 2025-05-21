@@ -5,6 +5,9 @@ using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
+using StardewValley.Buildings;
+using StardewValley.GameData.BigCraftables;
+using StardewValley.Objects;
 using Object = StardewValley.Object;
 
 namespace Jok.Stardio;
@@ -20,7 +23,12 @@ internal sealed class ModEntry : Mod
     internal static IBiggerMachinesAPI? BMApi;
     internal static IFurnitureMachineApi? FMApi;
 
-    private const string MACHINE_STATE_KEY = "Jok.Stardio.MachineState";
+    internal const string MACHINE_STATE_KEY = "Jok.Stardio.MachineState";
+    internal const string BUILDING_CHEST_KEY = "Jok.Stardio/BuildingChest";
+    internal const string INPUT_CHEST_QID = "(BC)Jok.Stardio.InputChest";
+    internal const string OUTPUT_CHEST_QID = "(BC)Jok.Stardio.OutputChest";
+    internal static Texture2D dronepadTexture;
+    internal static Texture2D dronesTexture;
     //ModEntry.MonitorInst.Log($"X value: {x}", LogLevel.Info);
 
     /*********
@@ -49,6 +57,9 @@ internal sealed class ModEntry : Mod
         Helper.ModContent.Load<Texture2D>("assets/otherbelts");
         Helper.ModContent.Load<Texture2D>("assets/belts2");
         Helper.ModContent.Load<Texture2D>("assets/otherbelts2");
+        Helper.ModContent.Load<Texture2D>("assets/chest");
+        dronesTexture = Helper.ModContent.Load<Texture2D>("assets/drones");
+        dronepadTexture = Helper.ModContent.Load<Texture2D>("assets/dronepad");
 
         HarmonyPatches.Patch(ModManifest.UniqueID);
     }
@@ -59,6 +70,7 @@ internal sealed class ModEntry : Mod
         {
             return;
         }
+
         foreach (var (tileLoc, obj) in e.Removed)
         {
             MachineStateManager.RemoveState(e.Location, tileLoc);
@@ -67,19 +79,109 @@ internal sealed class ModEntry : Mod
             {
                 belt.UpdateNeighborCurves(tileLoc);
             }
+
+            if (obj is SplitterItem splitter)
+            {
+                splitter.UpdateNeighborCurves(tileLoc);
+            }
+
+            if (obj is BridgeItem bridge)
+            {
+                bridge.UpdateNeighborCurves(tileLoc);
+            }
+
+            if (IsObjectDroneHub(obj))
+            {
+                if (obj.heldObject.Value is Chest chest)
+                {
+                    foreach (Item item in chest.Items)
+                    {
+                        if (item != null)
+                        {
+                            Game1.createItemDebris(item, Game1.player.getStandingPosition(), Game1.player.FacingDirection);
+                        }
+                    }
+                }
+                obj.heldObject.Value = null;
+
+                bool removeKey = true;
+
+                foreach (Object obj2 in obj.Location.Objects.Values)
+                {
+                    if (IsObjectDroneHub(obj2))
+                    {
+                        removeKey = false;
+                        break;
+                    }
+                }
+
+                if (removeKey)
+                {
+                    if (obj.Location.ParentBuilding != null)
+                    {
+                        obj.Location.ParentBuilding.modData.Remove(BUILDING_CHEST_KEY);
+                        UpdateBeltsSurroundingBuilding(obj.Location.ParentBuilding);
+                    }
+                }
+            }
         }
-        
+
         foreach (var (tileLoc, obj) in e.Added)
         {
             if (obj is BeltItem belt)
             {
                 belt.CheckForCurve();
             }
+
+            if (IsObjectDroneHub(obj))
+            {
+                obj.heldObject.Value = new Chest(false);
+
+                if (obj.Location.ParentBuilding != null && obj.Location.ParentBuilding.modData.TryAdd(BUILDING_CHEST_KEY, "hi"))
+                {
+                    UpdateBeltsSurroundingBuilding(obj.Location.ParentBuilding);
+                }
+            }
         }
     }
 
-    private static readonly XmlSerializer ItemSerializer = new(typeof(ItemListSerialized), new []
-        {typeof(Item)});
+    private void UpdateBeltsSurroundingBuilding(Building building)
+    {
+        int leftX = building.tileX.Value - 1;
+        int topY = building.tileY.Value - 1;
+        int width = building.tilesWide.Value + 1;
+        int height = building.tilesHigh.Value + 1;
+        GameLocation loc = building.GetParentLocation();
+
+        for (int x = leftX; x <= leftX + width; x++)
+        {
+            if (loc.objects.TryGetValue(new Vector2(x, topY), out var obj) && obj is BeltItem belt)
+            {
+                belt.CheckForCurve();
+            }
+
+            if (loc.objects.TryGetValue(new Vector2(x, topY + height), out var obj2) && obj2 is BeltItem belt2)
+            {
+                belt2.CheckForCurve();
+            }
+        }
+
+        for (int y = topY; y <= topY + height; y++)
+        {
+            if (loc.objects.TryGetValue(new Vector2(leftX, y), out var obj) && obj is BeltItem belt)
+            {
+                belt.CheckForCurve();
+            }
+
+            if (loc.objects.TryGetValue(new Vector2(leftX + width, y), out var obj2) && obj2 is BeltItem belt2)
+            {
+                belt2.CheckForCurve();
+            }
+        }
+    }
+
+    private static readonly XmlSerializer ItemSerializer = new(typeof(ItemListSerialized), new[] { typeof(Item) });
+
     private void OnSaving(object? sender, SavingEventArgs e)
     {
         if (!Context.IsMainPlayer)
@@ -87,8 +189,9 @@ internal sealed class ModEntry : Mod
             return;
         }
         MonitorInst.Log($"Creating save", LogLevel.Info);
-        
+
         Dictionary<string, Dictionary<Vector2, ModMachineStateSerialized>?> serialized = new Dictionary<string, Dictionary<Vector2, ModMachineStateSerialized>?>();
+
         foreach (var (location, locationDict) in MachineStateManager.MachineStates)
         {
             if (locationDict == null)
@@ -96,13 +199,14 @@ internal sealed class ModEntry : Mod
                 continue;
             }
             var innerDict = new Dictionary<Vector2, ModMachineStateSerialized>();
+
             foreach (var (tileLocation, machineState) in locationDict)
             {
                 var writer = new StringWriter();
                 ItemListSerialized itemListSerialized = new();
                 itemListSerialized.currentInventory = machineState.currentInventory;
                 ItemSerializer.Serialize(writer, itemListSerialized);
-                
+
                 ModMachineStateSerialized newStateSerialized = new ModMachineStateSerialized();
                 newStateSerialized.outputRule = machineState.outputRule;
                 newStateSerialized.outputTrigger = machineState.outputTrigger;
@@ -114,25 +218,28 @@ internal sealed class ModEntry : Mod
         }
         Helper.Data.WriteSaveData(MACHINE_STATE_KEY, serialized);
     }
-    
+
     private void OnSaveLoaded(object sender, SaveLoadedEventArgs e)
     {
         if (!Context.IsMainPlayer)
         {
             return;
         }
-        
+
         var stateData = Helper.Data.ReadSaveData<Dictionary<string, Dictionary<Vector2, ModMachineStateSerialized>?>>(MACHINE_STATE_KEY);
+
         if (stateData == null)
         {
             MachineStateManager.MachineStates = new Dictionary<string, Dictionary<Vector2, ModMachineState>?>();
             return;
         }
-        
+
         MachineStateManager.MachineStates = new Dictionary<string, Dictionary<Vector2, ModMachineState>?>();
+
         foreach (var (location, locationDict) in stateData)
         {
             MachineStateManager.MachineStates.Add(location, new Dictionary<Vector2, ModMachineState>());
+
             foreach (var (tileLocation, machineStateSerialized) in locationDict)
             {
                 using var reader = new StringReader(machineStateSerialized.currentInventory);
@@ -175,7 +282,7 @@ internal sealed class ModEntry : Mod
                 BeltItem.BeltAnim = 0;
                 BridgeItem.BridgeAnim += 1;
             }
-            
+
             if (BridgeItem.BridgeAnim > 3)
             {
                 BridgeItem.BridgeAnim = 0;
@@ -188,22 +295,21 @@ internal sealed class ModEntry : Mod
         {
             return;
         }
+
         foreach (GameLocation location in Game1.locations)
         {
-            if (location.IsBuildableLocation())
+            UpdateAllBelts(location, isProcessTick);
+
+            foreach (var building in location.buildings)
             {
-                UpdateAllBelts(location, isProcessTick);
-                foreach (var building in location.buildings)
+                if (building.indoors.Value != null)
                 {
-                    if (building.indoors.Value != null)
-                    {
-                        UpdateAllBelts(building.indoors.Value, isProcessTick);
-                    }
+                    UpdateAllBelts(building.indoors.Value, isProcessTick);
                 }
             }
         }
     }
-    
+
     private void UpdateAllBelts(GameLocation location, bool isProcessTick)
     {
         foreach (Object obj in location.objects.Values)
@@ -213,7 +319,7 @@ internal sealed class ModEntry : Mod
                 belt.beltUpdate(isProcessTick);
                 continue;
             }
-                
+
             if (obj is SplitterItem splitter)
             {
                 splitter.splitterUpdate(isProcessTick);
@@ -228,8 +334,8 @@ internal sealed class ModEntry : Mod
         sc.RegisterSerializerType(typeof(BridgeItem));
         sc.RegisterSerializerType(typeof(SplitterItem));
         EMCApi = Helper.ModRegistry.GetApi<IExtraMachineConfigApi>("selph.ExtraMachineConfig");
-        BMApi = Helper.ModRegistry.GetApi<IBiggerMachinesAPI>("Jok.BiggerMachines");
         FMApi = Helper.ModRegistry.GetApi<IFurnitureMachineApi>("selph.FurnitureMachine");
+        BMApi = Helper.ModRegistry.GetApi<IBiggerMachinesAPI>("Jok.BiggerMachines");
 
         SetupConfigs();
     }
@@ -239,75 +345,34 @@ internal sealed class ModEntry : Mod
         var configMenu = Helper.ModRegistry.GetApi<IGenericModConfigMenuApi>("spacechase0.GenericModConfigMenu");
         if (configMenu is null)
             return;
-        
+
         // register mod
-        configMenu.Register(
-            mod: ModManifest,
-            reset: () => Config = new StardioConfig(),
-            save: () => Helper.WriteConfig(Config)
-        );
+        configMenu.Register(mod: ModManifest, reset: () => Config = new StardioConfig(), save: () => Helper.WriteConfig(Config));
 
         // add config options
-        configMenu.AddKeybind(
-            mod: ModManifest,
-            name: I18n.Config_Rkeybind_Name,
-            tooltip: I18n.Config_Rkeybind_Tooltip,
-            getValue: () => Config.RotateKeybind,
-            setValue: value => Config.RotateKeybind = value
-        );
-        
-        configMenu.AddNumberOption(
-            mod: ModManifest,
-            name: I18n.Config_Pushplayer_Name,
-            tooltip: I18n.Config_Pushplayer_Tooltip,
-            getValue: () => Config.BeltPushPlayerSpeed,
-            setValue: value => Config.BeltPushPlayerSpeed = value,
-            min: 0f,
-            max: 10f,
-            interval: .1f
-        );
-        
-        configMenu.AddNumberOption(
-            mod: ModManifest,
-            name: I18n.Config_Speedplayer_Name,
-            tooltip: I18n.Config_Speedplayer_Tooltip,
-            getValue: () => Config.BeltPlayerSpeedBoost,
-            setValue: value => Config.BeltPlayerSpeedBoost = value,
-            min: 0f,
-            max: 10f,
-            interval: .1f
-        );
-        
-        configMenu.AddBoolOption(
-            mod: ModManifest,
-            name: I18n.Config_Quality_Name,
-            tooltip: I18n.Config_Quality_Tooltip,
-            getValue: () => Config.ShowQualityOnBelts,
-            setValue: value => Config.ShowQualityOnBelts = value
-        );
-        
-        configMenu.AddNumberOption(
-            mod: ModManifest,
-            name: I18n.Config_Updaterate_Name,
-            tooltip: I18n.Config_Updaterate_Tooltip,
-            getValue: () => Config.BeltUpdateMS,
-            setValue: value => Config.BeltUpdateMS = value,
-            min: 10,
-            max: 1000,
-            interval: 5
-        );
-        
-        configMenu.AddBoolOption(
-            mod: ModManifest,
-            name: I18n.Config_Brownbelts_Name,
-            tooltip: I18n.Config_Brownbelts_Tooltip,
-            getValue: () => Config.BrownBelts,
-            setValue: value =>
-            {
-                Config.BrownBelts = value;
-                Helper.GameContent.InvalidateCache($"{ModManifest.UniqueID}/belts.png");
-                Helper.GameContent.InvalidateCache($"{ModManifest.UniqueID}/otherbelts.png");
-            });
+        configMenu.AddKeybind(mod: ModManifest, name: I18n.Config_Rkeybind_Name, tooltip: I18n.Config_Rkeybind_Tooltip, getValue: () => Config.RotateKeybind,
+            setValue: value => Config.RotateKeybind = value);
+
+        configMenu.AddNumberOption(mod: ModManifest, name: I18n.Config_Pushplayer_Name, tooltip: I18n.Config_Pushplayer_Tooltip, getValue: () => Config.BeltPushPlayerSpeed,
+            setValue: value => Config.BeltPushPlayerSpeed = value, min: 0f, max: 10f, interval: .1f);
+
+        configMenu.AddNumberOption(mod: ModManifest, name: I18n.Config_Speedplayer_Name, tooltip: I18n.Config_Speedplayer_Tooltip, getValue: () => Config.BeltPlayerSpeedBoost,
+            setValue: value => Config.BeltPlayerSpeedBoost = value, min: 0f, max: 10f, interval: .1f);
+
+        configMenu.AddBoolOption(mod: ModManifest, name: I18n.Config_Quality_Name, tooltip: I18n.Config_Quality_Tooltip, getValue: () => Config.ShowQualityOnBelts,
+            setValue: value => Config.ShowQualityOnBelts = value);
+
+        configMenu.AddNumberOption(mod: ModManifest, name: I18n.Config_Updaterate_Name, tooltip: I18n.Config_Updaterate_Tooltip, getValue: () => Config.BeltUpdateMS,
+            setValue: value => Config.BeltUpdateMS = value, min: 10, max: 1000, interval: 5);
+
+        configMenu.AddBoolOption(mod: ModManifest, name: I18n.Config_Brownbelts_Name, tooltip: I18n.Config_Brownbelts_Tooltip, getValue: () => Config.BrownBelts, setValue: value =>
+        {
+            Config.BrownBelts = value;
+            Helper.GameContent.InvalidateCache($"{ModManifest.UniqueID}/belts.png");
+            Helper.GameContent.InvalidateCache($"{ModManifest.UniqueID}/otherbelts.png");
+        });
+
+        configMenu.AddBoolOption(mod: ModManifest, name: I18n.Config_Dronehub_Name, tooltip: I18n.Config_Dronehub_Tooltip, getValue: () => Config.DroneHub, setValue: value => Config.DroneHub = value);
     }
 
     private void OnAssetRequested(object sender, AssetRequestedEventArgs e)
@@ -357,6 +422,18 @@ internal sealed class ModEntry : Mod
                 e.LoadFromModFile<Texture2D>("assets/otherbelts.png", AssetLoadPriority.Low);
             }
         }
+        else if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/chest.png"))
+        {
+            e.LoadFromModFile<Texture2D>("assets/chest.png", AssetLoadPriority.Low);
+        }
+        else if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/drones.png"))
+        {
+            e.LoadFromModFile<Texture2D>("assets/drones.png", AssetLoadPriority.Low);
+        }
+        else if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/dronepad.png"))
+        {
+            e.LoadFromModFile<Texture2D>("assets/dronepad.png", AssetLoadPriority.Low);
+        }
         else if (e.NameWithoutLocale.IsEquivalentTo("Data/CraftingRecipes"))
         {
             e.Edit(asset =>
@@ -366,7 +443,43 @@ internal sealed class ModEntry : Mod
                 dict.Add("(Jok.Belt)Jok.Stardio.Belt", $"335 5 390 25 388 25/what/(Jok.Belt)Jok.Stardio.Belt 5/false/s farming 3/");
                 dict.Add("(Jok.Belt)Jok.Stardio.Bridge", $"336 1 (Jok.Belt)Jok.Stardio.Belt 5/what/(Jok.Belt)Jok.Stardio.Bridge 1/false/s farming 5/");
                 dict.Add("(Jok.Belt)Jok.Stardio.Splitter", $"336 1 (Jok.Belt)Jok.Stardio.Belt 5/what/(Jok.Belt)Jok.Stardio.Splitter 1/false/s farming 5/");
+
+                dict.Add("Jok.Stardio.InputChest", $"337 1 (Jok.Belt)Jok.Stardio.Bridge 4/what/Jok.Stardio.InputChest 1/true/s farming 10/");
+                dict.Add("Jok.Stardio.OutputChest", $"337 1 (Jok.Belt)Jok.Stardio.Splitter 4/what/Jok.Stardio.OutputChest 1/true/s farming 10/");
             });
         }
+        else if (e.NameWithoutLocale.IsEquivalentTo("Data/BigCraftables"))
+        {
+            e.Edit(asset =>
+            {
+                IDictionary<string, BigCraftableData> data = asset.AsDictionary<string, BigCraftableData>().Data;
+                data["Jok.Stardio.InputChest"] = new BigCraftableData()
+                {
+                    Name = "Jok.Stardio.InputChest",
+                    DisplayName = I18n.Inputchest_Name(),
+                    Description = I18n.Inputchest_Description(),
+                    CanBePlacedOutdoors = true,
+                    CanBePlacedIndoors = true,
+                    Texture = Helper.ModContent.GetInternalAssetName("assets/chest").Name,
+                    SpriteIndex = 0
+                };
+
+                data["Jok.Stardio.OutputChest"] = new BigCraftableData()
+                {
+                    Name = "Jok.Stardio.OutputChest",
+                    DisplayName = I18n.Outputchest_Name(),
+                    Description = I18n.Outputchest_Description(),
+                    CanBePlacedOutdoors = true,
+                    CanBePlacedIndoors = true,
+                    Texture = Helper.ModContent.GetInternalAssetName("assets/chest").Name,
+                    SpriteIndex = 3
+                };
+            });
+        }
+    }
+
+    public static bool IsObjectDroneHub(Object obj)
+    {
+        return obj.QualifiedItemId == OUTPUT_CHEST_QID || obj.QualifiedItemId == INPUT_CHEST_QID;
     }
 }

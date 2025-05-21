@@ -10,4 +10,5 @@ public sealed class StardioConfig
     public bool ShowQualityOnBelts { get; set; } = true;
     public int BeltUpdateMS { get; set; } = 100;
     public bool BrownBelts { get; set; } = true;
+    public bool DroneHub { get; set; } = true;
 }
