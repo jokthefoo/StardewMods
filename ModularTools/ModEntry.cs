@@ -82,20 +82,26 @@ namespace ModularTools
                 return true;
             });
         }
-        
+
         private void UpdateAttachmentSlotsForTools(string command, string[] args)
         {
             Utility.ForEachItem(item =>
             {
                 if (item is Tool tool && IsAllowedTool(tool))
                 {
-                    if (PrismaticTools && tool.UpgradeLevel > 10)
+                    try
                     {
-                        tool.AttachmentSlotsCount = 5;
+                        if (PrismaticTools && tool.UpgradeLevel > 10)
+                        {
+                            tool.AttachmentSlotsCount = 5;
+                        }
+                        else
+                        {
+                            tool.AttachmentSlotsCount = tool.UpgradeLevel;
+                        }
                     }
-                    else
+                    catch (Exception ex) // idk why sometimes the tools throw an exception, something about multiplayer
                     {
-                        tool.AttachmentSlotsCount = tool.UpgradeLevel;
                     }
                 }
                 return true;
@@ -1244,10 +1250,6 @@ namespace ModularTools
             if (__instance.attachments.Length > slot)
             {
                 __instance.attachments[slot]?.drawInMenu(b, pixel, 1f);
-            } 
-            else if (__instance.attachments.Length <= slot)
-            {
-                __instance.attachments.SetCount(__instance.AttachmentSlotsCount);
             }
             
             return false;
