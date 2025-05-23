@@ -7,6 +7,7 @@ using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Buildings;
 using StardewValley.GameData.BigCraftables;
+using StardewValley.GameData.Machines;
 using StardewValley.Objects;
 using Object = StardewValley.Object;
 
@@ -476,10 +477,53 @@ internal sealed class ModEntry : Mod
                 };
             });
         }
+        else if (e.NameWithoutLocale.IsEquivalentTo("Data/Machines"))
+        {
+            e.Edit(asset =>
+            { 
+                var data = asset.AsDictionary<string, MachineData>().Data;
+                
+                var triggers = new List<MachineOutputTriggerRule> { new MachineOutputTriggerRule { Id = "DayUpdate", Trigger = MachineOutputTrigger.DayUpdate, RequiredItemId = null} };
+                var output = new List<MachineItemOutput> { new MachineItemOutput { Id = "Default", ItemId = null, OutputMethod = "Jok.Stardio.ModEntry, Stardio: OutputNothing"} };
+                var outputRules = new List<MachineOutputRule>
+                {
+                    new MachineOutputRule
+                    {
+                        Id = "HelloThere", Triggers = triggers, OutputItem = output, DaysUntilReady = Int32.MaxValue,
+                    }
+                };
+                var timepass = new List<MachineTimeBlockers> { MachineTimeBlockers.Always };
+                
+                var machineData = new MachineData
+                {
+                    OutputRules = outputRules,
+                    PreventTimePass = timepass,
+                    AllowFairyDust = false,
+                    WobbleWhileWorking = false,
+                };
+                
+                data.Add("(BC)Jok.Stardio.InputChest", machineData);
+                data.Add("(BC)Jok.Stardio.OutputChest", machineData);
+            });
+        }
     }
 
     public static bool IsObjectDroneHub(Object obj)
     {
         return obj.QualifiedItemId == OUTPUT_CHEST_QID || obj.QualifiedItemId == INPUT_CHEST_QID;
+    }
+    
+    
+    /// <summary>Get the output item to produce.</summary>
+    /// <param name="machine">The machine instance for which to produce output.</param>
+    /// <param name="inputItem">The item being dropped into the machine, if applicable.</param>
+    /// <param name="probe">Whether the machine is only checking whether the input is valid. If so, the input/machine shouldn't be changed and no animations/sounds should play.</param>
+    /// <param name="outputData">The item output data from <c>Data/Machines</c> for which output is being created, if applicable.</param>
+    /// <param name="overrideMinutesUntilReady">The in-game minutes until the item will be ready to collect, if set. This overrides the equivalent fields in the machine data if set.</param>
+    /// <returns>Returns the item to produce, or <c>null</c> if none should be produced.</returns>
+    public static Item? OutputNothing(Object machine, Item inputItem, bool probe, MachineItemOutput outputData, Farmer player, out int? overrideMinutesUntilReady)
+    {
+        overrideMinutesUntilReady = null;
+        return null;
     }
 }

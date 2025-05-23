@@ -257,7 +257,8 @@ public abstract class IBeltPushing : Object
                     out var matchesExceptCount))
             {
                 // we shouldn't get in here, this would mean we can load item but failed in earlier conditions that should succeed
-                ModEntry.MonitorInst.Log($"Stardio failed to correctly load a machine.", LogLevel.Error);
+                // ModEntry.MonitorInst.Log($"Stardio failed to correctly load a machine.", LogLevel.Error);
+                // pipes hits in here
                 return;
             }
             

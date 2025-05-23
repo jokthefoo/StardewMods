@@ -6,18 +6,34 @@
   "bridge.description": "用于跨越垂直或水平传送带的桥梁。",
 
   "splitter.name": "分流器",
-  "splitter.description": "将进入的物品平均分配到所有连接的传送带上。",
+  "splitter.description": "将输入的物品平均分配到所有与其相连接的传送带上。",
+
+  "inputchest.name": "输入型物流中枢",
+  "inputchest.description": "将其放置在建筑物内，可让传送带将物品送入建筑物中。建筑内的传送带可以从该中枢中提取输入的物品。",
+  
+  "outputchest.name": "输出型物流中枢",
+  "outputchest.description": "将其放置在建筑物内，可让传送带将物品送出建筑物外。物品必须首先被输入该中枢中才能被建筑外连接的传送带提取。",
 
   "belt.category.name": "传送带",
 
   "config.quality.name": "显示物品品质",
   "config.quality.tooltip": "是否在传送带上显示物品的品质。",
+  
   "config.updaterate.name": "传送带更新频率",
   "config.updaterate.tooltip": "传送带检测更新的频率（以毫秒为单位）。",
+  
   "config.pushplayer.name": "传送带对玩家的推力",
   "config.pushplayer.tooltip": "传送带推动玩家的力度。",
+  
   "config.speedplayer.name": "传送带对玩家移动加速",
   "config.speedplayer.tooltip": "当玩家顺着传送带方向移动时获得的速度加成。",
+  
   "config.rkeybind.name": "旋转快捷键",
-  "config.rkeybind.tooltip": "用于旋转传送带的按键，可在放置前后使用。"
+  "config.rkeybind.tooltip": "用于旋转传送带的按键，可在放置前后使用。",
+  
+  "config.brownbelts.name": "木制传送带",
+  "config.brownbelts.tooltip": "将传送带的外观更改为更”不那么工业化“的木制纹理样式。 (感谢vickylchq的美术作品)",
+  
+  "config.dronehub.name": "无人机物流中枢连接外观",
+  "config.dronehub.tooltip": "当传送带连接到带有物流中枢的建筑物时，将其外观更改为无人机样式。"
 }

@@ -1,7 +1,7 @@
 {
   "Name": "Stardio",
   "Author": "Jok",
-  "Version": "1.0.2",
+  "Version": "1.0.3",
   "Description": "Stardio",
   "UniqueID": "Jok.Stardio",
   "EntryDll": "Stardio.dll",

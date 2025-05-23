@@ -1,0 +1,39 @@
+{
+  "belt.name": "Băng chuyền",
+  "belt.description": "Di chuyển vật phẩm, có thể kéo và đẩy từ rương và máy móc.",
+
+  "bridge.name": "Cầu băng chuyền",
+  "bridge.description": "Bắc qua băng chuyền dọc và ngang.",
+
+  "splitter.name": "Bộ chia",
+  "splitter.description": "Chia đều vật phẩm đi vào sang tất cả băng chuyền đầu ra.",
+
+  "inputchest.name": "Trung tâm Đầu vào",
+  "inputchest.description": "Đặt vật này trong nhà để băng chuyền có thể đẩy vật phẩm vào bên trong. Vật phẩm sau đó có thể được kéo từ Trung tâm Đầu vào bằng băng chuyền.",
+  
+  "outputchest.name": "Trung tâm Đầu ra",
+  "outputchest.description": "Đặt vật này trong nhà để băng chuyền có thể kéo vật phẩm ra ngoài. Vật phẩm phải được đặt vào Trung tâm Đầu ra trước khi có thể được lấy ra.",
+
+  "belt.category.name": "Băng chuyền",
+
+  "config.quality.name": "Hiển thị chất lượng",
+  "config.quality.tooltip": "Cho biết có hiển thị chất lượng của vật phẩm trên băng chuyền hay không.",
+  
+  "config.updaterate.name": "Tốc độ cập nhật của băng chuyền",
+  "config.updaterate.tooltip": "Tần suất băng chuyền kiểm tra cập nhật, tính bằng mili giây.",
+  
+  "config.pushplayer.name": "Lực đẩy người chơi",
+  "config.pushplayer.tooltip": "Lực mà băng chuyền dùng để đẩy người chơi xung quanh.",
+  
+  "config.speedplayer.name": "Tăng tốc cho người chơi",
+  "config.speedplayer.tooltip": "Tăng tốc độ cho người chơi khi đi \"cùng chiều\" với băng chuyền.",
+  
+  "config.rkeybind.name": "Phím xoay",
+  "config.rkeybind.tooltip": "Phím dùng để xoay băng chuyền, cả trước và sau khi đặt.",
+  
+  "config.brownbelts.name": "Băng chuyền gỗ",
+  "config.brownbelts.tooltip": "Thay đổi hình ảnh băng chuyền thành phiên bản kết cấu gỗ \"ít công nghiệp\" hơn. (bởi vickylchq)",
+  
+  "config.dronehub.name": "Hình ảnh Trung tâm Drone",
+  "config.dronehub.tooltip": "Thay đổi hình ảnh băng chuyền thành drone khi gắn với một toà nhà có trung tâm bên trong."
+}
