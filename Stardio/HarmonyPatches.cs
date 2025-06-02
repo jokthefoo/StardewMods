@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using Microsoft.Xna.Framework;
+using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Menus;
 using StardewValley.Objects;
@@ -13,14 +14,8 @@ internal static class HarmonyPatches
     {
         var harmony = new Harmony(modId);
         
-        /*
-        harmony.Patch(AccessTools.DeclaredMethod(typeof(Game1), nameof(Game1.pressActionButton)), 
-            postfix: new HarmonyMethod(typeof(HarmonyPatches), nameof(Game1_pressActionButton_postfix)));*/
-        
         harmony.Patch(AccessTools.DeclaredMethod(typeof(Object), "CheckForActionOnMachine"),
-            prefix: new HarmonyMethod(typeof(HarmonyPatches), nameof(Object_CheckForActionOnMachine_prefix)));
-        
-        harmony.Patch(AccessTools.DeclaredMethod(typeof(Object), "CheckForActionOnMachine"),
+            prefix: new HarmonyMethod(typeof(HarmonyPatches), nameof(Object_CheckForActionOnMachine_prefix)), 
             postfix: new HarmonyMethod(typeof(HarmonyPatches), nameof(Object_CheckForActionOnMachine_postfix)));
         
         harmony.Patch(AccessTools.DeclaredMethod(typeof(Farmer), nameof(Farmer.MovePosition)),
@@ -28,16 +23,28 @@ internal static class HarmonyPatches
         
         harmony.Patch(AccessTools.DeclaredMethod(typeof(Object), nameof(Object.performToolAction)),
             postfix: new HarmonyMethod(typeof(HarmonyPatches), nameof(Object_performToolAction_postfix)));
-        /*
-        harmony.Patch(
-            AccessTools.Method(typeof(GameLocation), nameof(GameLocation.isCollidingPosition),
-                new[] { typeof(Rectangle), typeof(xTile.Dimensions.Rectangle), typeof(bool), typeof(int), typeof(bool), typeof(Character), typeof(bool), typeof(bool), typeof(bool), typeof(bool) }),
-            postfix: new HarmonyMethod(typeof(HarmonyPatches), nameof(GameLocation_isCollidingPosition_postfix)));
-            */
+        
+        harmony.Patch(AccessTools.DeclaredMethod(typeof(Object), nameof(Object.minutesElapsed)),
+            prefix: new HarmonyMethod(typeof(HarmonyPatches), nameof(Object_minutesElapsed_prefix)));
+    }
+    
+    public static bool Object_minutesElapsed_prefix(Object __instance, int minutes)
+    {
+        if (ModEntry.IsObjectDroneHub(__instance) || __instance.QualifiedItemId == ModEntry.FILTER_QID)
+        {
+            __instance.readyForHarvest.Value = false;
+            return false;
+        }
+        return true;
     }
 
     public static void Object_performToolAction_postfix(Object __instance, ref bool __result, Tool t)
     {
+        if (!Context.IsMainPlayer)
+        {
+            return;
+        }
+        
         var tileLoc = __instance.TileLocation;
         var location = __instance.Location;
         var state = MachineStateManager.GetState(location, tileLoc);
@@ -113,32 +120,6 @@ internal static class HarmonyPatches
         }
     }
     
-    /*
-    public static void GameLocation_isCollidingPosition_postfix(GameLocation __instance, ref bool __result, Rectangle position, xTile.Dimensions.Rectangle viewport, bool isFarmer, int damagesFarmer,
-        bool glider, Character character, bool pathfinding, bool projectile = false, bool ignoreCharacterRequirement = false, bool skipCollisionEffects = false)
-    {
-        Vector2 nextTopRight = new Vector2(position.Right / 64, position.Top / 64);
-        Vector2 nextTopLeft = new Vector2(position.Left / 64, position.Top / 64);
-        Vector2 nextBottomRight = new Vector2(position.Right / 64, position.Bottom / 64);
-        Vector2 nextBottomLeft = new Vector2(position.Left / 64, position.Bottom / 64);
-        bool nextLargerThanTile = position.Width > 64;
-        Vector2 nextBottomMid = new Vector2(position.Center.X / 64, position.Bottom / 64);
-        Vector2 nextTopMid = new Vector2(position.Center.X / 64, position.Top / 64);
-        
-        string forecast = ModEntry.Helper.Reflection
-            .GetMethod(new GameLocation(), "_TestCornersTiles")
-            .Invoke<string>();
-        
-        __instance._TestCornersTiles(nextTopRight, nextTopLeft, nextBottomRight, nextBottomLeft, nextTopMid, nextBottomMid, null, null, null, null, null, null, nextLargerThanTile, delegate(Vector2 corner)
-        {
-            if (__instance.objects.TryGetValue(corner, out var obj) && !pathfinding && character != null && !skipCollisionEffects)
-            {
-                //obj.doCollisionAction(position, (int)((float)character.speed + character.addedSpeed), corner, character);
-            }
-            return false;
-        });
-    }*/
-    
     public static void Object_CheckForActionOnMachine_prefix(Object __instance, out bool __state, Farmer who, bool justCheckingForActivity = false)
     {
         __state = __instance is BeltItem && __instance.heldObject.Value != null;
@@ -165,6 +146,33 @@ internal static class HarmonyPatches
                 who.freezePause = 1000;
                 Game1.activeClickableMenu = new ItemGrabMenu(chest.Items, reverseGrab: false, showReceivingMenu: true, InventoryMenu.highlightAllItems, chest.grabItemFromInventory, null, chest.grabItemFromChest, snapToBottom: false, canBeExitedWithKey: true, playRightClickSound: true, allowRightClick: true, showOrganizeButton: true, 1, null, -1, __instance);
                 __result = true;
+            }
+        }
+        
+        if (__instance.QualifiedItemId == ModEntry.FILTER_QID)
+        {
+            if (__instance.heldObject.Value != null && justCheckingForActivity)
+            {
+                __result = true;
+                return;
+            }
+            
+            if (__instance.heldObject.Value != null && who.ActiveItem == null)
+            {
+                if (who.IsLocalPlayer)
+                {
+                    var outputObj = __instance.heldObject.Value;
+                    __instance.heldObject.Value = null;
+                    if (!who.addItemToInventoryBool(outputObj))
+                    {
+                        __instance.heldObject.Value = outputObj;
+                        Game1.showRedMessage(Game1.content.LoadString("Strings\\StringsFromCSFiles:Crop.cs.588"));
+                        __result = true;
+                        return;
+                    }
+                    __result = true;
+                    Game1.playSound("coin", null);
+                }
             }
         }
     }

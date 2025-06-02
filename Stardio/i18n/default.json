@@ -7,6 +7,9 @@
 
   "splitter.name": "Splitter",
   "splitter.description": "Splits items that come into it evenly to all belts coming out of it.",
+  
+  "filter.name": "Filter",
+  "filter.description": "If an item pushed into the Filter matches the filter, it passes forward. Otherwise, the item is output to the left or right. To set the Filter's item interact with the filter while holding an item. To remove the Filter's item interact with an empty hand.",
 
   "inputchest.name": "Input Hub",
   "inputchest.description": "Place this inside a building to let belts to push items into the building. Items can then be pulled from the Input Hub by belts.",

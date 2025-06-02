@@ -40,6 +40,11 @@ public class BeltItemDataDefinition : BaseItemDataDefinition
         {
             return new SplitterItem(data.ItemId);
         }
+        
+        if(data.ItemId == "Jok.Stardio.Filter")
+        {
+            return new FilterItem(data.ItemId);
+        }
             
         return new BeltItem(data.ItemId);
     }
@@ -48,6 +53,10 @@ public class BeltItemDataDefinition : BaseItemDataDefinition
     {
         int width = 16;
         int height = 16;
+        if (data.ItemId == "Jok.Stardio.Filter")
+        {
+            height = 32;
+        }
         return new Rectangle(spriteIndex * width % texture.Width, spriteIndex * width / texture.Width * height, width, height);
     }
     

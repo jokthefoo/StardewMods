@@ -28,10 +28,13 @@ internal sealed class ModEntry : Mod
     internal const string BUILDING_CHEST_KEY = "Jok.Stardio/BuildingChest";
     internal const string INPUT_CHEST_QID = "(BC)Jok.Stardio.InputChest";
     internal const string OUTPUT_CHEST_QID = "(BC)Jok.Stardio.OutputChest";
+    internal const string FILTER_QID = "(Jok.Belt)Jok.Stardio.Filter";
     internal static Texture2D dronepadTexture;
     internal static Texture2D dronesTexture;
     //ModEntry.MonitorInst.Log($"X value: {x}", LogLevel.Info);
 
+    public const string BELT_IGNORE_KEY = "Jok.Stardio.NoGrabby";
+    
     /*********
      ** Public methods
      *********/
@@ -59,6 +62,7 @@ internal sealed class ModEntry : Mod
         Helper.ModContent.Load<Texture2D>("assets/belts2");
         Helper.ModContent.Load<Texture2D>("assets/otherbelts2");
         Helper.ModContent.Load<Texture2D>("assets/chest");
+        Helper.ModContent.Load<Texture2D>("assets/filter");
         dronesTexture = Helper.ModContent.Load<Texture2D>("assets/drones");
         dronepadTexture = Helper.ModContent.Load<Texture2D>("assets/dronepad");
 
@@ -76,19 +80,9 @@ internal sealed class ModEntry : Mod
         {
             MachineStateManager.RemoveState(e.Location, tileLoc);
 
-            if (obj is BeltItem belt)
+            if (obj is IBeltPushing belt)
             {
                 belt.UpdateNeighborCurves(tileLoc);
-            }
-
-            if (obj is SplitterItem splitter)
-            {
-                splitter.UpdateNeighborCurves(tileLoc);
-            }
-
-            if (obj is BridgeItem bridge)
-            {
-                bridge.UpdateNeighborCurves(tileLoc);
             }
 
             if (IsObjectDroneHub(obj))
@@ -334,6 +328,7 @@ internal sealed class ModEntry : Mod
         sc.RegisterSerializerType(typeof(BeltItem));
         sc.RegisterSerializerType(typeof(BridgeItem));
         sc.RegisterSerializerType(typeof(SplitterItem));
+        sc.RegisterSerializerType(typeof(FilterItem));
         EMCApi = Helper.ModRegistry.GetApi<IExtraMachineConfigApi>("selph.ExtraMachineConfig");
         FMApi = Helper.ModRegistry.GetApi<IFurnitureMachineApi>("selph.FurnitureMachine");
         BMApi = Helper.ModRegistry.GetApi<IBiggerMachinesAPI>("Jok.BiggerMachines");
@@ -427,6 +422,10 @@ internal sealed class ModEntry : Mod
         {
             e.LoadFromModFile<Texture2D>("assets/chest.png", AssetLoadPriority.Low);
         }
+        else if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/filter.png"))
+        {
+            e.LoadFromModFile<Texture2D>("assets/filter.png", AssetLoadPriority.Low);
+        }
         else if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/drones.png"))
         {
             e.LoadFromModFile<Texture2D>("assets/drones.png", AssetLoadPriority.Low);
@@ -445,8 +444,10 @@ internal sealed class ModEntry : Mod
                 dict.Add("(Jok.Belt)Jok.Stardio.Bridge", $"336 1 (Jok.Belt)Jok.Stardio.Belt 5/what/(Jok.Belt)Jok.Stardio.Bridge 1/false/s farming 5/");
                 dict.Add("(Jok.Belt)Jok.Stardio.Splitter", $"336 1 (Jok.Belt)Jok.Stardio.Belt 5/what/(Jok.Belt)Jok.Stardio.Splitter 1/false/s farming 5/");
 
-                dict.Add("Jok.Stardio.InputChest", $"337 1 (Jok.Belt)Jok.Stardio.Bridge 4/what/Jok.Stardio.InputChest 1/true/s farming 10/");
-                dict.Add("Jok.Stardio.OutputChest", $"337 1 (Jok.Belt)Jok.Stardio.Splitter 4/what/Jok.Stardio.OutputChest 1/true/s farming 10/");
+                dict.Add("Jok.Stardio.InputChest", $"337 1 (Jok.Belt)Jok.Stardio.Bridge 2/what/Jok.Stardio.InputChest 1/true/s farming 10/");
+                dict.Add("Jok.Stardio.OutputChest", $"337 1 (Jok.Belt)Jok.Stardio.Splitter 2/what/Jok.Stardio.OutputChest 1/true/s farming 10/");
+                
+                dict.Add("(Jok.Belt)Jok.Stardio.Filter", $"787 1 (Jok.Belt)Jok.Stardio.Splitter 1 (Jok.Belt)Jok.Stardio.Bridge 1/what/(Jok.Belt)Jok.Stardio.Filter 1/false/s farming 7/");
             });
         }
         else if (e.NameWithoutLocale.IsEquivalentTo("Data/BigCraftables"))
@@ -477,6 +478,7 @@ internal sealed class ModEntry : Mod
                 };
             });
         }
+        /*
         else if (e.NameWithoutLocale.IsEquivalentTo("Data/Machines"))
         {
             e.Edit(asset =>
@@ -505,7 +507,7 @@ internal sealed class ModEntry : Mod
                 data.Add("(BC)Jok.Stardio.InputChest", machineData);
                 data.Add("(BC)Jok.Stardio.OutputChest", machineData);
             });
-        }
+        }*/
     }
 
     public static bool IsObjectDroneHub(Object obj)

@@ -19,5 +19,12 @@
     Texture: "Jok.Stardio/otherbelts.png",
     TextureIndex: 4,
     Price: 0
+  },
+  "Jok.Stardio.Filter": {
+    DisplayName: "filter.name",
+    Description: "filter.description",
+    Texture: "Jok.Stardio/filter.png",
+    TextureIndex: 0,
+    Price: 0
   }
 }

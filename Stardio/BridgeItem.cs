@@ -8,7 +8,7 @@ using Object = StardewValley.Object;
 namespace Jok.Stardio;
 
 [XmlType("Mods_Jok_BridgeItem")]
-public class BridgeItem : Object
+public class BridgeItem : IBeltPushing
 {
     [XmlIgnore]
     public static int BridgeAnim = 0;
@@ -127,41 +127,5 @@ public class BridgeItem : Object
             UpdateNeighborCurves();
         }
         return wasPlaced;
-    }
-
-    private void UpdateNeighborCurves()
-    {
-        UpdateNeighborCurves(TileLocation);
-    }
-    
-    public void UpdateNeighborCurves(Vector2 tileLoc)
-    {
-        if (Location.objects.TryGetValue(getTileInDirection(BeltItem.Direction.Forward, tileLoc), out Object obj1) && obj1 is BeltItem forwardBelt)
-        {
-            forwardBelt.CheckForCurve();
-        }
-        if (Location.objects.TryGetValue(getTileInDirection(BeltItem.Direction.Right, tileLoc), out Object obj2) && obj2 is BeltItem rightBelt)
-        {
-            rightBelt.CheckForCurve();
-        }
-        if (Location.objects.TryGetValue(getTileInDirection(BeltItem.Direction.Left, tileLoc), out Object obj3) && obj3 is BeltItem leftBelt)
-        {
-            leftBelt.CheckForCurve();
-        }
-        if (Location.objects.TryGetValue(getTileInDirection(BeltItem.Direction.Behind, tileLoc), out Object obj4) && obj4 is BeltItem backBelt)
-        {
-            backBelt.CheckForCurve();
-        }
-    }
-
-    public Vector2 getTileInDirection(BeltItem.Direction dir, Vector2 tileLoc)
-    {
-        var rot = (int)dir % 4;
-        return tileLoc + BeltItem.rotationDict[rot];
-    }
-    
-    private Vector2 getTileInDirection(BeltItem.Direction dir)
-    {
-        return getTileInDirection(dir, TileLocation);
     }
 }

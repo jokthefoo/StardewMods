@@ -57,17 +57,7 @@ public abstract class IBeltPushing : Object
         tempBeltInventory.Clear();
         tempBeltInventory.Add(heldObject.Value);
 
-        Object? outputTarget = null;
-        // Try to get push target with BM first
-        if (ModEntry.BMApi != null && ModEntry.BMApi.TryGetObjectAt(Location, targetTile, out var bmObject))
-        {
-            outputTarget = bmObject;
-        }
-
-        if (outputTarget == null && Location.objects.TryGetValue(targetTile, out var normalObj))
-        {
-            outputTarget = normalObj;
-        }
+        Object? outputTarget = getObjectAtTile(targetTile);
         
         // Try push item with FM
         if (ModEntry.FMApi != null && outputTarget == null)
@@ -85,30 +75,45 @@ public abstract class IBeltPushing : Object
             {
                 return;
             }
+            if (TryPushToJunimoHut(targetTile))
+            {
+                return;
+            }
             if (TryPushToBuilding(targetTile))
             {
                 return;
             }
             return;
         }
+
+        // try to push to filter
+        Object? newTarget = null;
+        if (outputTarget is FilterItem)
+        {
+            if (TryPushToFilter(outputTarget, ref newTarget, ref dir))
+            {
+                outputTarget = newTarget;
+            }
+            
+            if (outputTarget == null)
+            {
+                return;
+            }
+        }
         
         // try to push to bridge
-        Object? newTarget = null;
+        newTarget = null;
         if (outputTarget is BridgeItem)
         {
             if (TryPushToBridge(outputTarget, ref newTarget, dir))
             {
                 outputTarget = newTarget;
             }
-            else
+            
+            if (outputTarget == null)
             {
                 return;
             }
-        }
-
-        if (outputTarget == null)
-        {
-            return;
         }
             
         // try to add to chest
@@ -182,6 +187,15 @@ public abstract class IBeltPushing : Object
         return false;
     }
     
+    private bool TryPushToJunimoHut(Vector2 targetTile)
+    {
+        var building = Location.getBuildingAt(targetTile);
+        if (building is JunimoHut hut)
+        {
+            return TryPushToChest(hut.GetOutputChest());
+        }
+        return false;
+    }
     
     private bool TryPushToShippingBin(Vector2 targetTile)
     {
@@ -334,18 +348,7 @@ public abstract class IBeltPushing : Object
         if (outputTarget is BridgeItem bridge)
         {
             var targetTile = getTileInDirection(dir, bridge.TileLocation);
-            
-            Object? outputTarget2 = null;
-            // Try to get target with BM first
-            if (ModEntry.BMApi != null && ModEntry.BMApi.TryGetObjectAt(Location, targetTile, out var bmObject))
-            {
-                outputTarget2 = bmObject;
-            }
-
-            if (outputTarget2 == null && Location.objects.TryGetValue(targetTile, out var normalObj))
-            {
-                outputTarget2 = normalObj;
-            }
+            Object? outputTarget2 = getObjectAtTile(targetTile);
             
             if (outputTarget2 == null)
             {
@@ -386,5 +389,90 @@ public abstract class IBeltPushing : Object
             return true;
         }
         return false;
+    }
+    
+    private bool TryPushToFilter(Object outputTarget, ref Object? newTarget, ref Direction dir)
+    {
+        if (outputTarget is FilterItem filter)
+        {
+            // if we match filter attempt to push forwards
+            if (filter.heldObject.Value != null && filter.heldObject.Value.QualifiedItemId == heldObject.Value.QualifiedItemId)
+            {
+                var targetTile = getTileInDirection(dir, filter.TileLocation);
+                Object? outputTarget2 = getObjectAtTile(targetTile);
+            
+                if (outputTarget2 == null)
+                {
+                    return false;
+                }
+            
+                newTarget = outputTarget2;
+                return true;
+            }
+            else //attempt to push l/r
+            {
+                var targetTile = getTileInDirection(dir + filter.pushDirection, filter.TileLocation);
+                Object? outputTarget2 = getObjectAtTile(targetTile);
+                var newDir = dir + filter.pushDirection;
+                
+                if (outputTarget2 == null)
+                {
+                    var targetTile2 = getTileInDirection(dir - filter.pushDirection, filter.TileLocation);
+                    outputTarget2 = getObjectAtTile(targetTile2);
+                    newDir =  dir - filter.pushDirection;
+    
+                    if (outputTarget2 == null)
+                    {
+                        return false;
+                    }
+                }
+                dir = newDir;
+                filter.pushDirection *= -1; // flip direction
+                newTarget = outputTarget2;
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    private Object? getObjectAtTile(Vector2 tileLocation)
+    {
+        Object? outputTarget = null;
+        // Try to get push target with BM first
+        if (ModEntry.BMApi != null && ModEntry.BMApi.TryGetObjectAt(Location, tileLocation, out var bmObject))
+        {
+            outputTarget = bmObject;
+        }
+        if (outputTarget == null && Location.objects.TryGetValue(tileLocation, out var normalObj))
+        {
+            outputTarget = normalObj;
+        }
+        return outputTarget;
+    }
+
+    protected void UpdateNeighborCurves()
+    {
+        UpdateNeighborCurves(TileLocation);
+    }
+    
+    public void UpdateNeighborCurves(Vector2 tileLoc)
+    {
+        if (Location.objects.TryGetValue(getTileInDirection(Direction.Forward, tileLoc), out Object obj1) && obj1 is BeltItem forwardBelt)
+        {
+            forwardBelt.CheckForCurve();
+        }
+        if (Location.objects.TryGetValue(getTileInDirection(Direction.Right, tileLoc), out Object obj2) && obj2 is BeltItem rightBelt)
+        {
+            rightBelt.CheckForCurve();
+        }
+        if (Location.objects.TryGetValue(getTileInDirection(Direction.Left, tileLoc), out Object obj3) && obj3 is BeltItem leftBelt)
+        {
+            leftBelt.CheckForCurve();
+        }
+        if (Location.objects.TryGetValue(getTileInDirection(Direction.Behind, tileLoc), out Object obj4) && obj4 is BeltItem backBelt)
+        {
+            backBelt.CheckForCurve();
+        }
     }
 }

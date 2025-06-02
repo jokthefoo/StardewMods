@@ -192,29 +192,4 @@ public class SplitterItem : IBeltPushing
         }
         return wasPlaced;
     }
-
-    private void UpdateNeighborCurves()
-    {
-        UpdateNeighborCurves(TileLocation);
-    }
-    
-    public void UpdateNeighborCurves(Vector2 tileLoc)
-    {
-        if (Location.objects.TryGetValue(getTileInDirection(Direction.Forward, tileLoc), out Object obj1) && obj1 is BeltItem forwardBelt)
-        {
-            forwardBelt.CheckForCurve();
-        }
-        if (Location.objects.TryGetValue(getTileInDirection(Direction.Right, tileLoc), out Object obj2) && obj2 is BeltItem rightBelt)
-        {
-            rightBelt.CheckForCurve();
-        }
-        if (Location.objects.TryGetValue(getTileInDirection(Direction.Left, tileLoc), out Object obj3) && obj3 is BeltItem leftBelt)
-        {
-            leftBelt.CheckForCurve();
-        }
-        if (Location.objects.TryGetValue(getTileInDirection(Direction.Behind, tileLoc), out Object obj4) && obj4 is BeltItem backBelt)
-        {
-            backBelt.CheckForCurve();
-        }
-    }
 }

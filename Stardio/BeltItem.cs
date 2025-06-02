@@ -187,6 +187,10 @@ public class BeltItem : IBeltPushing
         {
             return;
         }
+        if (TryPullFromJunimoHut(targetTile))
+        {
+            return;
+        }
         TryPullFromBuilding(targetTile);
     }
 
@@ -229,6 +233,16 @@ public class BeltItem : IBeltPushing
         }
     }
     
+    private bool TryPullFromJunimoHut(Vector2 targetTile)
+    {
+        var building = Location.getBuildingAt(targetTile);
+        if (building is JunimoHut hut && hut.GetOutputChest() != null)
+        {
+            return TryPullFromChest(hut.GetOutputChest());
+        }
+        return false;
+    }
+    
     private bool TryPullFromFishPond(Vector2 targetTile)
     {
         var building = Location.getBuildingAt(targetTile);
@@ -250,10 +264,29 @@ public class BeltItem : IBeltPushing
         }
         return false;
     }
-    
+
+    private static bool ShouldBeltIgnoreObject(Object obj)
+    {
+        if (obj == null)
+        {
+            return true;
+        }
+        
+        Game1.objectData.TryGetValue(obj.ItemId, out var objData);
+        if (objData != null && objData.CustomFields != null && objData.CustomFields.TryGetValue(ModEntry.BELT_IGNORE_KEY,  out var zz))
+        {
+            return true;
+        }
+        return false;
+    }
     private void TryPullFromMachine(Object inputObj)
     {
         if (inputObj == null || !inputObj.readyForHarvest.Value || inputObj is BeltItem || inputObj is SplitterItem)
+        {
+            return;
+        }
+
+        if (ShouldBeltIgnoreObject(inputObj) || ShouldBeltIgnoreObject(inputObj.heldObject.Value))
         {
             return;
         }
@@ -293,13 +326,13 @@ public class BeltItem : IBeltPushing
                     {
                         heldObject.Value = (Object)item.getOne();
                         item.Stack -= 1;
-                        
+
                         if (item.Stack == 0)
                         {
                             chest.Items.Remove(item);
                             return;
                         }
-                        
+
                         if (chest.Items.Count == 0)
                         {
                             inputObj.heldObject.Value.heldObject.Value = null;
@@ -322,7 +355,7 @@ public class BeltItem : IBeltPushing
         {
             return;
         }
-        
+
         OnMachineEmptied(inputObj, machineData, output);
     }
 
@@ -640,31 +673,6 @@ public class BeltItem : IBeltPushing
             }
         }
         return wasPlaced;
-    }
-
-    private void UpdateNeighborCurves()
-    {
-        UpdateNeighborCurves(TileLocation);
-    }
-    
-    public void UpdateNeighborCurves(Vector2 tileLoc)
-    {
-        if (Location.objects.TryGetValue(getTileInDirection(Direction.Forward, tileLoc), out Object obj1) && obj1 is BeltItem forwardBelt)
-        {
-            forwardBelt.CheckForCurve();
-        }
-        if (Location.objects.TryGetValue(getTileInDirection(Direction.Right, tileLoc), out Object obj2) && obj2 is BeltItem rightBelt)
-        {
-            rightBelt.CheckForCurve();
-        }
-        if (Location.objects.TryGetValue(getTileInDirection(Direction.Left, tileLoc), out Object obj3) && obj3 is BeltItem leftBelt)
-        {
-            leftBelt.CheckForCurve();
-        }
-        if (Location.objects.TryGetValue(getTileInDirection(Direction.Behind, tileLoc), out Object obj4) && obj4 is BeltItem backBelt)
-        {
-            backBelt.CheckForCurve();
-        }
     }
 
     public void CheckForCurve()
