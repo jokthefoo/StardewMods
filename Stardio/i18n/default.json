@@ -32,5 +32,10 @@
   "config.brownbelts.name": "Wood Belts",
   "config.brownbelts.tooltip": "Changes sprite of belts to a \"less industrial\" wooden version of the texture. (by vickylchq)",
   "config.dronehub.name": "Drone Hub Sprites",
-  "config.dronehub.tooltip": "Changes sprite of belts to a drone when attached to a building with a hub inside."
+  "config.dronehub.tooltip": "Changes sprite of belts to a drone when attached to a building with a hub inside.",
+
+  "config.pushmachine.name": "Push into Machines",
+  "config.pushmachine.tooltip": "Allows belts to push items into machines.",
+  "config.pullmachines.name": "Pull from Machines",
+  "config.pullmachines.tooltip": "Allows belts to pull items out of machines."
 }

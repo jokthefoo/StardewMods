@@ -11,4 +11,6 @@ public sealed class StardioConfig
     public int BeltUpdateMS { get; set; } = 100;
     public bool BrownBelts { get; set; } = true;
     public bool DroneHub { get; set; } = true;
+    public bool PullFromMachines { get; set; } = true;
+    public bool PushIntoMachines { get; set; } = true;
 }

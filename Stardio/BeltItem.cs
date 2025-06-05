@@ -290,6 +290,11 @@ public class BeltItem : IBeltPushing
         {
             return;
         }
+        
+        if (!ModEntry.Config.PullFromMachines)
+        {
+            return;
+        }
 
         //Object.CheckForActionOnMachine
         MachineData machineData = inputObj.GetMachineData();

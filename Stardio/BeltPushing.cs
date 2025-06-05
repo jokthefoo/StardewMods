@@ -37,7 +37,7 @@ public abstract class IBeltPushing : Object
 
     public Vector2 getTileInDirection(Direction dir, Vector2 tileLoc)
     {
-        var rot = (currentRotation.Value + (int)dir) % 4;
+        var rot = Math.Abs((currentRotation.Value + (int)dir) % 4);
         return tileLoc + rotationDict[rot];
     }
     
@@ -141,6 +141,11 @@ public abstract class IBeltPushing : Object
             return;
         }
 
+        if (!ModEntry.Config.PushIntoMachines)
+        {
+            return;
+        }
+        
         // try to load single item
         if (outputTarget.AttemptAutoLoad(tempBeltInventory, Game1.player))
         {
@@ -411,22 +416,27 @@ public abstract class IBeltPushing : Object
             }
             else //attempt to push l/r
             {
-                var targetTile = getTileInDirection(dir + filter.pushDirection, filter.TileLocation);
+                int newDir = (int)dir + filter.pushDirection;
+                if (newDir < 0)
+                {
+                    newDir = 4 + newDir;
+                }
+                
+                var targetTile = getTileInDirection((Direction)newDir, filter.TileLocation);
                 Object? outputTarget2 = getObjectAtTile(targetTile);
-                var newDir = dir + filter.pushDirection;
                 
                 if (outputTarget2 == null)
                 {
-                    var targetTile2 = getTileInDirection(dir - filter.pushDirection, filter.TileLocation);
+                    newDir = (int)dir - filter.pushDirection;
+                    var targetTile2 = getTileInDirection((Direction)newDir, filter.TileLocation);
                     outputTarget2 = getObjectAtTile(targetTile2);
-                    newDir =  dir - filter.pushDirection;
     
                     if (outputTarget2 == null)
                     {
                         return false;
                     }
                 }
-                dir = newDir;
+                dir = (Direction)newDir;
                 filter.pushDirection *= -1; // flip direction
                 newTarget = outputTarget2;
                 return true;

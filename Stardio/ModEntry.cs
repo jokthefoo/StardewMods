@@ -369,6 +369,8 @@ internal sealed class ModEntry : Mod
         });
 
         configMenu.AddBoolOption(mod: ModManifest, name: I18n.Config_Dronehub_Name, tooltip: I18n.Config_Dronehub_Tooltip, getValue: () => Config.DroneHub, setValue: value => Config.DroneHub = value);
+        configMenu.AddBoolOption(mod: ModManifest, name: I18n.Config_Pullmachines_Name, tooltip: I18n.Config_Pullmachines_Tooltip, getValue: () => Config.PullFromMachines, setValue: value => Config.PullFromMachines = value);
+        configMenu.AddBoolOption(mod: ModManifest, name: I18n.Config_Pushmachine_Name, tooltip: I18n.Config_Pushmachine_Tooltip, getValue: () => Config.PushIntoMachines, setValue: value => Config.PushIntoMachines = value);
     }
 
     private void OnAssetRequested(object sender, AssetRequestedEventArgs e)
