@@ -69,23 +69,6 @@ namespace FishMod
 		public int treeAnimTimer = 800;
 		public int farmerAnimTimer = 100;
 		public int farmerAnimIndex = 0;
-		
-		private class Debris
-		{
-			public Debris(int i, int x, int y, Vector2 vel)
-			{
-				index = i;
-				this.x = x;
-				this.y = y;
-				velocity = vel;
-			}
-	
-			public int index;
-			public int x;
-			public int y;
-			public Vector2 velocity;
-		}
-		
 		private List<Debris> debris = new List<Debris>();
 
 		public TreeBobberBar(GameLocation location, bool treasure, int logCount, Tool t, Vector2 tileLocation, int spriteIndex = TreasureSprites.Wood_Pau)

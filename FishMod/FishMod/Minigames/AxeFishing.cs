@@ -95,7 +95,7 @@ public class AxeFishing
             float num = Math.Max(1f, (toolStrength + 1) * 0.75f);
             if (Game1.random.NextDouble() <= num / 12.0)
             {
-                var debris = new Debris(709,
+                var debris = new StardewValley.Debris(709,
                     new Vector2((float)(tileLocation.X * 64.0 + 32.0),
                         (float)((tileLocation.Y - 0.5) * 64.0 + 32.0)), Game1.player.getStandingPosition());
                 debris.Chunks[0].xVelocity.Value += Game1.random.Next(-10, 11) / 10f;
@@ -191,7 +191,7 @@ public class AxeFishing
 
                 Vector2 debrisOrigin = new Vector2((float)(tileLocation.X * 64.0 + 32.0),
                     (float)((tileLocation.Y - 0.5) * 64.0 + 32.0));
-                Debris debris = new Debris(itemid, debrisOrigin, Game1.player.getStandingPosition());
+                StardewValley.Debris debris = new StardewValley.Debris(itemid, debrisOrigin, Game1.player.getStandingPosition());
                 debris.Chunks[0].xVelocity.Value += Game1.random.Next(-10, 11) / 10f;
                 debris.chunkFinalYLevel = (int)(tileLocation.Y * 64.0 + 64.0);
                 tree.Location.debris.Add(debris);

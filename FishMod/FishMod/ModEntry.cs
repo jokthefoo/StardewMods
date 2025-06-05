@@ -33,6 +33,8 @@ namespace FishMod
             DeluxeFishingRodTool.fishingTextures = helper.ModContent.Load<Texture2D>(DeluxeFishingRodTool.FishSpritesPath);
             TreeBobberBar.treeBobberBarTextures = helper.ModContent.Load<Texture2D>("Assets/WoodChoppingUI.png");
             MiningBobberBar.miningBobberBarTextures = helper.ModContent.Load<Texture2D>("Assets/MiningUI.png");
+            WateringBobberBar.farmingBobberBarTextures = helper.ModContent.Load<Texture2D>("Assets/FarmingUI.png");
+            AnimalBobberBar.pettingBobberBarTextures = helper.ModContent.Load<Texture2D>("Assets/PettingUI.png");
             Config = helper.ReadConfig<ModConfig>();
             HarmonyPatches();
         }

@@ -10,6 +10,22 @@ using StardewValley.Tools;
 
 namespace FishMod;
 
+public class Debris
+{
+    public Debris(int i, int x, int y, Vector2 vel)
+    {
+        index = i;
+        this.x = x;
+        this.y = y;
+        velocity = vel;
+    }
+	
+    public int index;
+    public int x;
+    public int y;
+    public Vector2 velocity;
+}
+
 public class BasicBobberBar : IClickableMenu
 {
     public bool handledFishResult;
@@ -52,6 +68,18 @@ public class BasicBobberBar : IClickableMenu
     public Color color = Color.White;
 
     private CallBack minigameEndingCallback;
+    
+    //Debris
+    public List<Debris> debris = new List<Debris>();
+    public float debrisAlpha = 1.0f;
+    private int toolAnimState = ToolAnimStates.Chop;
+    private static ICue chopSound;
+    public bool hasToolChopAnim = false;
+    public float toolChoppingAngle;
+    public float toolChoppingStartDegree = 260;
+    public float toolChoppingEndDegree = 380;
+    public string chopSoundName = "hammer";
+
     public delegate void CallBack(int treasures, bool success);  
 
     public BasicBobberBar(CallBack completeCallback, int treasure, int playerLevel = -1, bool goldenTreasure = false, int colorIndex = -1)
@@ -338,9 +366,78 @@ public class BasicBobberBar : IClickableMenu
 
             CheckLoss();
             CheckVictory();
+
+            if (hasToolChopAnim)
+            {
+                SwingingAnimationUpdate(time);
+            }
         }
     }
+    private static class ToolAnimStates
+    {
+        public const int Chop = 0;
+        public const int PullBack = 1;
+    }
 
+    protected virtual void DebrisVelocityUpdate(Debris d)
+    {
+        d.x += (int)d.velocity.X;
+        d.y += (int)d.velocity.Y;
+        d.y += 10;
+        d.velocity.X -= .1f;
+        d.velocity.X = Math.Clamp(d.velocity.X, -4, 10);
+        d.velocity.Y += .1f;
+        d.velocity.Y = Math.Clamp(d.velocity.Y, -12, 0);
+    }
+    
+    protected virtual void DebrisAlphaUpdate()
+    {
+        debrisAlpha -= 0.02f;
+    }
+    
+    protected virtual void ConstructDebris()
+    {
+        debris = new List<Debris>();
+        for (int i = 0; i < 4; i++)
+        {
+            debris.Add(new Debris(Game1.random.Next(0,9), Game1.random.Next(-10,2), Game1.random.Next(-8,9), new Vector2(Game1.random.Next(-2, 5), Game1.random.Next(-20, -10))));
+        }
+    }
+    
+    private void SwingingAnimationUpdate(GameTime time)
+    {
+        DebrisAlphaUpdate();
+        foreach (Debris d in debris)
+        {
+            DebrisVelocityUpdate(d);
+        }
+	
+        switch (toolAnimState)
+        {
+            case ToolAnimStates.Chop:
+                toolChoppingAngle += MathHelper.ToRadians(4);
+                break;
+            case ToolAnimStates.PullBack:
+                toolChoppingAngle -= MathHelper.ToRadians(1.5f);
+                break;
+        }
+	
+        if (toolChoppingAngle < MathHelper.ToRadians(toolChoppingStartDegree) && toolAnimState != ToolAnimStates.Chop)
+        {
+            //start chop
+            toolAnimState = ToolAnimStates.Chop;
+        }
+	
+        if (toolChoppingAngle > MathHelper.ToRadians(toolChoppingEndDegree) && toolAnimState != ToolAnimStates.PullBack)
+        {
+            Game1.playSound(chopSoundName, out chopSound);
+
+            //start backswing
+            toolAnimState = ToolAnimStates.PullBack;
+            debrisAlpha = 1.0f;
+            ConstructDebris();
+        }
+    }
 
     public override void draw(SpriteBatch b)
     {
@@ -354,10 +451,17 @@ public class BasicBobberBar : IClickableMenu
             DrawProgressBar(b);
 
             DrawTreasures(b);
+
+            DrawToolAnim(b);
             
             sparkleText?.draw(b, new Vector2(xPositionOnScreen - 16, yPositionOnScreen - 64));
         }
         Game1.EndWorldDrawInUI(b);
+    }
+
+    protected virtual void DrawToolAnim(SpriteBatch b)
+    {
+        
     }
 
     protected virtual void DrawTreasures(SpriteBatch b)

@@ -7,8 +7,10 @@ namespace FishMod;
 
 public class AnimalBobberBar : BasicBobberBar
 {
+    public static Texture2D pettingBobberBarTextures;
+    
     private float perAnimalProgress;
-    public AnimalBobberBar(CallBack completeCallback, List<int> animals, bool treasure, int colorIndex = -1)
+    public AnimalBobberBar(CallBack completeCallback, List<int> animals, bool treasure, int colorIndex = -5)
         : base(completeCallback, treasure ? 1 : 0, Game1.player.farmingLevel.Value, false, colorIndex)
     {
         perAnimalProgress = 1f / animals.Count;
@@ -21,9 +23,14 @@ public class AnimalBobberBar : BasicBobberBar
             newTreasure.increaseRate *= 2;
             newTreasure.isSpecial = true;
             newTreasure.treasureProgressColor = Color.White;
+            newTreasure.treasureScaleMaxScale = 1.4f;
             treasures.Add(newTreasure);
         }
         distanceFromCatching = 0.01f;
+        
+        toolChoppingAngle = MathHelper.ToRadians(220);
+        hasToolChopAnim = true;
+        chopSoundName = "toolCharge";
     }
 
     protected override void TreasureUpdate(GameTime time)
@@ -60,6 +67,31 @@ public class AnimalBobberBar : BasicBobberBar
         if (reelSound == null || reelSound.IsStopped || reelSound.IsStopping || !reelSound.IsPlaying)
             Game1.playSound("fastReel", out reelSound);
     }
+
+    protected override void DrawToolAnim(SpriteBatch b)
+    {
+        b.Draw(DeluxeFishingRodTool.fishingTextures,
+            new Vector2(xPositionOnScreen + 10, yPositionOnScreen + 530) + everythingShake, new Rectangle(20 * TreasureSprites.Dino, 0, 20, 24), Color.White, 0f,
+            new Vector2(10f, 10f),  4f, SpriteEffects.None, 0.85f);
+
+        // Petting
+        b.Draw(pettingBobberBarTextures,
+            new Vector2(xPositionOnScreen - 25, yPositionOnScreen + 510) + everythingShake,
+            new Rectangle(66, 35, 10, 10), Color.White, toolChoppingAngle, new Vector2(5f, 5f), 4f,
+            SpriteEffects.None, 0.9f);
+        
+        if (debrisAlpha > 0f)
+        {
+            // Debris
+            foreach(Debris d in debris)
+            {
+                b.Draw(pettingBobberBarTextures,
+                    new Vector2(xPositionOnScreen + d.x, yPositionOnScreen + 505 + d.y) + everythingShake,
+                    new Rectangle(100 + 3 * d.index, 32, 3, 3), Color.White * debrisAlpha, toolChoppingAngle, new Vector2(0f, 0f), 4f,
+                    SpriteEffects.None, 0.9f);
+            }
+        }
+    }
     
     protected override void DecreaseProgress()
     {
@@ -77,8 +109,9 @@ public class AnimalBobberBar : BasicBobberBar
     protected override void DrawBackground(SpriteBatch b)
     {
         // bar background
-        b.Draw(DeluxeFishingRodTool.fishingTextures, new Vector2(xPositionOnScreen + 126, yPositionOnScreen + 296) + everythingShake,
-            new Rectangle(141, 362, 22, 148), Color.White * scale, 0f, new Vector2(18.5f, 74f) * scale, 4f * scale,
+        int barXPos = xPositionOnScreen + 54;
+        b.Draw(pettingBobberBarTextures, new Vector2(barXPos, yPositionOnScreen + 300 - 14) + everythingShake,
+            new Rectangle(1, 13, 48, 153), Color.White * scale, 0f, new Vector2(18.5f, 74f) * scale, 4f * scale,
             SpriteEffects.None, 0.01f);
     }
     
@@ -86,10 +119,9 @@ public class AnimalBobberBar : BasicBobberBar
     {
         // current level of progress bar
         b.Draw(Game1.staminaRect,
-            new Rectangle(xPositionOnScreen + 124 - 8,
-                yPositionOnScreen + 4 + (int)(580f * (1f - distanceFromCatching)), 16,
+            new Rectangle(xPositionOnScreen + 128,
+                yPositionOnScreen + 4 + (int)(580f * (1f - distanceFromCatching)), 8,
                 (int)(580f * distanceFromCatching)), Utility.getRedToGreenLerpColor(distanceFromCatching));
-
     }
     public override void CheckVictory()
     {

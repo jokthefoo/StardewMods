@@ -452,22 +452,6 @@ private static class AxeAnimStates
 	public const int Chop = 0;
 	public const int PullBack = 1;
 }
-
-private class Debris
-{
-	public Debris(int i, int x, int y, Vector2 vel)
-	{
-		index = i;
-		this.x = x;
-		this.y = y;
-		velocity = vel;
-	}
-	
-	public int index;
-	public int x;
-	public int y;
-	public Vector2 velocity;
-}
 		
 private List<Debris> debris = new List<Debris>();
 private int axeAnimstate = AxeAnimStates.Chop;
@@ -538,7 +522,7 @@ public override void draw(SpriteBatch b)
 			int barXPos = xPositionOnScreen + 54;
 			// Pau's mining background
 			b.Draw(miningBobberBarTextures, new Vector2(barXPos, yPositionOnScreen + 300 - 18) + everythingShake,
-				new Rectangle(4, 8, 45, 156), Color.White * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 4f * uiScale,
+				new Rectangle(4, 8, 47, 156), Color.White * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 4f * uiScale,
 				SpriteEffects.None, 0.01f);
 			
 			/*// bar background
@@ -586,13 +570,13 @@ public override void draw(SpriteBatch b)
 				
 				// current level of Success bar
 				b.Draw(Game1.staminaRect,
-					new Rectangle(barXPos + 54,
+					new Rectangle(barXPos + 66,
 						yPositionOnScreen + 14 + (int)(570f * (1f - distanceFromCatchingSlime)), 8,
 						(int)(570f * distanceFromCatchingSlime)), Color.Lerp(Color.Red, Color.LimeGreen, distanceFromCatchingSlime));
 				
 				// current level of Success bar 2
 				b.Draw(Game1.staminaRect,
-					new Rectangle(barXPos + 44,
+					new Rectangle(barXPos + 46,
 						yPositionOnScreen + 14 + (int)(570f * (1f - distanceFromCatchingRock)), 8,
 						(int)(570f * distanceFromCatchingRock)), Color.Lerp(Color.DarkSlateGray, Color.White, distanceFromCatchingRock));
 				

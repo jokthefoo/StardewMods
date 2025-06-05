@@ -275,7 +275,7 @@ namespace FishMod
 
         public static void PlayHitEffectForRandomEncounter(Farmer who, IClickableMenu menu)
         {
-            Game1.player.UsingTool = true;
+            //Game1.player.UsingTool = true;
             Game1.player.CanMove = false;
             Game1.screenOverlayTempSprites.Add(new TemporaryAnimatedSprite("LooseSprites\\Cursors", new Rectangle(612, 1913, 74, 30), 500f, 1, 0, Game1.GlobalToLocal(Game1.viewport, who.getStandingPosition() + new Vector2(-140f, -160f)), false, false, 1f, 0.005f, Color.White, 4f, 0.075f, 0.0f, 0.0f, true)
             {

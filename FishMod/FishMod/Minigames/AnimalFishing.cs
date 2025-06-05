@@ -10,9 +10,10 @@ namespace FishMod;
 
 public class AnimalFishing
 {
-    public static void Post_CheckForAction(StardewValley.Object __instance, Farmer who, bool justCheckingForActivity, ref bool __result)
+    private static bool FishingMachineSpamLock = false;
+    public static void Post_CheckForAction(Object __instance, Farmer who, bool justCheckingForActivity, ref bool __result)
     {
-        if (__instance.QualifiedItemId.Equals("(BC)Jok.Fishdew.CP.AnimalMachine") && !justCheckingForActivity && !__result)
+        if (__instance.QualifiedItemId.Equals("(BC)Jok.Fishdew.CP.AnimalMachine") && !justCheckingForActivity && !__result && !FishingMachineSpamLock)
         {
             if (!(__instance.Location is AnimalHouse animalHouse))
             {
@@ -35,14 +36,26 @@ public class AnimalFishing
                 }
                 animals.Add(index);
             }
+
+            if (animals.Count == 0)
+            {
+                return;
+            }
             
             Dictionary<string, int> produceCounts = new Dictionary<string, int>();
             
             bool treasure = Game1.random.NextDouble() < DeluxeFishingRodTool.baseChanceForTreasure + who.LuckLevel * 0.005 + who.DailyLuck / 2.0;
-            DeluxeFishingRodTool.PlayHitEffectForRandomEncounter(who, new AnimalBobberBar(CompleteCallback, animals, treasure,3));
+            FishingMachineSpamLock = true;
+            DeluxeFishingRodTool.PlayHitEffectForRandomEncounter(who, new AnimalBobberBar(CompleteCallback, animals, treasure));
             
             void CompleteCallback(int treasures, bool success)
             {
+                FishingMachineSpamLock = false;
+                if (!success)
+                {
+                    return;
+                }
+                
                 int xp = 5 * animalHouse.animals.Pairs.Count();
                 Game1.player.gainExperience(Farmer.farmingSkill, xp);
                 foreach (KeyValuePair<long, FarmAnimal> pair in animalHouse.animals.Pairs)

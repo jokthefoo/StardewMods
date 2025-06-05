@@ -18,6 +18,8 @@ namespace FishMod
 {
 	public class WateringBobberBar : IClickableMenu
 	{
+		public static Texture2D farmingBobberBarTextures;
+		
 		public bool handledFishResult;
 
 		public float uiScale;
@@ -99,6 +101,8 @@ namespace FishMod
 			uiScale = 0f;
 			
 			bobberBarHeight = 96 + Game1.player.FarmingLevel * 8;
+			
+			toolChoppingAngle = MathHelper.ToRadians(220);
 
 			Reposition();
 
@@ -269,6 +273,7 @@ public override void update(GameTime time)
 		return;
 	}
 	fishUpdate(time);
+	SwingingAnimationUpdate(time);
 }
 
 public void fishUpdate(GameTime time)
@@ -397,6 +402,83 @@ public void fishUpdate(GameTime time)
 	}
 }
 
+//Debris
+private List<Debris> debris = new List<Debris>();
+private float debrisAlpha = 1.0f;
+public float toolChoppingAngle;
+private int toolAnimState = ToolAnimStates.Chop;
+public static ICue chopSound;
+private float toolXPosOffset = 0;
+
+private static class ToolAnimStates
+{
+	public const int Chop = 0;
+	public const int PullBack = 1;
+	public const int Sow = 2;
+}
+
+private void SwingingAnimationUpdate(GameTime time)
+{
+	debrisAlpha -= 0.02f;
+	
+	foreach (Debris d in debris)
+	{
+		d.x += (int)d.velocity.X;
+		d.y += (int)d.velocity.Y;
+		d.y += 10;
+		//d.velocity.X -= .1f;
+		d.velocity.X = Math.Clamp(d.velocity.X, -4, 10);
+		d.velocity.Y += .05f;
+		d.velocity.Y = Math.Clamp(d.velocity.Y, -12, 0);
+	}
+	
+	switch (toolAnimState)
+	{
+		case ToolAnimStates.Chop:
+			toolChoppingAngle += MathHelper.ToRadians(2);
+			break;
+		case ToolAnimStates.PullBack:
+			toolXPosOffset += .3f;
+			toolXPosOffset = Math.Clamp(toolXPosOffset, -10, 0);
+			toolChoppingAngle -= MathHelper.ToRadians(1.5f);
+			break;
+		case ToolAnimStates.Sow:
+			toolXPosOffset -= .5f;
+			break;
+	}
+	
+	if (toolChoppingAngle < MathHelper.ToRadians(280) && toolAnimState == ToolAnimStates.PullBack)
+	{
+		//start chop
+		toolAnimState = ToolAnimStates.Chop;
+	}
+	
+	if (toolChoppingAngle > MathHelper.ToRadians(380) && toolAnimState == ToolAnimStates.Chop)
+	{
+		Game1.playSound("hoeHit", out chopSound);
+
+		//start sowing
+		toolAnimState = ToolAnimStates.Sow;
+		debrisAlpha = 1.0f;
+		ConstructDebris();
+	}
+	
+	if (toolXPosOffset < -10 && toolAnimState == ToolAnimStates.Sow)
+	{
+		//start backswing
+		toolAnimState = ToolAnimStates.PullBack;
+	}
+}
+
+private void ConstructDebris()
+{
+	debris = new List<Debris>();
+	for (int i = 0; i < 4; i++)
+	{
+		debris.Add(new Debris(Game1.random.Next(0,11), Game1.random.Next(-10,2), Game1.random.Next(-8,9), new Vector2(Game1.random.Next(-1, 1), Game1.random.Next(-20, -10))));
+	}
+}
+
 public override void draw(SpriteBatch b)
 		{
 			// Draw order matters
@@ -409,24 +491,20 @@ public override void draw(SpriteBatch b)
 				new Vector2(26f, 78.5f) * uiScale, 4f * uiScale,
 				flipBubble ? SpriteEffects.FlipHorizontally : SpriteEffects.None, 0.001f);
 			
-			/*
-			// TODO watering bar background?
-			b.Draw(ObjectIds.fishingTextures, new Vector2(xPositionOnScreen - 36, yPositionOnScreen + 300) + everythingShake,
-				new Rectangle(0, 368, 72, 144), Color.White * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 6f * uiScale,
-				SpriteEffects.None, 0.01f);*/
-			
-			// bar background
-			b.Draw(DeluxeFishingRodTool.fishingTextures, new Vector2(xPositionOnScreen + 126, yPositionOnScreen + 296) + everythingShake,
-				new Rectangle(112, 362, 22, 148), Color.White * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 4f * uiScale,
+			int barXPos = xPositionOnScreen + 20;
+			// Pau's mining background
+			b.Draw(farmingBobberBarTextures, new Vector2(barXPos, yPositionOnScreen + 300 - 32) + everythingShake,
+				new Rectangle(13, 5, 58, 158), Color.White * uiScale, 0f, new Vector2(18.5f, 74f) * uiScale, 4f * uiScale,
 				SpriteEffects.None, 0.01f);
 			
 			// Gameplay bar
 			if (uiScale == 1f)
 			{
 				// These 3 are bobber bar
-				int colorIndex = 1;
+				int colorIndex = -4;
+				barXPos += 38;
 				b.Draw(DeluxeFishingRodTool.fishingTextures,
-					new Vector2(xPositionOnScreen + 64, yPositionOnScreen + 12 + (int)bobberBarPos) + barShake +
+					new Vector2(barXPos, yPositionOnScreen + 12 + (int)bobberBarPos) + barShake +
 					everythingShake, new Rectangle(216, 447 + 10 * colorIndex, 9, 2),
 					treasureInBar
 						? Color.White
@@ -434,7 +512,7 @@ public override void draw(SpriteBatch b)
 						   ((float)Math.Round(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 100.0),
 							   2) + 2f)), 0f, Vector2.Zero, 4f, SpriteEffects.None, 0.89f);
 				b.Draw(DeluxeFishingRodTool.fishingTextures,
-					new Vector2(xPositionOnScreen + 64, yPositionOnScreen + 12 + (int)bobberBarPos + 8) + barShake +
+					new Vector2(barXPos, yPositionOnScreen + 12 + (int)bobberBarPos + 8) + barShake +
 					everythingShake, new Rectangle(216, 453 + 10 * colorIndex, 9, 1),
 					treasureInBar
 						? Color.White
@@ -443,7 +521,7 @@ public override void draw(SpriteBatch b)
 							   2) + 2f)), 0f, Vector2.Zero, new Vector2(4f, bobberBarHeight - 16), SpriteEffects.None,
 					0.89f);
 				b.Draw(DeluxeFishingRodTool.fishingTextures,
-					new Vector2(xPositionOnScreen + 64,
+					new Vector2(barXPos,
 						yPositionOnScreen + 12 + (int)bobberBarPos + bobberBarHeight - 8) + barShake + everythingShake,
 					new Rectangle(216, 454 + 10 * colorIndex, 9, 2),
 					treasureInBar
@@ -454,26 +532,37 @@ public override void draw(SpriteBatch b)
 				
 				// current level of bottom Success bar
 				b.Draw(Game1.staminaRect,
-					new Rectangle(xPositionOnScreen + 116 + progressBarShakeBot,
-						yPositionOnScreen + 4 + 290 + (int)(290f * (1f - distancesFromCatchingBot)) + progressBarShakeBot, 16,
+					new Rectangle(xPositionOnScreen + 121 + progressBarShakeBot,
+						yPositionOnScreen + 0 + 290 + (int)(290f * (1f - distancesFromCatchingBot)) + progressBarShakeBot, 8,
 						(int)(290f * distancesFromCatchingBot)), Color.Lerp(Color.Blue, Color.Aqua, distancesFromCatchingBot));
 				// current level of top Success bar
 				b.Draw(Game1.staminaRect,
-					new Rectangle(xPositionOnScreen + 116 + progressBarShakeTop,
-						yPositionOnScreen + 4, 16 + progressBarShakeTop,
-						(int)(290 * distancesFromCatchingTop)), Color.Lerp(Color.DarkGreen, Color.LawnGreen, distancesFromCatchingTop));
+					new Rectangle(xPositionOnScreen + 121 + progressBarShakeTop,
+						yPositionOnScreen + 12, 8 + progressBarShakeTop,
+						(int)(278f * distancesFromCatchingTop)), Color.Lerp(Color.DarkGreen, Color.LawnGreen, distancesFromCatchingTop));
 				
-				/*
-				// TODO add watering anim for bar?
-				b.Draw(Game1.mouseCursors,
-					new Vector2(xPositionOnScreen - 18, yPositionOnScreen + 514) + everythingShake,
-					new Rectangle(32, 657, 16, 15), Color.White, reelRotation, new Vector2(2f, 10f), 4f,
-					SpriteEffects.None, 0.9f);*/
-				
+				//Hoe
+				b.Draw(farmingBobberBarTextures,
+					new Vector2(xPositionOnScreen - 30 + toolXPosOffset, yPositionOnScreen + 520) + everythingShake,
+					new Rectangle(79, 50, 15, 13), Color.White, toolChoppingAngle, new Vector2(4f, 10f), 4f,
+					SpriteEffects.None, 0.9f);
+
+				if (debrisAlpha > 0f)
+				{
+					// Debris
+					foreach(Debris d in debris)
+					{
+						b.Draw(farmingBobberBarTextures,
+							new Vector2(xPositionOnScreen + 20 + d.x, yPositionOnScreen + 507 + d.y) + everythingShake,
+							new Rectangle(100 + 3 * d.index, 32, 3, 3), Color.White * debrisAlpha, toolChoppingAngle, new Vector2(0f, 0f), 4f,
+							SpriteEffects.None, 0.9f);
+					}
+				}
+					
 				//draw treasures
 				foreach (var t in treasures)
 				{
-					t.drawTreasure(b, everythingShake, xPositionOnScreen, yPositionOnScreen);
+					t.drawTreasure(b, everythingShake, xPositionOnScreen - 7, yPositionOnScreen);
 				}
 				
 				sparkleText?.draw(b, new Vector2(xPositionOnScreen - 16, yPositionOnScreen - 64)); // "perfect text"
