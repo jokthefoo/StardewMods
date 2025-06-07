@@ -38,7 +38,6 @@ namespace FishMod
             Config = helper.ReadConfig<ModConfig>();
             HarmonyPatches();
         }
-        // TODO tiles to water next day persist through save?
 
         private void HarmonyPatches()
         {
@@ -107,17 +106,25 @@ namespace FishMod
 
         private void OnDayStarted(object? sender, DayStartedEventArgs e)
         {
-            foreach (var mapping in WateringCanFishing.tilesToWaterNextDay)
+            foreach (var location in Game1.locations)
             {
-                foreach (Vector2 tile in mapping.Value)
+                location.ForEachDirt(delegate(HoeDirt dirt)
                 {
-                    if (mapping.Key.terrainFeatures.ContainsKey(tile) && mapping.Key.terrainFeatures[tile] is HoeDirt)
+                    if (dirt.modData.TryGetValue(WateringCanFishing.shouldWaterDirtKey, out string value))
                     {
-                        (mapping.Key.terrainFeatures[tile] as HoeDirt).state.Value = 1;
+                        if (dirt.Pot != null)
+                        {
+                            dirt.Pot.Water();
+                        }
+                        else
+                        {
+                            dirt.state.Value = 1;
+                        }
+                        dirt.modData.Remove(WateringCanFishing.shouldWaterDirtKey);
                     }
-                }
+                    return true;
+                });
             }
-            WateringCanFishing.tilesToWaterNextDay.Clear();
         }
 
         private void OnUpdateTicked(object? sender, UpdateTickedEventArgs e)
