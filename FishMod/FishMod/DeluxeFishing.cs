@@ -4,6 +4,7 @@ using System.Xml.Serialization;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using StardewModdingAPI;
 using StardewModdingAPI.Events;
 using StardewValley;
 using StardewValley.Constants;
@@ -180,7 +181,15 @@ namespace FishMod
 
             return matcher.InstructionEnumeration();
         }
-        
+
+        public static void Post_getColor(FishingRod __instance, ref Color __result)
+        {
+            if (__instance.QualifiedItemId == PirateFishingRodTool.DeluxeRodQiid)
+            {
+                __result = new Color(250, 230, 0);
+            }
+        }
+
         internal static void Post_openTreasureMenuEndFunction(FishingRod __instance, int remainingFish)
         {
             if (Game1.activeClickableMenu is not ItemGrabMenu menu)

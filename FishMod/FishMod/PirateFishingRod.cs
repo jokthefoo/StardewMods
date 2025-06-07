@@ -43,5 +43,10 @@ namespace FishMod
                 UpgradeLevel = 0
             };
         }
+        
+        public new Color getColor()
+        {
+            return new Color(255, 0, 0);
+        }
     }
 }

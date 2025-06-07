@@ -60,6 +60,12 @@ namespace FishMod
                 postfix: new HarmonyMethod(typeof(DeluxeFishingRodTool),
                     nameof(DeluxeFishingRodTool.Post_openTreasureMenuEndFunction))
             );
+            harmony.Patch(
+                original: AccessTools.Method(typeof(FishingRod), nameof(FishingRod.getColor)),
+                postfix: new HarmonyMethod(typeof(DeluxeFishingRodTool),
+                    nameof(DeluxeFishingRodTool.Post_getColor))
+            );
+            
 
             // Watering can fishing
             Type[] types = { typeof(Vector2), typeof(int), typeof(Farmer) };
