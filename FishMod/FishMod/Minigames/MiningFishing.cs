@@ -19,7 +19,6 @@ public class MiningFishing
             return;
         }
 
-        who.Stamina -= 30f / __instance.UpgradeLevel + 1 - who.MiningLevel * 0.1f ;
         if (location.resourceClumps != null)
         {
             foreach (ResourceClump? clump in location.resourceClumps)
@@ -52,6 +51,8 @@ public class MiningFishing
             }
         }
         
+        tool.lastUser.Stamina -= 30f / tool.UpgradeLevel + 1 - tool.lastUser.MiningLevel * 0.1f;
+        
         rewards[0] = slimeCount;
         rewards[1] = rockCount;
         rewards[2] = mineralCount;
@@ -60,9 +61,10 @@ public class MiningFishing
         int locForSlimeRewards = 0;
         if (location is MineShaft mine)
         {
-            if (Game1.random.NextDouble() < .15)
+            
+            if (Game1.random.NextDouble() < .5 + Game1.player.LuckLevel * 0.005 + Game1.player.DailyLuck / 2.0)
             {
-                mine.createLadderAt(tileLocation, "newArtifact");
+                mine.recursiveTryToCreateLadderDown(tileLocation, "newArtifact");
             }
             
             if (mine.mineLevel < 30)

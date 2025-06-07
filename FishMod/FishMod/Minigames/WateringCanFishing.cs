@@ -16,9 +16,9 @@ public class WateringCanFishing
     public static TimeSpan chargingUpTime;
     public static bool playerDidChargeUp;
     public static List<Vector2> tilesAffectedList;
-    public static Dictionary<GameLocation, HashSet<Vector2>> tilesToWaterNextDay = new();
     private static IMonitor Monitor;
     private static Dictionary<string,int> crops;
+    public static string shouldWaterDirtKey = "Jok.FishMod.WaterDirt";
 
     public static void WateringRewards(GameLocation location, Tool tool, bool treasureCaught)
     {
@@ -28,30 +28,13 @@ public class WateringCanFishing
         {
             if (location.terrainFeatures.ContainsKey(tile) && location.terrainFeatures[tile] is HoeDirt dirt)
             {
-                if (tilesToWaterNextDay.ContainsKey(location))
+                dirt.modData[shouldWaterDirtKey] = "Water";
+                if (dirt.crop != null)
                 {
-                    if (tilesToWaterNextDay[location].Add(tile))
+                    string key = dirt.crop.indexOfHarvest.Value;
+                    if (!crops.TryAdd(key, 1))
                     {
-                        if (dirt.crop != null)
-                        {
-                            string key = dirt.crop.indexOfHarvest.Value;
-                            if (!crops.TryAdd(key, 1))
-                            {
-                                crops[key]++;
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    tilesToWaterNextDay[location] = new HashSet<Vector2>() { tile };
-                    if (dirt.crop != null)
-                    {
-                        string key = dirt.crop.indexOfHarvest.Value;
-                        if (!crops.TryAdd(key, 1))
-                        {
-                            crops[key]++;
-                        }
+                        crops[key]++;
                     }
                 }
             }

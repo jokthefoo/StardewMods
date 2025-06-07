@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System.Diagnostics;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using StardewValley;
@@ -10,10 +11,12 @@ public class AnimalBobberBar : BasicBobberBar
     public static Texture2D pettingBobberBarTextures;
     
     private float perAnimalProgress;
+    private int randomAnimal = 0;
     public AnimalBobberBar(CallBack completeCallback, List<int> animals, bool treasure, int colorIndex = -5)
         : base(completeCallback, treasure ? 1 : 0, Game1.player.farmingLevel.Value, false, colorIndex)
     {
         perAnimalProgress = 1f / animals.Count;
+        randomAnimal = animals[Game1.random.Next(0, animals.Count)];
         foreach (var animalIndex in animals)
         {
             var newTreasure = new MovingTreasure(animalIndex, false, 20, 20);
@@ -68,17 +71,112 @@ public class AnimalBobberBar : BasicBobberBar
             Game1.playSound("fastReel", out reelSound);
     }
 
+    private float handPettingXOffset = 0;
+    private float handPettingYOffset = 0;
+    private bool yPetUp = false;
+    private float HeartIconTimer = 0;
+    private float HeartIconScale = 1f;
+    private bool heartIconGrowing = true;
+    private int heartIconState = 0;
+    private Vector2 heartIconShake;
+    
+    protected override void SwingingAnimationUpdate(GameTime time)
+    {
+        DebrisAlphaUpdate();
+        foreach (Debris d in debris)
+        {
+            DebrisVelocityUpdate(d);
+        }
+	
+        switch (toolAnimState)
+        {
+            case ToolAnimStates.Chop:
+                handPettingXOffset += .5f;
+                
+                if (handPettingYOffset > 20)
+                {
+                    yPetUp = false;
+                }
+                else if(handPettingYOffset < 0)
+                {
+                    yPetUp = true;
+                }
+
+                handPettingYOffset += yPetUp ? .5f : -.5f;
+                break;
+            case ToolAnimStates.PullBack:
+                handPettingXOffset -= .5f;
+                handPettingYOffset = 0;
+                break;
+        }
+	
+        if (handPettingXOffset < 0 && toolAnimState != ToolAnimStates.Chop)
+        {
+            //start chop
+            toolAnimState = ToolAnimStates.Chop;
+        }
+	
+        if (handPettingXOffset > 40 && toolAnimState != ToolAnimStates.PullBack)
+        {
+            HeartIconTimer = 3f;
+            HeartIconScale = 0;
+            heartIconState = 0;
+            
+            //start backswing
+            toolAnimState = ToolAnimStates.PullBack;
+            debrisAlpha = 1.0f;
+            ConstructDebris();
+        }
+
+        if (HeartIconTimer > 0)
+        {
+            HeartIconTimer -= .05f;
+            Math.Clamp(HeartIconTimer, 0, 20);
+
+            switch (heartIconState)
+            {
+                case 0:
+                    HeartIconScale += .07f;
+                    break;
+                case 1:
+                    break;
+                case 2:
+                    HeartIconScale -= .07f;
+                    break;
+            }
+            Math.Clamp(HeartIconScale, 0, 1.5f);
+            
+            if (HeartIconTimer < 2.0f && heartIconState == 0)
+            {
+                heartIconState = 1;
+            }
+            if (HeartIconTimer < 1f && heartIconState == 1)
+            {
+                heartIconState = 2;
+            }
+        }
+    }
+    
     protected override void DrawToolAnim(SpriteBatch b)
     {
+        // Draw animal
         b.Draw(DeluxeFishingRodTool.fishingTextures,
-            new Vector2(xPositionOnScreen + 10, yPositionOnScreen + 530) + everythingShake, new Rectangle(20 * TreasureSprites.Dino, 0, 20, 24), Color.White, 0f,
+            new Vector2(xPositionOnScreen + 10, yPositionOnScreen + 530) + everythingShake, new Rectangle(20 * randomAnimal, 0, 20, 24), Color.White, 0f,
             new Vector2(10f, 10f),  4f, SpriteEffects.None, 0.85f);
 
-        // Petting
+        // pat pat
         b.Draw(pettingBobberBarTextures,
-            new Vector2(xPositionOnScreen - 25, yPositionOnScreen + 510) + everythingShake,
-            new Rectangle(66, 35, 10, 10), Color.White, toolChoppingAngle, new Vector2(5f, 5f), 4f,
+            new Vector2(xPositionOnScreen - 20 + handPettingXOffset, yPositionOnScreen + 510 - handPettingYOffset) + everythingShake,
+            new Rectangle(66, 35, 10, 10), Color.White, 0, new Vector2(5f, 5f), 4f,
             SpriteEffects.None, 0.9f);
+        
+        // draw temporary heart
+        if (HeartIconTimer > 0)
+        {
+            b.Draw(DeluxeFishingRodTool.fishingTextures,
+                new Vector2(xPositionOnScreen + 25, yPositionOnScreen + 480) + everythingShake + heartIconShake, new Rectangle(20 * TreasureSprites.HeartIcon, 0, 20, 24), Color.White, 0f,
+                new Vector2(10f, 10f), 2f * HeartIconScale, SpriteEffects.None, 0.85f);
+        }
         
         if (debrisAlpha > 0f)
         {

@@ -72,8 +72,8 @@ public class BasicBobberBar : IClickableMenu
     //Debris
     public List<Debris> debris = new List<Debris>();
     public float debrisAlpha = 1.0f;
-    private int toolAnimState = ToolAnimStates.Chop;
-    private static ICue chopSound;
+    protected int toolAnimState = ToolAnimStates.Chop;
+    protected static ICue chopSound;
     public bool hasToolChopAnim = false;
     public float toolChoppingAngle;
     public float toolChoppingStartDegree = 260;
@@ -233,6 +233,7 @@ public class BasicBobberBar : IClickableMenu
                 
                 // Do ending
                 minigameEndingCallback(treasureCaughtCount, true);
+                Game1.player.completelyStopAnimatingOrDoingAction();
             }
             else
             {
@@ -373,7 +374,7 @@ public class BasicBobberBar : IClickableMenu
             }
         }
     }
-    private static class ToolAnimStates
+    protected static class ToolAnimStates
     {
         public const int Chop = 0;
         public const int PullBack = 1;
@@ -404,7 +405,7 @@ public class BasicBobberBar : IClickableMenu
         }
     }
     
-    private void SwingingAnimationUpdate(GameTime time)
+    protected virtual void SwingingAnimationUpdate(GameTime time)
     {
         DebrisAlphaUpdate();
         foreach (Debris d in debris)

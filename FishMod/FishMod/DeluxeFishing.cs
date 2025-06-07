@@ -135,7 +135,7 @@ namespace FishMod
 
             if (bobberBar.whichFish == "Jok.Fishdew.CP.MidnightPufferfish")
             {
-                Game1.activeClickableMenu = new DoubleFishBobberBar(bobberBar.whichFish, bobberBar.fishSize,
+                Game1.activeClickableMenu = new ShrinkingBobberBar(bobberBar.whichFish, bobberBar.fishSize,
                     treasureCount,
                     bobberBar.bobbers, bobberBar.setFlagOnCatch, bobberBar.bossFish, baitid,
                     bobberBar.goldenTreasure);
