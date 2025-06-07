@@ -34,6 +34,11 @@ namespace ModularTools
         private static string shouldWaterDirtKey = "Jok.ModularTools.WaterDirt";
         private static bool PrismaticTools = false;
         
+        public static void Debug(string str)
+        {
+            MonitorInst.Log($"Debug: {str}", LogLevel.Warn);
+        }
+        
         public override void Entry(IModHelper helper)
         {
             Instance = this;
@@ -75,9 +80,16 @@ namespace ModularTools
         {
             Utility.ForEachItem(item =>
             {
-                if (item is Tool tool && IsAllowedTool(tool))
+                try
                 {
-                    tool.AttachmentSlotsCount = 0;
+                    if (item is Tool tool && IsAllowedTool(tool))
+                    {
+                        tool.AttachmentSlotsCount = 0;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Monitor.Log("Removing all tool attachments in multiplayer!", LogLevel.Warn);
                 }
                 return true;
             });
@@ -85,23 +97,15 @@ namespace ModularTools
 
         private void UpdateAttachmentSlotsForTools(string command, string[] args)
         {
-            Utility.ForEachItem(item =>
+            Utility.ForEachItemContext((in ForEachItemContext context) =>
             {
-                if (item is Tool tool && IsAllowedTool(tool))
+                if (context.Item is not null)
                 {
-                    try
+                    if (context.Item is Tool tool && IsAllowedTool(tool))
                     {
-                        if (PrismaticTools && tool.UpgradeLevel > 10)
-                        {
-                            tool.AttachmentSlotsCount = 5;
-                        }
-                        else
-                        {
-                            tool.AttachmentSlotsCount = tool.UpgradeLevel;
-                        }
-                    }
-                    catch (Exception ex) // idk why sometimes the tools throw an exception, something about multiplayer
-                    {
+                        Tool newTool = (Tool)ItemRegistry.Create(context.Item.ItemId);
+                        newTool.CopyEnchantments(tool, newTool);
+                        context.ReplaceItemWith(newTool);
                     }
                 }
                 return true;
@@ -165,7 +169,7 @@ namespace ModularTools
         }
         public static ModConfig Config { get; set; }
 
-        private void OnAssetRequested(object sender, AssetRequestedEventArgs e)
+        private void OnAssetRequested(object? sender, AssetRequestedEventArgs e)
         {
             if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/ModularUpgrades"))
             {
@@ -239,6 +243,21 @@ namespace ModularTools
                     dict.Add(MUQIds.Speed2, $"337 5 {MUQIds.Speed} 2/what/{MUQIds.Speed2}/false/s Mining 9/");
                     dict.Add(MUQIds.Luck2, $"337 5 {MUQIds.Luck} 2/what/{MUQIds.Luck2}/false/s Fishing 9/");
                 });
+            }
+            else if (e.NameWithoutLocale.IsEquivalentTo("Data/Tools"))
+            {
+                e.Edit(asset =>
+                {
+                    var dict = asset.AsDictionary<string, ToolData>().Data;
+                    foreach (var (key, toolData) in dict)
+                    {
+                        if (toolData.ClassName is "Pickaxe" or "Hoe" or "WateringCan" or "Axe")
+                        {
+                            int count = toolData.UpgradeLevel > 5 ? 5 : toolData.UpgradeLevel;
+                            toolData.AttachmentSlots = count;
+                        }
+                    }
+                }, priority: AssetEditPriority.Late + 1337);
             }
         }
 
@@ -610,7 +629,6 @@ namespace ModularTools
                 __instance.modData[shouldWaterDirtKey] = "Water";
                 if (wateringCan.getLastFarmerToUse() != null)
                 {
-                    wateringCan.getLastFarmerToUse().stamina -= 1 - wateringCan.getLastFarmerToUse().FarmingLevel * 0.1f;
                     if (!wateringCan.IsBottomless)
                     {
                         wateringCan.WaterLeft -= 1;
@@ -924,7 +942,7 @@ namespace ModularTools
                 wateringCan.waterCanMax = 40;
                 wateringCan.WaterLeft = 40;
             }
-            tool.AttachmentSlotsCount = __state.AttachmentSlotsCount + 1;
+            //tool.AttachmentSlotsCount = __state.AttachmentSlotsCount + 1;
             foreach (Object o in __state.attachments)
             {
                 if (o is not null)
@@ -966,8 +984,7 @@ namespace ModularTools
                 wateringCan.waterCanMax = 40;
                 wateringCan.WaterLeft = 40;
             }
-            tool.AttachmentSlotsCount = __state.AttachmentSlotsCount + 1;
-
+            //tool.AttachmentSlotsCount = __state.AttachmentSlotsCount + 1;
             foreach (Object o in __state.attachments)
             {
                 if (o is not null)
@@ -1015,7 +1032,7 @@ namespace ModularTools
             }
             tool.AnimationSpeedModifier = speed;
         }
-
+        
         public static void attachOrDetach_postfix(Tool __instance, ref Object __result, Object o)
         {
             if (!IsAllowedTool(__instance))
@@ -1147,7 +1164,7 @@ namespace ModularTools
                     dirt.state.Value = 1;
                     if (!who.CurrentTool.isEfficient.Value)
                     {
-                        who.Stamina -= 2 * who.toolPower.Value - who.FarmingLevel * 0.1f;
+                        who.Stamina -= 1 - who.FarmingLevel * 0.1f;
                     }
                 }
                 
@@ -1155,7 +1172,7 @@ namespace ModularTools
                 {
                     if (TryToApplyFertilizer(who, dirt) && !who.CurrentTool.isEfficient.Value)
                     {
-                        who.Stamina -= who.toolPower.Value - who.FarmingLevel * 0.1f;
+                        who.Stamina -= 1 - who.FarmingLevel * 0.1f;
                     }
                 }
             }

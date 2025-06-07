@@ -1,0 +1,54 @@
+{
+
+  "modularupgrade.config.clint.name": "Réduction du coût d’amélioration",
+  "modularupgrade.config.clint.description": "Lorsqu'il est activé, la quantité de lingots requise pour que les outils de mise à niveau sera de 3 au lieu de 5.",
+  
+  "modularupgrade.category.text": "Mise à niveau modulaire",
+  "modularupgrade.attach.error": "Cette mise à niveau ne peut pas être appliquée à cet outil.",
+  "modularupgrade.buff.display.name": "Vitesse de l'air",
+
+  "modularupgrade.width.name": "Amélioration d’outil : Largeur +",
+  "modularupgrade.width.description": "Installez sur une houe ou un arrosoir pour élargir la zone d'effet en largeur.",
+  
+  "modularupgrade.length.name": "Amélioration d’outil : Longueur +",
+  "modularupgrade.length.description": "Installez sur une houe ou un arrosoir pour augmenter la zone d'effet en longueur.",
+
+  "modularupgrade.widthheight.name": "Amélioration d’outil : Aire d’effet +",
+  "modularupgrade.widthheight.description": "Installez sur une houe ou un arrosoir pour agrandir l'aire d'effet.",
+
+  "modularupgrade.capacity.name": "Amélioration d’outil : Capacité +",
+  "modularupgrade.capacity.description": "Installez sur un arrosoir pour augmenter la capacité.",
+
+  "modularupgrade.speed.name": "Amélioration d’outil : Vitesse +",
+  "modularupgrade.speed.description": "Installez sur un outil pour augmenter légèrement sa vitesse.",
+  
+  "modularupgrade.speed2.name": "Amélioration d’outil : Vitesse ++",
+  "modularupgrade.speed2.description": "Installez sur un outil pour augmenter sa vitesse.",
+
+  "modularupgrade.power.name": "Amélioration d’outil : Puissance +",
+  "modularupgrade.power.description": "Installez dans une hache ou une pioche pour augmenter sa puissance (1 pour l’équivalence du cuivre du jeu de base, 2 pour l'acier, etc.).",
+  
+  "modularupgrade.power2.name": "Amélioration d’outil : Puissance ++",
+  "modularupgrade.power2.description": "Installez dans une hache ou une pioche pour augmenter considérablement sa puissance (2 pour l’équivalence de l’acier du jeu de base, 2 pour l'iridium).",
+
+  "modularupgrade.water.name": "Amélioration d’outil : Arrosage +",
+  "modularupgrade.water.description": "Installez sur un arrosoir pour arroser profondément dans le sol. (qui restera arrosé pendant une journée supplémentaire). Vous pouvez aussi l’installer dans une houe pour arroser une terre labourée.",
+
+  "modularupgrade.luck.name": "Amélioration d’outil : Chance +",
+  "modularupgrade.luck.description": "Installez sur un outil pour avoir de la chance (pour cet outil uniquement).",
+
+  "modularupgrade.luck2.name": "Amélioration d’outil : Chance ++",
+  "modularupgrade.luck2.description": "Installez sur un outil pour avoir davantage de chance supplémentaire (pour cet outil uniquement).",
+
+  "modularupgrade.fire.name": "Amélioration d’outil : Feu",
+  "modularupgrade.fire.description": "Installez sur une hache ou une pioche pour augmenter la chaleur de l'outil (obtenir du charbon des arbres au lieu du bois ou du charbon supplémentaire lors de l'exploitation minière).",
+
+  "modularupgrade.air.name": "Amélioration d’outil : Air",
+  "modularupgrade.air.description": "Installez sur un outil pour gagner un petit coup de vitesse après utilisation.",
+
+  "modularupgrade.air2.name": "Amélioration d’outil : Vent",
+  "modularupgrade.air2.description": "Installez sur un outil pour gagner une augmentation de vitesse après utilisation.",
+  
+  "modularupgrade.earth.name": "Amélioration d’outil : Terre",
+  "modularupgrade.earth.description": "Installez sur une houe pour appliquer automatiquement l'engrais de votre inventaire après utilisation. Ou installez sur une hache pour replanter automatiquement les graines d'arbre de votre inventaire (en fonction de l’arbre abattu)."
+}
