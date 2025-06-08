@@ -1,0 +1,10 @@
+{
+  "pipe.name": "Pipe",
+  "pipe.description": "Moves liquids.",
+
+  "water.name": "Water",
+  "water.description": "Is water wet?",
+  
+  "oil.name": "Oil",
+  "oil.description": "Don't drink this"
+}

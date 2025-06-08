@@ -1,0 +1,10 @@
+{
+  "Name": "Fluid Pipes",
+  "Author": "Jok",
+  "Version": "1.0.0",
+  "Description": "Fluid Pipes",
+  "UniqueID": "Jok.FluidPipes",
+  "EntryDll": "FluidPipes.dll",
+  "MinimumApiVersion": "4.0.0",
+  "UpdateKeys": [""]
+}
