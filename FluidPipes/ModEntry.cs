@@ -46,14 +46,15 @@ internal sealed class ModEntry : Mod
     public override object GetApi() {
         return FPApi;
     }*/
-
+    // TODO test buffering system
+    
     // TODO PIPES
     // TODO pipe art -- just sticks for now
     // TODO pipe art logic
     
     // TODO liquid-liquid only machine?
     // TODO pumps on/near water
-    // TODO output when full to a max capacity?
+    
     
     // TODO liquid tank?
     
@@ -66,16 +67,6 @@ internal sealed class ModEntry : Mod
         if (!Context.IsMainPlayer)
         {
             return;
-        }
-
-        foreach (var (tileLoc, obj) in e.Added)
-        {
-            
-        }
-
-        foreach (var (tileLoc, obj) in e.Removed)
-        {
-            
         }
     }
 

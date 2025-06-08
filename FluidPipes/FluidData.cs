@@ -10,32 +10,14 @@ namespace FluidPipes;
 
 internal class FluidData
 {
-    // TODO invalid message
-    internal static string RequirementInvalidMsgKey = $"Jok.FluidPipes.RequirementInvalidMsg";
-    
     internal static Regex RequirementTypeKeyRegex = new Regex(@$"Jok\.FluidPipes\.FluidType\.Input\.(\d+)");
     internal static string RequirementVolumeKeyPrefix = $"Jok.FluidPipes.FluidVolume.Input.";
     internal static Regex OutputTypeKeyRegex = new Regex(@$"Jok\.FluidPipes\.FluidType\.Output\.(\d+)");
     internal static string OutputVolumeKeyPrefix = $"Jok.FluidPipes.FluidVolume.Output.";
     
-    // Current machine state
-    internal static Regex MachineFluidInputRegex = new Regex(@$"Jok\.FluidPipes\.FluidType\.Input\.(\w+)");
-    internal static Regex MachineFluidOutputRegex = new Regex(@$"Jok\.FluidPipes\.FluidType\.Output\.(\w+)");
+    internal static string BufferEndKey = $".JokFluidBuffer";
     
     internal static string LiquidKey = $"Jok.Liquid";
-    
-    public FluidData(int inputCapacity, int outputCapacity, string? inputType, string? outputType)
-    {
-        this.inputCapacity = inputCapacity;
-        this.outputCapacity = outputCapacity;
-        this.inputType = inputType ?? "";
-        this.outputType = outputType ?? "";
-    }
-
-    public int inputCapacity { get; set; }
-    public int outputCapacity { get; set; }
-    public string inputType { get; set; }
-    public string outputType { get; set; }
     
     public class FluidDataEntry {
         public FluidDataEntry(string type, int vol)
@@ -45,12 +27,6 @@ internal class FluidData
         }
         public string fluidType;
         public int volume;
-        
-        public void Deconstruct(out string type, out int vol)
-        {
-            type = fluidType;
-            vol = volume;
-        }
     }
 
     internal struct AvailableFluid
@@ -61,7 +37,7 @@ internal class FluidData
             fluidContainer = container;
         }
         public Object fluidObject;
-        public Object fluidContainer;
+        public Object? fluidContainer;
     }
     
     /// <summary>Get the output item to produce.</summary>
@@ -89,31 +65,33 @@ internal class FluidData
             var visited = new HashSet<Vector2>();
             var availableFluids = new List<AvailableFluid>();
             GetAvailableFluids(machine.Location, ref visited, machine.TileLocation, ref availableFluids);
-
-            // subtract liquid
             List<FluidDataEntry> satisfyCheck = inputs.Select(x => new FluidDataEntry(x.fluidType, x.volume)).ToList();
-            int satisfyCount = 0;
-            foreach (var item in availableFluids)
+
+            
+            // Remove any buffered liquids
+            List<FluidDataEntry> bufferedFluids = new List<FluidDataEntry>();
+            foreach (var key in machine.modData.Keys)
             {
-                foreach (var reqInput in satisfyCheck)
+                if (key.EndsWith(BufferEndKey))
                 {
-                    if (item.fluidObject.ItemId == reqInput.fluidType && reqInput.volume > 0)
-                    {
-                        reqInput.volume -= item.fluidObject.Stack;
-                        if (reqInput.volume <= 0)
-                        {
-                            satisfyCount++;
-                        }
-                    }
+                    bufferedFluids.Add(new FluidDataEntry(key.Substring(0, key.Length - BufferEndKey.Length), int.Parse(machine.modData[key])));
                 }
             }
 
-            if (satisfyCount < inputs.Count)
+            foreach (var bf in bufferedFluids)
             {
-                ModEntry.Debug($"Machine '{machine.Name}' does not have enough liquids available.");
-                return null;
+                foreach (var reqInput in inputs)
+                {
+                    if (bf.fluidType == reqInput.fluidType && reqInput.volume > 0)
+                    {
+                        reqInput.volume -= bf.volume;
+                        machine.modData.Remove(bf.fluidType + BufferEndKey);
+                    }
+                }
             }
+            // End remove buffer liquids
             
+            // Grab liquids from available machines
             foreach (var item in availableFluids)
             {
                 foreach (var reqInput in inputs)
@@ -127,19 +105,24 @@ internal class FluidData
                         }
                         else
                         {
+                            // We depleted source
                             item.fluidObject.Stack = 0;
-                            if (item.fluidContainer is Chest chest2)
+                            if (item.fluidContainer is Chest chest2) // depleted source was an extra product
                             {
                                 chest2.Items.Remove(item.fluidObject);
                             }
                             else
                             {
-                                if (item.fluidContainer.heldObject.Value == item.fluidObject)
+                                if (item.fluidContainer.heldObject.Value == item.fluidObject) // depleted source was base product
                                 {
                                     var output = item.fluidObject;
                                     var inputObj = item.fluidContainer;
                                     MachineData machineData = inputObj.GetMachineData();
 
+                                    // TODO if we are grabbing a base fluid, but there should still be a chest with fluid in it, or extra items
+                                    // probably switch to a generic fluid base item?
+                                    // overwrite draw code so that if we have generic item we instead show contents
+                                    // This only matters when there are extra by products though
                                     MachineDataUtility.UpdateStats(machineData?.StatsToIncrementWhenHarvested, output, output.Stack);
                                     inputObj.heldObject.Value = null;
                                     inputObj.readyForHarvest.Value = false;
@@ -156,6 +139,31 @@ internal class FluidData
                         }
                     }
                 }
+            }
+
+            // Check if we satisfied all liquid conditions, if not we buffer the ones we consumed
+            bool needsMoreLiquid = false;
+            foreach (var leftOverReq in inputs)
+            {
+                if (leftOverReq.volume > 0)
+                {
+                    int startVol = 0;
+                    foreach (var startingReq in satisfyCheck)
+                    {
+                        if (startingReq.fluidType == leftOverReq.fluidType)
+                        {
+                            startVol = startingReq.volume;
+                            break;
+                        }
+                    }
+                    machine.modData[leftOverReq.fluidType + BufferEndKey] = (startVol - leftOverReq.volume).ToString();
+                    needsMoreLiquid = true;
+                }
+            }
+
+            if (needsMoreLiquid)
+            {
+                return null;
             }
         }
         
@@ -245,41 +253,7 @@ internal class FluidData
             }
         }
     }
-
-    public static List<FluidDataEntry> GetOutputFluids(MachineItemOutput outputData, MachineData? machineData = null)
-    {
-        // rule specific outputs
-        List<FluidDataEntry> extraOutputs = GetFluidInfoFromDict(outputData.CustomData, OutputTypeKeyRegex, OutputVolumeKeyPrefix);
-
-        // machine outputs
-        extraOutputs.AddRange(GetFluidInfoFromDict(machineData?.CustomFields, OutputTypeKeyRegex, OutputVolumeKeyPrefix));
-        
-        return extraOutputs;
-    }
-
-    public static bool CheckFluidRequirements(MachineItemOutput outputData, Object machine)
-    {
-        var extraRequirements = GetFluidInfoFromDict(outputData.CustomData, RequirementTypeKeyRegex, RequirementVolumeKeyPrefix);
-        int metRequirements = 0;
-        foreach (var entry in extraRequirements)
-        {
-            foreach (var modDataKey in machine.modData.Keys)
-            {
-                var match = MachineFluidInputRegex.Match(modDataKey);
-                if (!match.Success)
-                {
-                    continue;
-                }
-
-                if (match.Groups[1].Value == entry.fluidType && Int32.TryParse(machine.modData[modDataKey], out int parsedVolume) && parsedVolume == entry.volume)
-                {
-                    metRequirements++;
-                }
-            }
-        }
-        return metRequirements == extraRequirements.Count;
-    }
-
+    
     public static List<FluidDataEntry> GetFluidInfoFromDict(Dictionary<string,string>? modData, Regex regexType, string volKey)
     {
         List<FluidDataEntry> fluidInfo = new List<FluidDataEntry>();
