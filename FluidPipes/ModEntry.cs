@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using Jok.Stardio;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using StardewModdingAPI;
 using StardewModdingAPI.Events;
@@ -16,12 +17,15 @@ internal sealed class ModEntry : Mod
     internal static Mod Instance;
     internal static IMonitor MonitorInst;
     internal static IModHelper Helper;
+    internal static IBiggerMachinesAPI? BMApi;
     //MonitorInst.Log($"X value: {x}", LogLevel.Info);
 
     //internal static IFluidPipesAPI FPApi = null!;
     internal static string WeedsKey = "Jok.FluidWeeds";
     internal static string PipesQID = "(O)Jok.FluidPipes.Pipe";
     internal static string PipesID = "Jok.FluidPipes.Pipe";
+    internal static string FluidContainerID = "Jok.FluidPipes.FluidContainer";
+    internal static string PumpKey = "Jok.FluidPipes.Pump";
 
     /*********
      ** Public methods
@@ -38,25 +42,25 @@ internal sealed class ModEntry : Mod
         Helper.Events.Content.AssetRequested += OnAssetRequested;
         Helper.Events.World.ObjectListChanged += OnObjectListChanged;
         Helper.Events.GameLoop.SaveLoaded += OnSaveLoaded;
+        Helper.Events.GameLoop.GameLaunched += OnGameLaunched;
 
         HarmonyPatches.Patch(ModManifest.UniqueID);
+    }
+
+    private void OnGameLaunched(object? sender, GameLaunchedEventArgs e)
+    {
+        var sc = Helper.ModRegistry.GetApi<ISpaceCoreApi>("spacechase0.SpaceCore");
+        sc.RegisterSerializerType(typeof(FluidPipe));
+        BMApi = Helper.ModRegistry.GetApi<IBiggerMachinesAPI>("Jok.BiggerMachines");
     }
 
     /*
     public override object GetApi() {
         return FPApi;
     }*/
-    // TODO test buffering system
     
-    // TODO PIPES
-    // TODO pipe art -- just sticks for now
-    // TODO pipe art logic
-    
-    // TODO liquid-liquid only machine?
-    // TODO pumps on/near water
-    
-    
-    // TODO liquid tank?
+    // TODO fluids probably good to go --- make machines that use them in StardewInc
+    // TODO pipe/belt bridge?
     
     private void OnSaveLoaded(object? sender, SaveLoadedEventArgs e)
     {
@@ -67,6 +71,20 @@ internal sealed class ModEntry : Mod
         if (!Context.IsMainPlayer)
         {
             return;
+        }
+
+        foreach (var obj in e.Added)
+        {
+            FluidPipe.CheckForNeighborCurves(obj.Key, e.Location);
+            if (obj.Value is FluidPipe pipe)
+            {
+                pipe.CheckForCurve();
+            }
+        }
+        
+        foreach (var obj in e.Removed)
+        {
+            FluidPipe.CheckForNeighborCurves(obj.Key, e.Location);
         }
     }
 
@@ -90,7 +108,7 @@ internal sealed class ModEntry : Mod
                     Type = "Crafting",
                     Category = -8, // crafting
                     Texture = Helper.ModContent.GetInternalAssetName("assets/pipes").Name,
-                    SpriteIndex = 0,
+                    SpriteIndex = 4,
                     CanBeGivenAsGift = false,
                 };
                 
@@ -125,7 +143,24 @@ internal sealed class ModEntry : Mod
                         {FluidData.LiquidKey, "wat"}
                     }
                 };
-
+                
+                data["Jok.FluidPipes.FluidContainer"] = new ObjectData()
+                {
+                    Name = "Jok.FluidPipes.FluidContainer",
+                    DisplayName = "Fluid Container",
+                    Description = "You shouldn't get this",
+                    Type = "Crafting",
+                    Category = -29, // equipment
+                    Texture = Helper.ModContent.GetInternalAssetName("assets/pipes").Name,
+                    SpriteIndex = 1,
+                    CanBeGivenAsGift = false,
+                    CustomFields = new Dictionary<string, string>()
+                    {
+                        {FluidData.LiquidKey, "wat"}
+                    }
+                    
+                };
+                
                 foreach (var (itemid, objdata) in data)
                 {
                     if (objdata != null && objdata.CustomFields != null && objdata.CustomFields.ContainsKey(FluidData.LiquidKey))

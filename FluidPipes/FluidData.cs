@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Reflection.PortableExecutable;
+using System.Text.RegularExpressions;
 using Microsoft.Xna.Framework;
 using StardewValley;
 using StardewValley.GameData.Machines;
@@ -31,15 +32,34 @@ internal class FluidData
 
     internal struct AvailableFluid
     {
-        public AvailableFluid(Object fluid, Object container)
+        public AvailableFluid(Object fluid, Chest container, Object machine)
         {
             fluidObject = fluid;
             fluidContainer = container;
+            fluidMachine = machine;
         }
         public Object fluidObject;
-        public Object? fluidContainer;
+        public Chest fluidContainer;
+        public Object fluidMachine;
     }
     
+    struct MachineKey : IEquatable<MachineKey>
+    {
+        public Vector2 Position;
+        public string Location;
+
+        public MachineKey(Vector2 position, string name)
+        {
+            Position = position;
+            Location = name;
+        }
+
+        public override int GetHashCode() => HashCode.Combine(Position.X, Position.Y, Location);
+        public override bool Equals(object obj) => obj is MachineKey other && Equals(other);
+        public bool Equals(MachineKey other) =>
+            Position.Equals(other.Position) && string.Equals(Location, other.Location);
+    }
+    private static readonly HashSet<MachineKey> _machinesRunning = new();
     /// <summary>Get the output item to produce.</summary>
     /// <param name="machine">The machine instance for which to produce output.</param>
     /// <param name="inputItem">The item being dropped into the machine, if applicable.</param>
@@ -107,32 +127,35 @@ internal class FluidData
                         {
                             // We depleted source
                             item.fluidObject.Stack = 0;
-                            if (item.fluidContainer is Chest chest2) // depleted source was an extra product
+                            if (item.fluidContainer is Chest chest2)
                             {
                                 chest2.Items.Remove(item.fluidObject);
-                            }
-                            else
-                            {
-                                if (item.fluidContainer.heldObject.Value == item.fluidObject) // depleted source was base product
+                                if (chest2.Items.Count == 0)
                                 {
                                     var output = item.fluidObject;
-                                    var inputObj = item.fluidContainer;
-                                    MachineData machineData = inputObj.GetMachineData();
-
-                                    // TODO if we are grabbing a base fluid, but there should still be a chest with fluid in it, or extra items
-                                    // probably switch to a generic fluid base item?
-                                    // overwrite draw code so that if we have generic item we instead show contents
-                                    // This only matters when there are extra by products though
+                                    var fluidMachine = item.fluidMachine;
+                                    MachineData machineData = fluidMachine.GetMachineData();
                                     MachineDataUtility.UpdateStats(machineData?.StatsToIncrementWhenHarvested, output, output.Stack);
-                                    inputObj.heldObject.Value = null;
-                                    inputObj.readyForHarvest.Value = false;
-                                    inputObj.showNextIndex.Value = false;
-                                    inputObj.ResetParentSheetIndex();
+                                    fluidMachine.heldObject.Value = null;
+                                    fluidMachine.readyForHarvest.Value = false;
+                                    fluidMachine.showNextIndex.Value = false;
+                                    fluidMachine.ResetParentSheetIndex();
 
-                                    if (MachineDataUtility.TryGetMachineOutputRule(inputObj, machineData, MachineOutputTrigger.OutputCollected, output.getOne(), null, inputObj.Location, out var outputCollectedRule, out var _,
+                                    if (MachineDataUtility.TryGetMachineOutputRule(fluidMachine, machineData, MachineOutputTrigger.OutputCollected, output.getOne(), null, fluidMachine.Location, out var outputCollectedRule, out var _,
                                             out var _, out var _))
                                     {
-                                        inputObj.OutputMachine(machineData, outputCollectedRule, inputObj.lastInputItem.Value, null, inputObj.Location, probe: false);
+                                        fluidMachine.OutputMachine(machineData, outputCollectedRule, fluidMachine.lastInputItem.Value, null, fluidMachine.Location, probe: false);
+                                    }
+                                } else if (chest2.Items.Count == 1)
+                                {
+                                    var lastItem = chest2.Items[0];
+                                    if (lastItem != null)
+                                    {
+                                        if (lastItem.modData == null || !lastItem.modData.ContainsKey(FluidData.LiquidKey))
+                                        {
+                                            chest2.Items.Remove(lastItem);
+                                            item.fluidMachine.heldObject.Value = (Object)lastItem;
+                                        }
                                     }
                                 }
                             }
@@ -163,6 +186,28 @@ internal class FluidData
 
             if (needsMoreLiquid)
             {
+                DelayedAction.functionAfterDelay(delegate
+                {
+                    var key = new MachineKey(machine.TileLocation, machine.Location.NameOrUniqueName);
+                    if (!_machinesRunning.Add(key))
+                        return;
+
+                    try
+                    {
+                        var who = Game1.GetPlayer(machine.owner.Value) ?? Game1.player;
+                        GameLocation location = machine.Location;
+                        MachineData machineData = machine.GetMachineData();
+
+                        if (MachineDataUtility.TryGetMachineOutputRule(machine, machineData, MachineOutputTrigger.MachinePutDown, null, who, location, out var outputRule, out _, out _, out _))
+                        {
+                            machine.OutputMachine(machineData, outputRule, null, who, location, probe: false);
+                        }
+                    }
+                    finally
+                    {
+                        _machinesRunning.Remove(key);
+                    }
+                }, 5000);
                 return null;
             }
         }
@@ -171,35 +216,40 @@ internal class FluidData
         var machineOutputs = GetFluidInfoFromDict(machine.GetMachineData().CustomFields, OutputTypeKeyRegex, OutputVolumeKeyPrefix);
         var desiredOutputs = itemOutputs.Concat(machineOutputs).ToArray();
 
-        if (desiredOutputs.Length == 0)
+        Item? item2 = null;
+        if (outputData.ItemId != null)
+        {
+            ItemQueryContext context = new ItemQueryContext(machine.Location, player, Game1.random, "machine '" + machine.QualifiedItemId + "' > output rules");
+            item2 = ItemQueryResolver.TryResolveRandomItem(outputData, context, avoidRepeat: false, null,
+                (string id) => MachineDataUtility.FormatOutputId(id, machine, outputData, inputItem, player), inputItem,
+                delegate(string query, string error) { ModEntry.Debug($"Machine '{machine.QualifiedItemId}' failed parsing item query '{query}' for output '{outputData.Id}': {error}."); });
+        }
+        
+        if (desiredOutputs.Length == 0 && item2 != null)
+        {
+            return item2;
+        }
+
+        if (desiredOutputs.Length == 0 && item2 == null)
         {
             return null;
         }
 
         // output liquid
         var chest = new Chest(false);
-        Object? outputItem = ItemRegistry.Create<Object>("(O)" + desiredOutputs[0].fluidType, desiredOutputs[0].volume);
+        Object? outputItem = ItemRegistry.Create<Object>("(O)" + ModEntry.FluidContainerID, 1);
         outputItem.heldObject.Value = chest;
         outputItem.modData[LiquidKey] = "hi";
-        for(int i = 1; i < desiredOutputs.Length; i++)
+        for(int i = 0; i < desiredOutputs.Length; i++)
         {
             var item = ItemRegistry.Create<Object>("(O)" + desiredOutputs[i].fluidType, desiredOutputs[i].volume);
             item.modData[LiquidKey] = "hi";
             chest.addItem(item);
         }
 
-        if (outputData.ItemId != null)
+        if (item2 != null)
         {
-            ItemQueryContext context = new ItemQueryContext(machine.Location, player, Game1.random, "machine '" + machine.QualifiedItemId + "' > output rules");
-            Item item2 = ItemQueryResolver.TryResolveRandomItem(outputData, context, avoidRepeat: false, null, (string id) => MachineDataUtility.FormatOutputId(id, machine, outputData, inputItem, player), inputItem, delegate(string query, string error)
-            {
-                ModEntry.Debug($"Machine '{machine.QualifiedItemId}' failed parsing item query '{query}' for output '{outputData.Id}': {error}.");
-            });
-
-            if (item2 != null)
-            {
-                chest.addItem(item2);
-            }
+            chest.addItem(item2);
         }
         
         return outputItem;
@@ -227,25 +277,17 @@ internal class FluidData
                 continue;
             }
 
-            if (obj.heldObject.Value != null && obj.heldObject.Value is Chest chest)
+            if (obj.heldObject.Value != null && obj.heldObject.Value.ItemId == ModEntry.FluidContainerID && obj.heldObject.Value.heldObject.Value is Chest chest)
             {
                 foreach (var item in chest.Items)
                 {
                     if (item.modData.TryGetValue(LiquidKey, out var liquid))
                     {
                         // we have a liquid
-                        foundFluids.Add(new AvailableFluid((Object)item, chest));
+                        foundFluids.Add(new AvailableFluid((Object)item, chest, obj));
                     }
                 }
-            } 
-            else if (obj.heldObject.Value != null)
-            {
-                if (obj.heldObject.Value.modData.TryGetValue(LiquidKey, out var liquid))
-                {
-                    // we have a liquid
-                    foundFluids.Add(new AvailableFluid(obj.heldObject.Value, obj));
-                }
-            } 
+            }
             else if (obj.QualifiedItemId == ModEntry.PipesQID)
             {
                 // continue recursive
