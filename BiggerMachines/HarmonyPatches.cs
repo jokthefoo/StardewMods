@@ -571,7 +571,7 @@ internal static class HarmonyPatches
         }
 
         var itemData = ItemRegistry.GetDataOrErrorItem(__instance.QualifiedItemId);
-        var scale = Math.Min(4f * 16 / itemData.GetTexture().Height, 4f * bigMachineData.Width);
+        var scale = Math.Min(4f * 16 / itemData.GetTexture().Height, 4f * bigMachineData.Width) * scaleSize;
         var sourceRect = new Rectangle(0, 0, bigMachineData.Width * 16, itemData.GetTexture().Height);
         spriteBatch.Draw(itemData.GetTexture(), location + new Vector2(32f, 32f), sourceRect, color * transparency, 0f, new Vector2(sourceRect.Width / 2, sourceRect.Height / 2), scale,
             SpriteEffects.None, layerDepth);
