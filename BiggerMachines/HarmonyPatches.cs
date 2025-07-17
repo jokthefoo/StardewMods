@@ -1,4 +1,5 @@
-﻿using System.Reflection.Emit;
+﻿using System.Reflection;
+using System.Reflection.Emit;
 using HarmonyLib;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -6,7 +7,9 @@ using StardewModdingAPI;
 using StardewValley;
 using StardewValley.Buildings;
 using StardewValley.GameData.Machines;
+using StardewValley.ItemTypeDefinitions;
 using StardewValley.Locations;
+using StardewValley.Menus;
 using StardewValley.Network;
 using StardewValley.Objects;
 using StardewValley.Tools;
@@ -21,7 +24,7 @@ internal static class HarmonyPatches
     public static void Patch(string modId)
     {
         var harmony = new Harmony(modId);
-
+        
         // Character collision
         harmony.Patch(
             AccessTools.Method(typeof(GameLocation), nameof(GameLocation.isCollidingPosition),
@@ -39,6 +42,21 @@ internal static class HarmonyPatches
             AccessTools.Method(typeof(Object), nameof(Object.drawInMenu),
                 new[] { typeof(SpriteBatch), typeof(Vector2), typeof(float), typeof(float), typeof(float), typeof(StackDrawType), typeof(Color), typeof(bool) }),
             prefix: new HarmonyMethod(typeof(HarmonyPatches), nameof(Object_drawInMenu_prefix)));
+        
+        // Crafting menu draw
+        var originalCraftingPageMethod = typeof(CraftingPage).GetMethod("layoutRecipes",
+            BindingFlags.Instance | BindingFlags.NonPublic, null, new[] { typeof(List<string>) }, null);
+        var transpilerForRecipes = new HarmonyMethod(typeof(HarmonyPatches), nameof(CraftingPage_layoutRecipes_transpiler))
+        {
+            after = new[]{"spacechase0.SpaceCore"}
+        };
+        harmony.Patch(originalCraftingPageMethod, 
+            transpiler: transpilerForRecipes);
+        
+        // Level up menu draw
+        harmony.Patch(AccessTools.Method(typeof(CraftingRecipe), nameof(CraftingRecipe.drawMenuView)), 
+            prefix: new HarmonyMethod(typeof(HarmonyPatches), nameof(CraftingRecipe_drawMenuView_prefix)));
+
 
         // Placement bound checking
         harmony.Patch(AccessTools.Method(typeof(Object), nameof(Object.drawPlacementBounds)), 
@@ -571,12 +589,124 @@ internal static class HarmonyPatches
         }
 
         var itemData = ItemRegistry.GetDataOrErrorItem(__instance.QualifiedItemId);
-        var scale = Math.Min(4f * 16 / itemData.GetTexture().Height, 4f * bigMachineData.Width);
+        var scale = Math.Min(4.0f / bigMachineData.Height, 4.0f / bigMachineData.Width);
+        scale = Math.Min(4f * 16 / itemData.GetTexture().Height, scale);
         var sourceRect = new Rectangle(0, 0, bigMachineData.Width * 16, itemData.GetTexture().Height);
-        spriteBatch.Draw(itemData.GetTexture(), location + new Vector2(32f, 32f), sourceRect, color * transparency, 0f, new Vector2(sourceRect.Width / 2, sourceRect.Height / 2), scale,
+        spriteBatch.Draw(itemData.GetTexture(), location + new Vector2(32f, 32f), sourceRect, color * transparency, 0f, new Vector2(sourceRect.Width / 2, sourceRect.Height / 2), scale * scaleSize,
             SpriteEffects.None, layerDepth);
         __instance.DrawMenuIcons(spriteBatch, location, scaleSize, transparency, layerDepth, drawStackNumber, color);
         return false;
+    }
+
+    private static bool CraftingRecipe_drawMenuView_prefix(CraftingRecipe __instance, SpriteBatch b, int x, int y, float layerDepth = 0.88f, bool shadow = true)
+    {
+        if (!__instance.bigCraftable)
+        {
+            return true;
+        }
+        
+        var itemId = __instance.itemToProduce.FirstOrDefault();
+        if (itemId == null)
+        {
+            return true;
+        }
+        
+        if (!ModEntry.BigMachinesList.TryGetValue(itemId, out var bigMachineData))
+        {
+            return true;
+        }
+        
+        ParsedItemData itemData = __instance.GetItemData(useFirst: true);
+        Texture2D texture = itemData.GetTexture();
+        var scale = Math.Min(4.0f / bigMachineData.Height, 4.0f / bigMachineData.Width);
+        scale = Math.Min(4f * 16 / itemData.GetTexture().Height, scale);
+        var sourceRect = new Rectangle(0, 0, bigMachineData.Width * 16, texture.Height);
+        Utility.drawWithShadow(b, texture, new Vector2(x, y), sourceRect, Color.White, 0f, Vector2.Zero, scale, flipped: false, layerDepth);
+        return false;
+    }
+    
+    public static IEnumerable<CodeInstruction> CraftingPage_layoutRecipes_transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
+    {
+        CodeMatcher matcher = new(instructions, generator);
+        var craftingPageTranspiler = AccessTools.Method(typeof(HarmonyPatches), nameof(CraftingPageTranspiler));
+        var craftingYMethod = AccessTools.Method(typeof(CraftingPage), "craftingPageY");
+        var getItemData = AccessTools.Method(typeof(CraftingRecipe), "GetItemData");
+        Label jumpTarget = generator.DefineLabel();
+        
+        try
+        {
+            matcher.MatchEndForward(new CodeMatch(OpCodes.Ldloc_S),
+                    new CodeMatch(OpCodes.Call),
+                    new CodeMatch(OpCodes.Ldloc_S),
+                    new CodeMatch(OpCodes.Ldfld),
+                    new CodeMatch(OpCodes.Brfalse_S)).
+                ThrowIfNotMatch($"Could not find first entry point for {nameof(CraftingPage_layoutRecipes_transpiler)}");
+            jumpTarget = (Label)matcher.Operand;
+            
+            matcher.MatchStartBackwards(new CodeMatch(OpCodes.Dup),
+                    new CodeMatch(OpCodes.Callvirt),
+                    new CodeMatch(OpCodes.Stloc_S),
+                    new CodeMatch(OpCodes.Ldc_I4_0),
+                    new CodeMatch(OpCodes.Ldloca_S),
+                    new CodeMatch(OpCodes.Initobj)).
+                ThrowIfNotMatch($"Could not find second entry point for {nameof(CraftingPage_layoutRecipes_transpiler)}"); // currently have itemData on top of stack
+
+            matcher
+                .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 0)) // load craftingPageX
+                .InsertAndAdvance(new CodeInstruction(OpCodes.Ldarg_0)) // load this
+                .InsertAndAdvance(new CodeInstruction(OpCodes.Call, craftingYMethod)) // load craftingPageY
+                .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 10)) // load id
+                .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 3)) // load x
+                .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 4)) // load y
+                .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 9)) // load craftingrecipe
+                .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloca_S, 6)) // load ref to pageLayout
+                .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloca_S, 2)) // load ref to currentPage
+                .InsertAndAdvance(new CodeInstruction(OpCodes.Call, craftingPageTranspiler)) // call my function
+                .InsertAndAdvance(new CodeInstruction(OpCodes.Brtrue, jumpTarget))
+                
+                .InsertAndAdvance(new CodeInstruction(OpCodes.Ldloc_S, 9))
+                .InsertAndAdvance(new CodeInstruction(OpCodes.Ldc_I4_1))
+                .InsertAndAdvance(new CodeInstruction(OpCodes.Callvirt, getItemData)); // restore the stolen get item data
+        }
+        catch (Exception ex)
+        {
+            ModEntry.MonitorInst.Log($"Failed in {nameof(CraftingPage_layoutRecipes_transpiler)}:\n{ex}", LogLevel.Error);
+        }
+        
+        return matcher.InstructionEnumeration();
+    }
+    
+    // Alternative route to adding component to crafting screen
+    // returns true if adding item, thus skipping the rest of the loop logic
+    private static bool CraftingPageTranspiler(ParsedItemData itemData, int craftingPageX, int craftingPageY, int id, int x, int y, CraftingRecipe recipe, ref ClickableTextureComponent[,] pageLayout, ref Dictionary<ClickableTextureComponent, CraftingRecipe> currentPage)
+    {
+        if (!ModEntry.BigMachinesList.TryGetValue(itemData.ItemId, out var bigMachineData))
+        {
+            return false;
+        }
+
+        Texture2D texture = itemData.GetTexture();
+        var sourceRect = new Rectangle(0, 0, bigMachineData.Width * 16, texture.Height);
+        var scale = Math.Min(4.0f / bigMachineData.Height, 4.0f / bigMachineData.Width);
+        float hscaler = 4f * 16 / itemData.GetTexture().Height;
+        scale = Math.Min(hscaler, scale);
+        scale *= 1f;
+        
+        ClickableTextureComponent component = new ClickableTextureComponent("", new Rectangle(craftingPageX + x * (64 + 8), craftingPageY + y * 72, 1 * 64, 1 * 64), null, "", texture, sourceRect, scale)
+        {
+            myID = id,
+            rightNeighborID = -99998,
+            leftNeighborID = -99998,
+            upNeighborID = -99998,
+            downNeighborID = -99998,
+            fullyImmutable = true,
+            region = 8000
+        };
+        currentPage.Add(component, recipe);
+
+        pageLayout[x, y] = component;
+        
+        return true;
     }
 
     private static bool Object_drawPlacementBounds_prefix(Object __instance, SpriteBatch spriteBatch, GameLocation location)
