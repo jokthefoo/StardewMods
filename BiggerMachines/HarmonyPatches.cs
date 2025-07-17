@@ -80,6 +80,10 @@ internal static class HarmonyPatches
         harmony.Patch(AccessTools.DeclaredMethod(typeof(GameLocation), nameof(GameLocation.checkAction)), 
             postfix: new HarmonyMethod(typeof(HarmonyPatches), nameof(GameLocation_checkAction_postfix)));
 
+        // Check if machine accepts the item
+        harmony.Patch(AccessTools.DeclaredMethod(typeof(Utility), nameof(Utility.isThereAnObjectHereWhichAcceptsThisItem)),
+            postfix: new HarmonyMethod(typeof(HarmonyPatches), nameof(Utility_isThereAnObjectHereWhichAcceptsThisItem_postfix)));
+
         // Block furniture from placing inside bounds
         harmony.Patch(AccessTools.DeclaredMethod(typeof(Furniture), nameof(Furniture.canBePlacedHere)), 
             postfix: new HarmonyMethod(typeof(HarmonyPatches), nameof(Furniture_canBePlacedHere_postfix)));
@@ -102,6 +106,20 @@ internal static class HarmonyPatches
 
         harmony.Patch(AccessTools.DeclaredMethod(typeof(Chest), nameof(Chest.draw), new[] { typeof(SpriteBatch), typeof(int), typeof(int), typeof(float) }),
             new HarmonyMethod(typeof(HarmonyPatches), nameof(Chest_draw_prefix)));
+    }
+
+    public static void Utility_isThereAnObjectHereWhichAcceptsThisItem_postfix(Utility __instance, ref bool __result, GameLocation location, Item item, int x, int y)
+    {
+        if (ModEntry.LocationBigMachines.ContainsKey(location.Name))
+        {
+            Vector2 tileLocation = new Vector2(x / 64, y / 64);
+            BiggerMachine? machine = GetBiggerMachineAt(location.Name, tileLocation);
+
+            if (machine != null && Utility.tileWithinRadiusOfPlayer((int)tileLocation.X, (int)tileLocation.Y, 1, Game1.player) && machine.Object.heldObject.Value == null && machine.Object.performObjectDropInAction((Object)item, true, Game1.player))
+            {
+                __result = true;
+            }
+        }
     }
 
     public static bool Chest_draw_prefix(Chest __instance, SpriteBatch spriteBatch, int x, int y, float alpha)
