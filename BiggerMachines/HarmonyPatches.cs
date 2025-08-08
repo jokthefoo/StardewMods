@@ -106,6 +106,52 @@ internal static class HarmonyPatches
 
         harmony.Patch(AccessTools.DeclaredMethod(typeof(Chest), nameof(Chest.draw), new[] { typeof(SpriteBatch), typeof(int), typeof(int), typeof(float) }),
             new HarmonyMethod(typeof(HarmonyPatches), nameof(Chest_draw_prefix)));
+
+        // Fairy dust sprakle size fix
+        harmony.Patch(AccessTools.DeclaredMethod(typeof(Object), nameof(Object.TryApplyFairyDust)),
+            transpiler: new HarmonyMethod(typeof(HarmonyPatches), nameof(TryApplyFairyDust_Transpiler)));
+
+        harmony.Patch(AccessTools.DeclaredMethod(typeof(Cask), nameof(Cask.TryApplyFairyDust)),
+            transpiler: new HarmonyMethod(typeof(HarmonyPatches), nameof(TryApplyFairyDust_Transpiler)));
+    }
+
+    public static IEnumerable<CodeInstruction> TryApplyFairyDust_Transpiler(IEnumerable<CodeInstruction> instructions)
+    {
+        CodeMatcher matcher = new(instructions);
+
+        return matcher.MatchStartForward(
+            new CodeMatch(OpCodes.Ldarg_0),
+            new CodeMatch(OpCodes.Callvirt),
+            new CodeMatch(OpCodes.Ldarg_0),
+            new CodeMatch(OpCodes.Ldfld, AccessTools.DeclaredField(typeof(Netcode.NetVector2), "tileLocation")))
+            .ThrowIfNotMatch($"Could not find entry point for {nameof(TryApplyFairyDust_Transpiler)}")
+            .RemoveInstructions(18)
+            .Insert(
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(OpCodes.Call, AccessTools.DeclaredMethod(typeof(HarmonyPatches), nameof(HarmonyPatches.TryApplyFairyDust_Method))))
+            .InstructionEnumeration();
+    }
+
+    public static void TryApplyFairyDust_Method(Object instance)
+    {
+        if (ModEntry.BigMachinesList.TryGetValue(instance.ItemId, out var bigMachineData))
+        {
+            int textureHeight = ItemRegistry.GetDataOrErrorItem(instance.QualifiedItemId).GetTexture().Height / 16;
+            int locX = (int)instance.tileLocation.X - 1;
+            int locY = (int)instance.tileLocation.Y - (1 + (textureHeight - bigMachineData.Height));
+
+            float centerX = bigMachineData.Width / 2.0f;
+            float centerY = textureHeight / 2.0f;
+
+            locX += centerX % 1 != 0 ? (int)Math.Ceiling(centerX) : bigMachineData.Width;
+            locY += centerY % 1 != 0 ? (int)Math.Ceiling(centerY) : (int)centerY;
+
+            Utility.addSprinklesToLocation(instance.Location, locX, locY, bigMachineData.Width, textureHeight, 400, 40, Color.White);
+        }
+        else
+        {
+            Utility.addSprinklesToLocation(instance.Location, (int)instance.tileLocation.X, (int)instance.tileLocation.Y, 1, 2, 400, 40, Color.White);
+        }
     }
 
     public static void Utility_isThereAnObjectHereWhichAcceptsThisItem_postfix(Utility __instance, ref bool __result, GameLocation location, Item item, int x, int y)
