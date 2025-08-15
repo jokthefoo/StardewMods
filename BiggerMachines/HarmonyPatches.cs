@@ -500,7 +500,7 @@ internal static class HarmonyPatches
         {
             X = (int)(position.X - scaleFactor.X / 2f) + ((__instance.shakeTimer > 0) ? Game1.random.Next(-1, 2) : 0),
             Y = (int)(position.Y - (itemData.GetTexture().Height * 4 - bigMachineData.Height * 64) - scaleFactor.Y / 2f) + ((__instance.shakeTimer > 0) ? Game1.random.Next(-1, 2) : 0),
-            Width = (int)(itemData.GetTexture().Width * 4f + scaleFactor.X),
+            Width = (int)(bigMachineData.Width * 16 * 4f + scaleFactor.X),
             Height = (int)(itemData.GetTexture().Height * 4f + scaleFactor.Y / 2f)
         };
 
@@ -526,7 +526,7 @@ internal static class HarmonyPatches
             destination.Y += __instance.MinutesUntilReady > 0 ? 1 : 0;
         }
 
-        Rectangle sourceRect = new(bigMachineData.Width * 16 * offset, 0, itemData.GetTexture().Width, itemData.GetTexture().Height);
+        Rectangle sourceRect = new(bigMachineData.Width * 16 * offset, 0, bigMachineData.Width * 16, itemData.GetTexture().Height);
         spriteBatch.Draw(itemData.GetTexture(), destination, sourceRect, Color.White * alpha, 0f, Vector2.Zero, SpriteEffects.None, Math.Max(0f, ((y + 1) * 64 - 24) / 10000f) + x * 1E-05f);
 
         if (__instance.isLamp.Value && Game1.isDarkOut(__instance.Location))
