@@ -538,14 +538,19 @@ internal static class HarmonyPatches
             return true;
         }
 
-        var scaleFactor = __instance.getScale() * 4f;
-        var position = Game1.GlobalToLocal(Game1.viewport, new Vector2(x * 64, y * 64));
-        var itemData = ItemRegistry.GetDataOrErrorItem(__instance.QualifiedItemId);
-        var drawHeightOffset = itemData.GetTexture().Height * 4 - bigMachineData.Height * 64;
-        var dest = position - new Vector2(0, drawHeightOffset) + scaleFactor / 2f + (__instance.shakeTimer > 0 ? new Vector2(Game1.random.Next(-1, 2), Game1.random.Next(-1, 2)) : Vector2.Zero);
+        Vector2 scaleFactor = __instance.getScale() * 4f;
+        Vector2 position = Game1.GlobalToLocal(Game1.viewport, new Vector2(x * 64, y * 64));
+        ParsedItemData itemData = ItemRegistry.GetDataOrErrorItem(__instance.QualifiedItemId);
 
-        var draw_layer = Math.Max(0f, ((y + 1) * 64 - 24) / 10000f) + x * 1E-05f;
-        var offset = 0;
+        Rectangle destination = new()
+        {
+            X = (int)(position.X - scaleFactor.X / 2f) + ((__instance.shakeTimer > 0) ? Game1.random.Next(-1, 2) : 0),
+            Y = (int)(position.Y - (itemData.GetTexture().Height * 4 - bigMachineData.Height * 64) - scaleFactor.Y / 2f) + ((__instance.shakeTimer > 0) ? Game1.random.Next(-1, 2) : 0),
+            Width = (int)(bigMachineData.Width * 16 * 4f + scaleFactor.X),
+            Height = (int)(itemData.GetTexture().Height * 4f + scaleFactor.Y / 2f)
+        };
+
+        int offset = 0;
 
         if (__instance.showNextIndex.Value)
         {
@@ -562,10 +567,13 @@ internal static class HarmonyPatches
         if (bigMachineData.DrawShadow)
         {
             drawShadow(__instance, bigMachineData, alpha, spriteBatch);
+
+            // When the machine is processing something make sure there isn't a gap between the drawn shadow below and the texture above it
+            destination.Y += __instance.MinutesUntilReady > 0 ? 1 : 0;
         }
 
-        var sourceRect = new Rectangle(bigMachineData.Width * 16 * offset, 0, bigMachineData.Width * 16, itemData.GetTexture().Height);
-        spriteBatch.Draw(itemData.GetTexture(), dest, sourceRect, Color.White * alpha, 0, Vector2.Zero, 4, SpriteEffects.None, draw_layer);
+        Rectangle sourceRect = new(bigMachineData.Width * 16 * offset, 0, bigMachineData.Width * 16, itemData.GetTexture().Height);
+        spriteBatch.Draw(itemData.GetTexture(), destination, sourceRect, Color.White * alpha, 0f, Vector2.Zero, SpriteEffects.None, Math.Max(0f, ((y + 1) * 64 - 24) / 10000f) + x * 1E-05f);
 
         if (__instance.isLamp.Value && Game1.isDarkOut(__instance.Location))
         {
