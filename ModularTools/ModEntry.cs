@@ -416,12 +416,17 @@ namespace ModularTools
 
             if (source is Tool fromTool)
             {
+                int index = 0;
                 foreach (var o in fromTool.attachments)
                 {
                     if (o is not null)
                     {
-                        __instance.attach((Object)o.getOne());
+                        if (index < __instance.attachments.Length)
+                        {
+                            __instance.attachments[index] = (Object)o.getOne();
+                        }
                     }
+                    index++;
                 }
             }
         }
@@ -943,12 +948,18 @@ namespace ModularTools
                 wateringCan.WaterLeft = 40;
             }
             //tool.AttachmentSlotsCount = __state.AttachmentSlotsCount + 1;
-            foreach (Object o in __state.attachments)
+            
+            int index = 0;
+            foreach (var o in __state.attachments)
             {
                 if (o is not null)
                 {
-                    tool.attach((Object)o.getOne());
+                    if (index < tool.attachments.Length)
+                    {
+                        tool.attachments[index] = (Object)o.getOne();
+                    }
                 }
+                index++;
             }
         }
         
@@ -985,12 +996,17 @@ namespace ModularTools
                 wateringCan.WaterLeft = 40;
             }
             //tool.AttachmentSlotsCount = __state.AttachmentSlotsCount + 1;
-            foreach (Object o in __state.attachments)
+            int index = 0;
+            foreach (var o in __state.attachments)
             {
                 if (o is not null)
                 {
-                    tool.attach((Object)o.getOne());
+                    if (index < tool.attachments.Length)
+                    {
+                        tool.attachments[index] = (Object)o.getOne();
+                    }
                 }
+                index++;
             }
         }
         
