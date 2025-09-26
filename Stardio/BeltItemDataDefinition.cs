@@ -45,7 +45,17 @@ public class BeltItemDataDefinition : BaseItemDataDefinition
         {
             return new FilterItem(data.ItemId);
         }
-            
+
+        if(data.ItemId == "Jok.Stardio.Belt2")
+        {
+            return new BeltItem2(data.ItemId);
+        }
+        
+        if(data.ItemId == "Jok.Stardio.Belt3")
+        {
+            return new BeltItem3(data.ItemId);
+        }
+
         return new BeltItem(data.ItemId);
     }
 

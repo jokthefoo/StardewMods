@@ -6,6 +6,20 @@
     TextureIndex: 0,
     Price: 0
   },
+  "Jok.Stardio.Belt2": {
+    DisplayName: "belt2.name",
+    Description: "belt2.description",
+    Texture: "Jok.Stardio/fasterbelts.png",
+    TextureIndex: 0,
+    Price: 0
+  },
+  "Jok.Stardio.Belt3": {
+    DisplayName: "belt3.name",
+    Description: "belt3.description",
+    Texture: "Jok.Stardio/turbobelts.png",
+    TextureIndex: 0,
+    Price: 0
+  },
   "Jok.Stardio.Bridge": {
     DisplayName: "bridge.name",
     Description: "bridge.description",

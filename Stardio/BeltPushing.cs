@@ -79,6 +79,10 @@ public abstract class IBeltPushing : Object
             {
                 return;
             }
+            if (TryPushToSilo(targetTile))
+            {
+                return;
+            }
             if (TryPushToBuilding(targetTile))
             {
                 return;
@@ -198,6 +202,19 @@ public abstract class IBeltPushing : Object
         if (building is JunimoHut hut)
         {
             return TryPushToChest(hut.GetOutputChest());
+        }
+        return false;
+    }
+    
+    private bool TryPushToSilo(Vector2 targetTile)
+    {
+        var building = Location.getBuildingAt(targetTile);
+        if (building != null && building.hayCapacity.Value > 0 && building.daysOfConstructionLeft.Value <= 0 && heldObject.Value.QualifiedItemId == "(O)178") // hay
+        {
+            building.GetParentLocation().GetRootLocation().tryToAddHay(1);
+            heldObject.Value = null;
+            HeldItemPosition = 0;
+            return true;
         }
         return false;
     }

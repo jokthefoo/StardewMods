@@ -23,6 +23,7 @@ internal sealed class ModEntry : Mod
     internal static IExtraMachineConfigApi? EMCApi;
     internal static IBiggerMachinesAPI? BMApi;
     internal static IFurnitureMachineApi? FMApi;
+    internal static bool FPApi = false;
 
     internal const string MACHINE_STATE_KEY = "Jok.Stardio.MachineState";
     internal const string BUILDING_CHEST_KEY = "Jok.Stardio/BuildingChest";
@@ -266,10 +267,34 @@ internal sealed class ModEntry : Mod
     {
         bool isProcessTick = false;
         BeltItem.beltUpdateCountdown -= Game1.currentGameTime.ElapsedGameTime.Milliseconds;
+        BeltItem2.belt2AnimUpdateCountdown -= Game1.currentGameTime.ElapsedGameTime.Milliseconds;
+        BeltItem3.belt3AnimUpdateCountdown -= Game1.currentGameTime.ElapsedGameTime.Milliseconds;
 
+        if (BeltItem2.belt2AnimUpdateCountdown  <= 0)
+        {
+            BeltItem2.belt2AnimUpdateCountdown = Math.Clamp(Config.BeltUpdateMS, 20, Config.BeltUpdateMS) / 3;
+            BeltItem2.Belt2Anim++;
+
+            if (BeltItem2.Belt2Anim > 3)
+            {
+                BeltItem2.Belt2Anim = 0;
+            }
+        }
+        
+        if (BeltItem3.belt3AnimUpdateCountdown  <= 0)
+        {
+            BeltItem3.belt3AnimUpdateCountdown = Math.Clamp(Config.BeltUpdateMS, 20, Config.BeltUpdateMS) / 4;
+            BeltItem3.Belt3Anim++;
+
+            if (BeltItem3.Belt3Anim > 3)
+            {
+                BeltItem3.Belt3Anim = 0;
+            }
+        }
+        
         if (BeltItem.beltUpdateCountdown <= 0)
         {
-            BeltItem.beltUpdateCountdown = Math.Clamp(Config.BeltUpdateMS, 10, Config.BeltUpdateMS) / 2;
+            BeltItem.beltUpdateCountdown = Math.Clamp(Config.BeltUpdateMS, 20, Config.BeltUpdateMS) / 2;
             BeltItem.BeltAnim++;
 
             if (BeltItem.BeltAnim > 3)
@@ -332,6 +357,8 @@ internal sealed class ModEntry : Mod
         EMCApi = Helper.ModRegistry.GetApi<IExtraMachineConfigApi>("selph.ExtraMachineConfig");
         FMApi = Helper.ModRegistry.GetApi<IFurnitureMachineApi>("selph.FurnitureMachine");
         BMApi = Helper.ModRegistry.GetApi<IBiggerMachinesAPI>("Jok.BiggerMachines");
+        
+        FPApi = Helper.ModRegistry.Get("Jok.FluidPipes") != null;
 
         SetupConfigs();
     }
@@ -359,7 +386,7 @@ internal sealed class ModEntry : Mod
             setValue: value => Config.ShowQualityOnBelts = value);
 
         configMenu.AddNumberOption(mod: ModManifest, name: I18n.Config_Updaterate_Name, tooltip: I18n.Config_Updaterate_Tooltip, getValue: () => Config.BeltUpdateMS,
-            setValue: value => Config.BeltUpdateMS = value, min: 10, max: 1000, interval: 5);
+            setValue: value => Config.BeltUpdateMS = value, min: 20, max: 1000, interval: 5);
 
         configMenu.AddBoolOption(mod: ModManifest, name: I18n.Config_Brownbelts_Name, tooltip: I18n.Config_Brownbelts_Tooltip, getValue: () => Config.BrownBelts, setValue: value =>
         {
@@ -409,6 +436,14 @@ internal sealed class ModEntry : Mod
                 e.LoadFromModFile<Texture2D>("assets/belts.png", AssetLoadPriority.Low);
             }
         }
+        else if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/fasterbelts.png"))
+        {
+            e.LoadFromModFile<Texture2D>("assets/fasterbelts.png", AssetLoadPriority.Low);
+        }
+        else if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/turbobelts.png"))
+        {
+            e.LoadFromModFile<Texture2D>("assets/turbobelts.png", AssetLoadPriority.Low);
+        }
         else if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/otherbelts.png"))
         {
             if (Config.BrownBelts)
@@ -443,13 +478,17 @@ internal sealed class ModEntry : Mod
                 var dict = asset.AsDictionary<string, string>().Data;
                 // ingredients / unused / yield / big craftable? / unlock conditions /
                 dict.Add("(Jok.Belt)Jok.Stardio.Belt", $"335 5 390 25 388 25/what/(Jok.Belt)Jok.Stardio.Belt 5/false/s farming 3/");
+                
+                dict.Add("(Jok.Belt)Jok.Stardio.Belt2", $"(Jok.Belt)Jok.Stardio.Belt 5 336 3/what/(Jok.Belt)Jok.Stardio.Belt2 5/false/s farming 10/");
+                dict.Add("(Jok.Belt)Jok.Stardio.Belt3", $"(Jok.Belt)Jok.Stardio.Belt2 20 910 1/what/(Jok.Belt)Jok.Stardio.Belt3 20/false/s farming 10/");
+                
                 dict.Add("(Jok.Belt)Jok.Stardio.Bridge", $"336 1 (Jok.Belt)Jok.Stardio.Belt 5/what/(Jok.Belt)Jok.Stardio.Bridge 1/false/s farming 5/");
                 dict.Add("(Jok.Belt)Jok.Stardio.Splitter", $"336 1 (Jok.Belt)Jok.Stardio.Belt 5/what/(Jok.Belt)Jok.Stardio.Splitter 1/false/s farming 5/");
 
                 dict.Add("Jok.Stardio.InputChest", $"337 1 (Jok.Belt)Jok.Stardio.Bridge 2/what/Jok.Stardio.InputChest 1/true/s farming 10/");
                 dict.Add("Jok.Stardio.OutputChest", $"337 1 (Jok.Belt)Jok.Stardio.Splitter 2/what/Jok.Stardio.OutputChest 1/true/s farming 10/");
                 
-                dict.Add("(Jok.Belt)Jok.Stardio.Filter", $"787 1 (Jok.Belt)Jok.Stardio.Splitter 1 (Jok.Belt)Jok.Stardio.Bridge 1/what/(Jok.Belt)Jok.Stardio.Filter 1/false/s farming 7/");
+                dict.Add("(Jok.Belt)Jok.Stardio.Filter", $"787 1 (Jok.Belt)Jok.Stardio.Splitter 1 (Jok.Belt)Jok.Stardio.Bridge 1/what/(Jok.Belt)Jok.Stardio.Filter 1/true/s farming 7/" + I18n.Filter_Name());
             });
         }
         else if (e.NameWithoutLocale.IsEquivalentTo("Data/BigCraftables"))

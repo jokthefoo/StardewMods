@@ -129,7 +129,7 @@ public class BeltItem : IBeltPushing
         return false;
     }
 
-    public void beltUpdate(bool isProcessTick)
+    public virtual void beltUpdate(bool isProcessTick)
     {
         if (Location == null)
         {
@@ -150,7 +150,7 @@ public class BeltItem : IBeltPushing
         }
     }
 
-    private void BeltPullItem()
+    public void BeltPullItem()
     {
         if (heldObject.Value != null || beltSpriteRotationOffset.Value != 0)
         {
@@ -281,17 +281,7 @@ public class BeltItem : IBeltPushing
     }
     private void TryPullFromMachine(Object inputObj)
     {
-        if (inputObj == null || !inputObj.readyForHarvest.Value || inputObj is BeltItem || inputObj is SplitterItem)
-        {
-            return;
-        }
-
-        if (ShouldBeltIgnoreObject(inputObj) || ShouldBeltIgnoreObject(inputObj.heldObject.Value))
-        {
-            return;
-        }
-        
-        if (!ModEntry.Config.PullFromMachines)
+        if (inputObj == null || !inputObj.readyForHarvest.Value || inputObj is BeltItem || inputObj is SplitterItem || ShouldBeltIgnoreObject(inputObj) || !ModEntry.Config.PullFromMachines)
         {
             return;
         }
@@ -320,14 +310,14 @@ public class BeltItem : IBeltPushing
             }
         }
 
-        // If emc is installed check for extra outputs
-        if (ModEntry.EMCApi != null)
+        // If emc or fluid pipes is installed check for extra outputs
+        if (ModEntry.EMCApi != null || ModEntry.FPApi)
         {
             if (inputObj.heldObject.Value.heldObject.Value is Chest chest && chest.Items.Count > 0)
             {
                 foreach (var item in chest.Items)
                 {
-                    if (item is not null && item is Object)
+                    if (item is not null && item is Object obj && !ShouldBeltIgnoreObject(obj))
                     {
                         heldObject.Value = (Object)item.getOne();
                         item.Stack -= 1;
@@ -348,7 +338,7 @@ public class BeltItem : IBeltPushing
             }
         }
 
-        if (output is not Object)
+        if (output is not Object || ShouldBeltIgnoreObject(output))
         {
             return;
         }
@@ -428,6 +418,11 @@ public class BeltItem : IBeltPushing
         }
 
         return false;
+    }
+
+    public virtual int GetBeltAnim()
+    {
+        return BeltAnim;
     }
 
     public override void draw(SpriteBatch spriteBatch, int x, int y, float alpha = 1f)
@@ -513,16 +508,16 @@ public class BeltItem : IBeltPushing
             {
                 float yOffset2 = 4f * (float)Math.Round(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 250.0), 2); // makes it bob
                 spriteBatch.Draw(ModEntry.dronesTexture, Game1.GlobalToLocal(Game1.viewport, new Vector2(x * 64 + 32, y * 64 - 32 + yOffset2) + shake),
-                    new Rectangle(BeltAnim * 16, 0, 16, 32), Color.White * alpha, 0f, new Vector2(8f, 8f), scale.Y > 1f ? getScale().Y : 4f, SpriteEffects.None,
+                    new Rectangle(GetBeltAnim() * 16, 0, 16, 32), Color.White * alpha, 0f, new Vector2(8f, 8f), scale.Y > 1f ? getScale().Y : 4f, SpriteEffects.None,
                     (isPassable() ? bounds.Top - 100 : bounds.Center.Y + 2) / 10000f);
                 spriteBatch.Draw(ModEntry.dronepadTexture, Game1.GlobalToLocal(Game1.viewport, new Vector2(x * 64 + 32, y * 64 - 32) + shake),
-                    new Rectangle(BeltAnim * 16, 0, 16, 32), Color.White * alpha, 0f, new Vector2(8f, 8f), scale.Y > 1f ? getScale().Y : 4f, SpriteEffects.None,
+                    new Rectangle(GetBeltAnim() * 16, 0, 16, 32), Color.White * alpha, 0f, new Vector2(8f, 8f), scale.Y > 1f ? getScale().Y : 4f, SpriteEffects.None,
                     (isPassable() ? bounds.Top - 100 : bounds.Center.Y + 1) / 10000f);
             }
             
             spriteBatch.Draw(itemData.GetTexture(),
                     Game1.GlobalToLocal(Game1.viewport, new Vector2(x * 64 + 32, y * 64 + 32) + shake),
-                    itemData.GetSourceRect(sourceOffset + curveSpriteOffset, BeltAnim), Color.White * alpha, 0f, new Vector2(8f, 8f), scale.Y > 1f ? getScale().Y : 4f, spriteEffects,
+                    itemData.GetSourceRect(sourceOffset + curveSpriteOffset, GetBeltAnim()), Color.White * alpha, 0f, new Vector2(8f, 8f), scale.Y > 1f ? getScale().Y : 4f, spriteEffects,
                     (isPassable() ? bounds.Top - 100 : bounds.Center.Y) / 10000f);
             
             

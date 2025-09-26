@@ -2,6 +2,12 @@
   "belt.name": "Conveyor Belt",
   "belt.description": "Moves items, can pull and push from chests and machines.",
 
+  "belt2.name": "Fast Conveyor Belt",
+  "belt2.description": "Moves items twice as fast, can pull and push from chests and machines.",
+
+  "belt3.name": "Turbo Conveyor Belt",
+  "belt3.description": "Moves items four times as fast, can pull and push from chests and machines.",
+
   "bridge.name": "Bridge",
   "bridge.description": "Bridges across a vertical and horizontal belt.",
 
