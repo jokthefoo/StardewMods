@@ -211,10 +211,12 @@ public abstract class IBeltPushing : Object
         var building = Location.getBuildingAt(targetTile);
         if (building != null && building.hayCapacity.Value > 0 && building.daysOfConstructionLeft.Value <= 0 && heldObject.Value.QualifiedItemId == "(O)178") // hay
         {
-            building.GetParentLocation().GetRootLocation().tryToAddHay(1);
-            heldObject.Value = null;
-            HeldItemPosition = 0;
-            return true;
+            if (building.GetParentLocation().GetRootLocation().tryToAddHay(1) == 0)
+            {
+                heldObject.Value = null;
+                HeldItemPosition = 0;
+                return true;
+            }
         }
         return false;
     }
