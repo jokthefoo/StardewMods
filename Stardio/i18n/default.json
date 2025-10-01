@@ -24,7 +24,7 @@
   
   "belt.category.name": "Belt",
 
-  "warp.name": "Warp",
+  "warp.name": "Warp Nexus",
   "warp.description": "Transports items to an interdimensional space, enabling instant travel across any distance. Warps of the same color share a connected space. (items belted into one warp can be retrieved from any other warp of the same color using a belt, right click the warps to rotate through the 8 available colors)",
 
   "config.quality.name": "Show Quality",
