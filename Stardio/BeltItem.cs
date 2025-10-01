@@ -212,6 +212,12 @@ public class BeltItem : IBeltPushing
         {
             return;
         }
+
+        if (TryPullFromWarp(inputObj))
+        {
+            return;
+        }
+        
         TryPullFromMachine(inputObj);
     }
     
@@ -418,6 +424,23 @@ public class BeltItem : IBeltPushing
         }
 
         return false;
+    }
+    
+    private bool TryPullFromWarp(Object inputObj)
+    {
+        if (inputObj is not WarpItem inputWarp)
+        {
+            return false;
+        }
+
+        var item = ModEntry.GetWarpItem(inputWarp);
+        if (item is null)
+        {
+            return false;
+        }
+        
+        heldObject.Value = (Object)item;
+        return true;
     }
 
     public virtual int GetBeltAnim()

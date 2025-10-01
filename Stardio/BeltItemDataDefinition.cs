@@ -55,6 +55,11 @@ public class BeltItemDataDefinition : BaseItemDataDefinition
         {
             return new BeltItem3(data.ItemId);
         }
+        
+        if(data.ItemId == "Jok.Stardio.Warp")
+        {
+            return new WarpItem(data.ItemId);
+        }
 
         return new BeltItem(data.ItemId);
     }
@@ -63,7 +68,7 @@ public class BeltItemDataDefinition : BaseItemDataDefinition
     {
         int width = 16;
         int height = 16;
-        if (data.ItemId == "Jok.Stardio.Filter")
+        if (data.ItemId == "Jok.Stardio.Filter" || data.ItemId == "Jok.Stardio.Warp")
         {
             height = 32;
         }

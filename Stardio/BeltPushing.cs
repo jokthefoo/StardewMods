@@ -119,7 +119,7 @@ public abstract class IBeltPushing : Object
                 return;
             }
         }
-            
+        
         // try to add to chest
         if (TryPushToChest(outputTarget))
         {
@@ -141,6 +141,12 @@ public abstract class IBeltPushing : Object
         
         // try to push to splitter
         if (TryPushToSplitter(outputTarget) || outputTarget is SplitterItem)
+        {
+            return;
+        }
+        
+        // try to push to warp
+        if (TryPushToWarp(outputTarget) || outputTarget is WarpItem)
         {
             return;
         }
@@ -398,6 +404,21 @@ public abstract class IBeltPushing : Object
             heldObject.Value = null;
             HeldItemPosition = 0;
             return true;
+        }
+        return false;
+    }
+    
+    private bool TryPushToWarp(Object outputTarget)
+    {
+        if (outputTarget is WarpItem warp && !ModEntry.HasWarpItem(warp))
+        {
+            var item = ModEntry.GetWarpItem(warp);
+            if (item == null && ModEntry.StoreWarpItem(heldObject.Value, warp))
+            {
+                heldObject.Value = null;
+                HeldItemPosition = 0;
+                return true;
+            }
         }
         return false;
     }

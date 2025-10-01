@@ -24,6 +24,7 @@ internal sealed class ModEntry : Mod
     internal static IBiggerMachinesAPI? BMApi;
     internal static IFurnitureMachineApi? FMApi;
     internal static bool FPApi = false;
+    internal static int warpAnimDir = 1;
 
     internal const string MACHINE_STATE_KEY = "Jok.Stardio.MachineState";
     internal const string BUILDING_CHEST_KEY = "Jok.Stardio/BuildingChest";
@@ -32,7 +33,9 @@ internal sealed class ModEntry : Mod
     internal const string FILTER_QID = "(Jok.Belt)Jok.Stardio.Filter";
     internal static Texture2D dronepadTexture;
     internal static Texture2D dronesTexture;
+    internal static Texture2D warpExtraTexture;
     //ModEntry.MonitorInst.Log($"X value: {x}", LogLevel.Info);
+    internal static string WarpInventoryKeyPrefix = $"Jok.Stardio_Warp";
 
     public const string BELT_IGNORE_KEY = "Jok.Stardio.NoGrabby";
     
@@ -64,8 +67,10 @@ internal sealed class ModEntry : Mod
         Helper.ModContent.Load<Texture2D>("assets/otherbelts2");
         Helper.ModContent.Load<Texture2D>("assets/chest");
         Helper.ModContent.Load<Texture2D>("assets/filter");
+        Helper.ModContent.Load<Texture2D>("assets/warp");
         dronesTexture = Helper.ModContent.Load<Texture2D>("assets/drones");
         dronepadTexture = Helper.ModContent.Load<Texture2D>("assets/dronepad");
+        warpExtraTexture = Helper.ModContent.Load<Texture2D>("assets/warpExtra");
 
         HarmonyPatches.Patch(ModManifest.UniqueID);
     }
@@ -177,7 +182,36 @@ internal sealed class ModEntry : Mod
     }
 
     private static readonly XmlSerializer ItemSerializer = new(typeof(ItemListSerialized), new[] { typeof(Item) });
+    
+    public static bool HasWarpItem(WarpItem warp)
+    {
+        var inventory = Game1.player.team.GetOrCreateGlobalInventory($"{WarpInventoryKeyPrefix}_{warp.currentColor.Value}");
+        return inventory.HasAny();
+    }
+    
+    public static Item? GetWarpItem(WarpItem warp)
+    {
+        var inventory = Game1.player.team.GetOrCreateGlobalInventory($"{WarpInventoryKeyPrefix}_{warp.currentColor.Value}");
+        if (inventory.HasAny())
+        {
+            var item = inventory[0];
+            inventory.Clear();
+            return item;
+        }
+        return null;
+    }
 
+    public static bool StoreWarpItem(Item item, WarpItem warp)
+    {
+        var inventory = Game1.player.team.GetOrCreateGlobalInventory($"{WarpInventoryKeyPrefix}_{warp.currentColor.Value}");
+        if (inventory.HasAny())
+        {
+            return false;
+        }
+        inventory.Add(item);
+        return true;
+    }
+    
     private void OnSaving(object? sender, SavingEventArgs e)
     {
         if (!Context.IsMainPlayer)
@@ -301,11 +335,21 @@ internal sealed class ModEntry : Mod
             {
                 BeltItem.BeltAnim = 0;
                 BridgeItem.BridgeAnim += 1;
+                WarpItem.WarpAnim += warpAnimDir;
             }
 
             if (BridgeItem.BridgeAnim > 3)
             {
                 BridgeItem.BridgeAnim = 0;
+            }
+            
+            if (WarpItem.WarpAnim >= 7)
+            {
+                warpAnimDir = -1;
+            }
+            if (WarpItem.WarpAnim <= 0)
+            {
+                warpAnimDir = 1;
             }
 
             isProcessTick = true;
@@ -354,6 +398,7 @@ internal sealed class ModEntry : Mod
         sc.RegisterSerializerType(typeof(BridgeItem));
         sc.RegisterSerializerType(typeof(SplitterItem));
         sc.RegisterSerializerType(typeof(FilterItem));
+        sc.RegisterSerializerType(typeof(WarpItem));
         EMCApi = Helper.ModRegistry.GetApi<IExtraMachineConfigApi>("selph.ExtraMachineConfig");
         FMApi = Helper.ModRegistry.GetApi<IFurnitureMachineApi>("selph.FurnitureMachine");
         BMApi = Helper.ModRegistry.GetApi<IBiggerMachinesAPI>("Jok.BiggerMachines");
@@ -459,6 +504,10 @@ internal sealed class ModEntry : Mod
         {
             e.LoadFromModFile<Texture2D>("assets/chest.png", AssetLoadPriority.Low);
         }
+        else if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/warp.png"))
+        {
+            e.LoadFromModFile<Texture2D>("assets/warp.png", AssetLoadPriority.Low);
+        }
         else if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/filter.png"))
         {
             e.LoadFromModFile<Texture2D>("assets/filter.png", AssetLoadPriority.Low);
@@ -489,6 +538,8 @@ internal sealed class ModEntry : Mod
                 dict.Add("Jok.Stardio.OutputChest", $"337 1 (Jok.Belt)Jok.Stardio.Splitter 2/what/Jok.Stardio.OutputChest 1/true/s farming 10/");
                 
                 dict.Add("(Jok.Belt)Jok.Stardio.Filter", $"787 1 (Jok.Belt)Jok.Stardio.Splitter 1 (Jok.Belt)Jok.Stardio.Bridge 1/what/(Jok.Belt)Jok.Stardio.Filter 1/true/s farming 7/" + I18n.Filter_Name());
+                
+                dict.Add("(Jok.Belt)Jok.Stardio.Warp", $"768 5 769 5 (BC)Jok.Stardio.OutputChest 1 (BC)Jok.Stardio.InputChest 1 (Jok.Belt)Jok.Stardio.Belt3 5/what/(Jok.Belt)Jok.Stardio.Warp 2/false/s farming 10/" + I18n.Warp_Name());
             });
         }
         else if (e.NameWithoutLocale.IsEquivalentTo("Data/BigCraftables"))

@@ -40,5 +40,12 @@
     Texture: "Jok.Stardio/filter.png",
     TextureIndex: 0,
     Price: 0
+  },
+  "Jok.Stardio.Warp": {
+    DisplayName: "warp.name",
+    Description: "warp.description",
+    Texture: "Jok.Stardio/warp.png",
+    TextureIndex: 0,
+    Price: 0
   }
 }
