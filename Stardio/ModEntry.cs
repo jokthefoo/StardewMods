@@ -395,6 +395,8 @@ internal sealed class ModEntry : Mod
     {
         var sc = Helper.ModRegistry.GetApi<ISpaceCoreApi>("spacechase0.SpaceCore");
         sc.RegisterSerializerType(typeof(BeltItem));
+        sc.RegisterSerializerType(typeof(BeltItem2));
+        sc.RegisterSerializerType(typeof(BeltItem3));
         sc.RegisterSerializerType(typeof(BridgeItem));
         sc.RegisterSerializerType(typeof(SplitterItem));
         sc.RegisterSerializerType(typeof(FilterItem));
