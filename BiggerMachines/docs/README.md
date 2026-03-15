@@ -33,6 +33,8 @@ Optionals:
 
 `"Jok.BiggerMachines.IsChest": "true"` -- makes the object work as a chest (animations not supported)
 
+`"Jok.BiggerMachines.MachineBubbleLocation": "10, 8"` -- places the itemready bubble on the given location e.g. 10 pixels from the left and 8 pixels from the top
+
 Example of transparency and shadow:  
 ![](screenshot2.png)
 
