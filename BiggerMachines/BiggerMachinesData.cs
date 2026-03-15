@@ -4,13 +4,14 @@ namespace BiggerMachines;
 
 internal class BiggerMachineData
 {
-    public BiggerMachineData(int w, int h, bool fade = false, bool drawShadow = false, bool isChest = false)
+    public BiggerMachineData(int w, int h, bool fade = false, bool drawShadow = false, bool isChest = false, Vector2 machineBubbleLocation = new Vector2())
     {
         Width = w;
         Height = h;
         Fade = fade;
         DrawShadow = drawShadow;
         IsChest = isChest;
+        MachineBubbleLocation = machineBubbleLocation;
     }
 
     public int Width { get; set; }
@@ -18,6 +19,7 @@ internal class BiggerMachineData
     public bool Fade { get; set; }    
     public bool DrawShadow { get; set; }
     public bool IsChest { get; set; }
+    public Vector2 MachineBubbleLocation { get; set; }
 }
 
 internal class BiggerMachine
