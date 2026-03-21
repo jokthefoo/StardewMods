@@ -6,7 +6,7 @@
   "UniqueID": "Jok.Fishdew",
   "EntryDll": "FishMod.dll",
   "MinimumApiVersion": "4.0.0",
-  "UpdateKeys": [],
+  "UpdateKeys": ["Nexus:43937"],
   "Dependencies": [
   {
     "UniqueID": "spacechase0.SpaceCore",

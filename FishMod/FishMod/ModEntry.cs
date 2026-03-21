@@ -261,6 +261,7 @@ namespace FishMod
             {
                 return;
             }
+            /*
             
             if (e.Button == SButton.B)
             {
@@ -356,7 +357,7 @@ namespace FishMod
             if (e.Button == SButton.J)
             {
                 Game1.activeClickableMenu = new MiningBobberBar(Game1.player.currentLocation, Game1.player.CurrentTool, new Vector2(0,0));
-            }
+            }*/
         }
     }
 }
