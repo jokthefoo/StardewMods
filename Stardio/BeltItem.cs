@@ -146,18 +146,18 @@ public class BeltItem : IBeltPushing
         if (isProcessTick)
         {
             PushItem(Direction.Forward);
-            BeltPullItem();
+            BeltPullItem(Direction.Behind, beltSpriteRotationOffset.Value != 0);
         }
     }
 
-    public void BeltPullItem()
+    public void BeltPullItem(Direction dir, bool cannotPull)
     {
-        if (heldObject.Value != null || beltSpriteRotationOffset.Value != 0)
+        if (heldObject.Value != null || cannotPull)
         {
             return;
         }
 
-        var targetTile = getTileInDirection(Direction.Behind);
+        var targetTile = getTileInDirection(dir);
         // Try Grab item with BM first
         if(ModEntry.BMApi != null && ModEntry.BMApi.TryGetObjectAt(Location, targetTile, out var inputObj))
         {

@@ -30,7 +30,7 @@ internal static class HarmonyPatches
     
     public static bool Object_minutesElapsed_prefix(Object __instance, int minutes)
     {
-        if (ModEntry.IsObjectDroneHub(__instance) || __instance.QualifiedItemId == ModEntry.FILTER_QID)
+        if (ModEntry.IsObjectDroneHub(__instance) || __instance.QualifiedItemId == ModEntry.FILTER_QID || __instance.QualifiedItemId == ModEntry.FILTER_INV_QID)
         {
             __instance.readyForHarvest.Value = false;
             return false;
@@ -146,33 +146,6 @@ internal static class HarmonyPatches
                 who.freezePause = 1000;
                 Game1.activeClickableMenu = new ItemGrabMenu(chest.Items, reverseGrab: false, showReceivingMenu: true, InventoryMenu.highlightAllItems, chest.grabItemFromInventory, null, chest.grabItemFromChest, snapToBottom: false, canBeExitedWithKey: true, playRightClickSound: true, allowRightClick: true, showOrganizeButton: true, 1, null, -1, __instance);
                 __result = true;
-            }
-        }
-        
-        if (__instance.QualifiedItemId == ModEntry.FILTER_QID)
-        {
-            if (__instance.heldObject.Value != null && justCheckingForActivity)
-            {
-                __result = true;
-                return;
-            }
-            
-            if (__instance.heldObject.Value != null && who.ActiveItem == null)
-            {
-                if (who.IsLocalPlayer)
-                {
-                    var outputObj = __instance.heldObject.Value;
-                    __instance.heldObject.Value = null;
-                    if (!who.addItemToInventoryBool(outputObj))
-                    {
-                        __instance.heldObject.Value = outputObj;
-                        Game1.showRedMessage(Game1.content.LoadString("Strings\\StringsFromCSFiles:Crop.cs.588"));
-                        __result = true;
-                        return;
-                    }
-                    __result = true;
-                    Game1.playSound("coin", null);
-                }
             }
         }
     }

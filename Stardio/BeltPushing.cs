@@ -46,7 +46,7 @@ public abstract class IBeltPushing : Object
         return getTileInDirection(dir, TileLocation);
     }
     
-    public void PushItem(Direction dir)
+    public void PushItem(Direction dir, bool machineOnly = false)
     {
         if (heldObject.Value == null || HeldItemPosition < 1.0f)
         {
@@ -90,9 +90,24 @@ public abstract class IBeltPushing : Object
             return;
         }
 
-        // try to push to filter
+        // try to push to inverted filter
         Object? newTarget = null;
-        if (outputTarget is FilterItem)
+        if (outputTarget is FilterItemInv && !machineOnly)
+        {
+            if (TryPushToFilterInverted(outputTarget, ref newTarget, ref dir))
+            {
+                outputTarget = newTarget;
+            }
+            
+            if (outputTarget == null)
+            {
+                return;
+            }
+        }
+        
+        // try to push to filter
+        newTarget = null;
+        if (outputTarget is FilterItem && !machineOnly)
         {
             if (TryPushToFilter(outputTarget, ref newTarget, ref dir))
             {
@@ -107,7 +122,7 @@ public abstract class IBeltPushing : Object
         
         // try to push to bridge
         newTarget = null;
-        if (outputTarget is BridgeItem)
+        if (outputTarget is BridgeItem && !machineOnly)
         {
             if (TryPushToBridge(outputTarget, ref newTarget, dir))
             {
@@ -134,19 +149,19 @@ public abstract class IBeltPushing : Object
         }
 
         // try to push to belt
-        if (TryPushToBelt(outputTarget) || outputTarget is BeltItem)
+        if ((!machineOnly && TryPushToBelt(outputTarget)) || outputTarget is BeltItem)
         {
             return;
         }
         
         // try to push to splitter
-        if (TryPushToSplitter(outputTarget) || outputTarget is SplitterItem)
+        if ((!machineOnly && TryPushToSplitter(outputTarget)) || outputTarget is SplitterItem)
         {
             return;
         }
         
         // try to push to warp
-        if (TryPushToWarp(outputTarget) || outputTarget is WarpItem)
+        if ((!machineOnly && TryPushToWarp(outputTarget)) || outputTarget is WarpItem)
         {
             return;
         }
@@ -265,11 +280,10 @@ public abstract class IBeltPushing : Object
                     heldObject.Value = null;
                     HeldItemPosition = 0;
                 }
-            } 
-            // We matched a rule that requires only one base item but has EMC additional requirements so we start the rule here
-            else if (ModEntry.EMCApi != null) 
+            }
+            else if (outputRule != null)
             {
-                // start new rule
+                // We matched a rule that requires only one base item but may have EMC additional requirements so we start the rule here
                 MachineStateManager.CreateState(Location, outputTarget.TileLocation, outputRule, triggerRule, heldObject.Value);
                 heldObject.Value = null;
                 HeldItemPosition = 0;
@@ -435,52 +449,76 @@ public abstract class IBeltPushing : Object
         }
         return false;
     }
+
+    private bool PushLRFilter(FilterItem filter, ref Object? newTarget, ref Direction dir)
+    {
+        int newDir = (int)dir + filter.pushDirection;
+        if (newDir < 0)
+        {
+            newDir = 4 + newDir;
+        }
+                
+        var targetTile = getTileInDirection((Direction)newDir, filter.TileLocation);
+        Object? outputTarget2 = getObjectAtTile(targetTile);
+                
+        if (outputTarget2 == null)
+        {
+            newDir = (int)dir - filter.pushDirection;
+            var targetTile2 = getTileInDirection((Direction)newDir, filter.TileLocation);
+            outputTarget2 = getObjectAtTile(targetTile2);
     
+            if (outputTarget2 == null)
+            {
+                return false;
+            }
+        }
+        dir = (Direction)newDir;
+        filter.pushDirection *= -1; // flip direction
+        newTarget = outputTarget2;
+        return true;
+    }
+
+    private bool PushFFilter(FilterItem filter, ref Object? newTarget, ref Direction dir)
+    {
+        var targetTile = getTileInDirection(dir, filter.TileLocation);
+        Object? outputTarget2 = getObjectAtTile(targetTile);
+            
+        if (outputTarget2 == null)
+        {
+            return false;
+        }
+            
+        newTarget = outputTarget2;
+        return true;
+    }
+
     private bool TryPushToFilter(Object outputTarget, ref Object? newTarget, ref Direction dir)
     {
         if (outputTarget is FilterItem filter)
         {
             // if we match filter attempt to push forwards
-            if (filter.heldObject.Value != null && filter.heldObject.Value.QualifiedItemId == heldObject.Value.QualifiedItemId)
+            if (filter.checkForFilterMatch(heldObject.Value))
             {
-                var targetTile = getTileInDirection(dir, filter.TileLocation);
-                Object? outputTarget2 = getObjectAtTile(targetTile);
-            
-                if (outputTarget2 == null)
-                {
-                    return false;
-                }
-            
-                newTarget = outputTarget2;
-                return true;
+                return PushFFilter(filter, ref newTarget, ref dir);
             }
-            else //attempt to push l/r
+            //attempt to push l/r
+            return PushLRFilter(filter, ref newTarget, ref dir);
+        }
+        
+        return false;
+    }
+
+    private bool TryPushToFilterInverted(Object outputTarget, ref Object? newTarget, ref Direction dir)
+    {
+        if (outputTarget is FilterItemInv filter)
+        {
+            // if we match filter attempt to push l/r
+            if (filter.checkForFilterMatch(heldObject.Value))
             {
-                int newDir = (int)dir + filter.pushDirection;
-                if (newDir < 0)
-                {
-                    newDir = 4 + newDir;
-                }
-                
-                var targetTile = getTileInDirection((Direction)newDir, filter.TileLocation);
-                Object? outputTarget2 = getObjectAtTile(targetTile);
-                
-                if (outputTarget2 == null)
-                {
-                    newDir = (int)dir - filter.pushDirection;
-                    var targetTile2 = getTileInDirection((Direction)newDir, filter.TileLocation);
-                    outputTarget2 = getObjectAtTile(targetTile2);
-    
-                    if (outputTarget2 == null)
-                    {
-                        return false;
-                    }
-                }
-                dir = (Direction)newDir;
-                filter.pushDirection *= -1; // flip direction
-                newTarget = outputTarget2;
-                return true;
+                return PushLRFilter(filter, ref newTarget, ref dir);
             }
+            // attempt to push forward
+            return PushFFilter(filter, ref newTarget, ref dir);
         }
         
         return false;

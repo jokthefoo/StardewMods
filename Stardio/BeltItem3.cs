@@ -78,7 +78,9 @@ public class BeltItem3 : BeltItem
         if (isProcessTick)
         {
             PushItem(Direction.Forward);
-            BeltPullItem();
+            BeltPullItem(Direction.Behind, false);
+            BeltPullItem(Direction.Left, false);
+            BeltPullItem(Direction.Right, false);
         }
     }
     

@@ -14,6 +14,9 @@ public class FilterItem : IBeltPushing
     [XmlIgnore]
     public int pushDirection = 1;
     
+    [XmlElement("currentFilter")]
+    public readonly NetInt currentFilter = new();
+    
     public override string DisplayName => GetDisplayName();
     public string Description { get; set; }
     public override string TypeDefinitionId => "(Jok.Belt)";
@@ -112,7 +115,23 @@ public class FilterItem : IBeltPushing
                 Game1.GlobalToLocal(Game1.viewport, new Vector2(x * 64 + 32, y * 64 - 32) + shake),
                 itemData.GetSourceRect(sourceOffset), Color.White * alpha, 0f, new Vector2(8f, 8f), scale.Y > 1f ? getScale().Y : 4f, spriteEffects,
                 (isPassable() ? bounds.Top : bounds.Center.Y + 1) / 10000f);
-            
+
+            if (currentFilter.Value > 0)
+            {
+                int yoffset = (currentFilter.Value - 1) / 4;
+                int xoffset = (currentFilter.Value - 1) % 4;
+                Rectangle iconsrc = new Rectangle(0 + xoffset * 32, 0 + yoffset * 32, 32, 32);
+                
+                spriteBatch.Draw(ModEntry.filterIconsTexture,
+                    Game1.GlobalToLocal(Game1.viewport, new Vector2(x * 64 + 32, y * 64 + 6) + shake),
+                    iconsrc, Color.White * alpha, 0f, new Vector2(16f, 16f), scale.Y > 1f ? getScale().Y : 1.5f, spriteEffects,
+                    (isPassable() ? bounds.Top : bounds.Center.Y + 3) / 10000f);
+                
+                spriteBatch.Draw(ModEntry.filterIconsTexture,
+                    Game1.GlobalToLocal(Game1.viewport, new Vector2(x * 64 + 32, y * 64 + 8) + shake),
+                    new Rectangle(0, 4 * 32, 32, 32), Color.White * .7f, 0f, new Vector2(16f, 16f), scale.Y > 1f ? getScale().Y : 1.6f, spriteEffects,
+                    (isPassable() ? bounds.Top : bounds.Center.Y + 2) / 10000f);
+            }
             
             if (heldObject.Value == null)
             {
@@ -177,6 +196,55 @@ public class FilterItem : IBeltPushing
         base.drawWhenHeld(spriteBatch, new Vector2(objectPosition.X, objectPosition.Y - 64), f);
     }
 
+    public override bool checkForAction(Farmer who, bool justCheckingForActivity = false)
+    {
+        if (justCheckingForActivity)
+        {
+            return true;
+        }
+
+        if (heldObject.Value != null && who.ActiveItem == null)
+        {
+            if (who.IsLocalPlayer)
+            {
+                var outputObj = heldObject.Value;
+                heldObject.Value = null;
+
+                if (!who.addItemToInventoryBool(outputObj))
+                {
+                    heldObject.Value = outputObj;
+                    Game1.showRedMessage(Game1.content.LoadString("Strings\\StringsFromCSFiles:Crop.cs.588"));
+                    return true;
+                }
+                Game1.playSound("coin", null);
+                return true;
+            }
+        }
+
+        if (heldObject.Value == null && who.ActiveItem == null)
+        {
+            if (who.IsLocalPlayer)
+            {
+                // Filter Types:
+                // silver - gold -iridium
+                // artisan - forage - fruit
+                // vegetable - animal product - resource
+                // artifact - mineral - trash
+                // monster loot - seed - flower - fish
+                
+                // Change filter type
+                currentFilter.Value += 1;
+                if (currentFilter.Value > 15)
+                {
+                    currentFilter.Value = 0;
+                }
+
+                return true;
+            }
+        }
+        return false;
+    }
+
     public override bool performObjectDropInAction(Item dropInItem, bool probe, Farmer who, bool returnFalseIfItemConsumed = false)
     {
         if (isTemporarilyInvisible || heldObject.Value != null || dropInItem is not Object || who.ActiveItem is not Object || autoLoadFrom != null || who.ActiveItem is FilterItem)
@@ -189,6 +257,7 @@ public class FilterItem : IBeltPushing
             return true;
         }
 
+        currentFilter.Value = 0;
         heldObject.Value = (Object)who.ActiveItem.getOne();
         who.reduceActiveItemByOne();
         Game1.playSound("stoneStep");
@@ -218,5 +287,54 @@ public class FilterItem : IBeltPushing
             UpdateNeighborCurves();
         }
         return wasPlaced;
+    }
+    
+    public bool checkForFilterMatch(Object target)
+    {
+        // Filter Types:
+        // silver - gold -iridium
+        // artisan - forage - fruit
+        // vegetable - animal product - resource
+        // artifact - mineral - trash
+        // monster loot - seed - flower - fish
+        
+        switch (currentFilter.Value)
+        {
+            case 0: // held item
+                return heldObject.Value != null && heldObject.Value.QualifiedItemId == target.QualifiedItemId;
+            case 1: // silver quality
+            case 2: // gold quality
+                return heldObject.Value == null && target.Quality == currentFilter.Value;
+            case 3: // iridium quality
+                return heldObject.Value == null && target.Quality == 4;
+            case 4: // artisan goods
+                return heldObject.Value == null && (target.Category == artisanGoodsCategory || target.Category == syrupCategory);
+            case 5: // forage
+                return heldObject.Value == null && target.Category == GreensCategory;
+            case 6: // fruits
+                return heldObject.Value == null && target.Category == FruitsCategory;
+            case 7: // vegetables
+                return heldObject.Value == null && target.Category == VegetableCategory;
+            case 8: // animal products
+                return heldObject.Value == null && (target.Category == EggCategory || target.Category == MilkCategory || target.Category == meatCategory || target.Category == sellAtPierresAndMarnies);
+            case 9: // resource
+                return heldObject.Value == null && (target.Category == metalResources || target.Category == buildingResources);
+            case 10: // artifact
+                return heldObject.Value == null && target.Type == "Arch";
+            case 11: // mineral
+                return heldObject.Value == null && (target.Category == mineralsCategory || target.Category == GemCategory);
+            case 12: // trash
+                return heldObject.Value == null && target.Category == junkCategory;
+            case 13: // monster loot
+                return heldObject.Value == null && target.Category == monsterLootCategory;
+            case 14: // seed
+                return heldObject.Value == null && target.Category == SeedsCategory;
+            case 15: // flower
+                return heldObject.Value == null && target.Category == flowersCategory;
+            case 16: // fish
+                return heldObject.Value == null && target.Category == FishCategory;
+        }
+        
+        return false;
     }
 }

@@ -13,21 +13,19 @@ using Object = StardewValley.Object;
 
 namespace Jok.Stardio;
 
-[XmlType("Mods_Jok_BeltItem2")]
-public class BeltItem2 : BeltItem
+[XmlType("Mods_Jok_BeltItem4")]
+public class BeltItem4 : BeltItem
 {
     [XmlIgnore]
-    public static int Belt2Anim = 0;
-    [XmlIgnore]
-    public static int belt2AnimUpdateCountdown = 0;
+    public static int Belt3Anim = 0;
     
-    public BeltItem2()
+    public BeltItem4()
     {
         NetFields.AddField(objName).AddField(currentRotation);
         ParentSheetIndex = 0;
     }
     
-    public BeltItem2(string itemid)
+    public BeltItem4(string itemid)
         : this()
     {
         ItemId = itemid;
@@ -47,14 +45,14 @@ public class BeltItem2 : BeltItem
     }
     protected override Item GetOneNew() // needed for right-clicking item
     {
-        return new BeltItem2();
+        return new BeltItem4();
     }
 
     protected override void GetOneCopyFrom(Item source)
     {
         base.GetOneCopyFrom(source);
         ItemId = source.ItemId;
-        if (source is BeltItem2 beltFrom)
+        if (source is BeltItem4 beltFrom)
         {
             currentRotation.Value = beltFrom.currentRotation.Value;
         }
@@ -70,22 +68,22 @@ public class BeltItem2 : BeltItem
         
         if (heldObject.Value != null && HeldItemPosition < 1.0f)
         {
-            HeldItemPosition += 1.0f / Math.Clamp(ModEntry.Config.BeltUpdateMS / 2, 10, ModEntry.Config.BeltUpdateMS / 2);
+            HeldItemPosition += 1.0f / Math.Clamp(ModEntry.Config.BeltUpdateMS / 4, 10, ModEntry.Config.BeltUpdateMS / 4);
             readyForHarvest.Value = true;
         }
         HeldItemPosition = Math.Clamp(HeldItemPosition, 0.0f, 1.0f);
         
         if (isProcessTick)
         {
+            PushItem(Direction.Left,true);
+            PushItem(Direction.Right, true);
             PushItem(Direction.Forward);
-            BeltPullItem(Direction.Behind, false);
-            BeltPullItem(Direction.Left, false);
-            BeltPullItem(Direction.Right, false);
+            BeltPullItem(Direction.Behind, beltSpriteRotationOffset.Value != 0);
         }
     }
     
     public override int GetBeltAnim()
     {
-        return Belt2Anim;
+        return Belt3Anim;
     }
 }

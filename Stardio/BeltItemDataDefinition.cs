@@ -45,6 +45,11 @@ public class BeltItemDataDefinition : BaseItemDataDefinition
         {
             return new FilterItem(data.ItemId);
         }
+        
+        if(data.ItemId == "Jok.Stardio.FilterInv")
+        {
+            return new FilterItemInv(data.ItemId);
+        }
 
         if(data.ItemId == "Jok.Stardio.Belt2")
         {
@@ -54,6 +59,11 @@ public class BeltItemDataDefinition : BaseItemDataDefinition
         if(data.ItemId == "Jok.Stardio.Belt3")
         {
             return new BeltItem3(data.ItemId);
+        }
+        
+        if(data.ItemId == "Jok.Stardio.Belt4")
+        {
+            return new BeltItem4(data.ItemId);
         }
         
         if(data.ItemId == "Jok.Stardio.Warp")
@@ -68,7 +78,7 @@ public class BeltItemDataDefinition : BaseItemDataDefinition
     {
         int width = 16;
         int height = 16;
-        if (data.ItemId == "Jok.Stardio.Filter" || data.ItemId == "Jok.Stardio.Warp")
+        if (data.ItemId == "Jok.Stardio.Filter" || data.ItemId == "Jok.Stardio.FilterInv" || data.ItemId == "Jok.Stardio.Warp")
         {
             height = 32;
         }

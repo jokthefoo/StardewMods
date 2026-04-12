@@ -31,9 +31,11 @@ internal sealed class ModEntry : Mod
     internal const string INPUT_CHEST_QID = "(BC)Jok.Stardio.InputChest";
     internal const string OUTPUT_CHEST_QID = "(BC)Jok.Stardio.OutputChest";
     internal const string FILTER_QID = "(Jok.Belt)Jok.Stardio.Filter";
+    internal const string FILTER_INV_QID = "(Jok.Belt)Jok.Stardio.FilterInv";
     internal static Texture2D dronepadTexture;
     internal static Texture2D dronesTexture;
     internal static Texture2D warpExtraTexture;
+    internal static Texture2D filterIconsTexture;
     //ModEntry.MonitorInst.Log($"X value: {x}", LogLevel.Info);
     internal static string WarpInventoryKeyPrefix = $"Jok.Stardio_Warp";
 
@@ -67,10 +69,12 @@ internal sealed class ModEntry : Mod
         Helper.ModContent.Load<Texture2D>("assets/otherbelts2");
         Helper.ModContent.Load<Texture2D>("assets/chest");
         Helper.ModContent.Load<Texture2D>("assets/filter");
+        Helper.ModContent.Load<Texture2D>("assets/filterinv");
         Helper.ModContent.Load<Texture2D>("assets/warp");
         dronesTexture = Helper.ModContent.Load<Texture2D>("assets/drones");
         dronepadTexture = Helper.ModContent.Load<Texture2D>("assets/dronepad");
         warpExtraTexture = Helper.ModContent.Load<Texture2D>("assets/warpExtra");
+        filterIconsTexture = Helper.ModContent.Load<Texture2D>("assets/filtericons");
 
         HarmonyPatches.Patch(ModManifest.UniqueID);
     }
@@ -286,11 +290,17 @@ internal sealed class ModEntry : Mod
     {
         if (Config.RotateKeybind == e.Button)
         {
+            if (Game1.player == null)
+            {
+                return;
+            }
+            
             if (Game1.player.ActiveItem is BeltItem belt)
             {
                 belt.rotate(true);
             }
-            else if (Game1.player.currentLocation.objects.TryGetValue(e.Cursor.Tile, out Object obj) && obj is BeltItem belt2)
+            else if (Game1.player.currentLocation != null && Game1.player.currentLocation.objects != null && e.Cursor != null &&
+                     Game1.player.currentLocation.objects.TryGetValue(e.Cursor.Tile, out Object obj) && obj is BeltItem belt2)
             {
                 belt2.rotate();
             }
@@ -319,10 +329,12 @@ internal sealed class ModEntry : Mod
         {
             BeltItem3.belt3AnimUpdateCountdown = Math.Clamp(Config.BeltUpdateMS, 20, Config.BeltUpdateMS) / 4;
             BeltItem3.Belt3Anim++;
+            BeltItem4.Belt3Anim++;
 
             if (BeltItem3.Belt3Anim > 3)
             {
                 BeltItem3.Belt3Anim = 0;
+                BeltItem4.Belt3Anim = 0;
             }
         }
         
@@ -397,9 +409,11 @@ internal sealed class ModEntry : Mod
         sc.RegisterSerializerType(typeof(BeltItem));
         sc.RegisterSerializerType(typeof(BeltItem2));
         sc.RegisterSerializerType(typeof(BeltItem3));
+        sc.RegisterSerializerType(typeof(BeltItem4));
         sc.RegisterSerializerType(typeof(BridgeItem));
         sc.RegisterSerializerType(typeof(SplitterItem));
         sc.RegisterSerializerType(typeof(FilterItem));
+        sc.RegisterSerializerType(typeof(FilterItemInv));
         sc.RegisterSerializerType(typeof(WarpItem));
         EMCApi = Helper.ModRegistry.GetApi<IExtraMachineConfigApi>("selph.ExtraMachineConfig");
         FMApi = Helper.ModRegistry.GetApi<IFurnitureMachineApi>("selph.FurnitureMachine");
@@ -491,6 +505,10 @@ internal sealed class ModEntry : Mod
         {
             e.LoadFromModFile<Texture2D>("assets/turbobelts.png", AssetLoadPriority.Low);
         }
+        else if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/turbobelts2.png"))
+        {
+            e.LoadFromModFile<Texture2D>("assets/turbobelts2.png", AssetLoadPriority.Low);
+        }
         else if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/otherbelts.png"))
         {
             if (Config.BrownBelts)
@@ -514,6 +532,10 @@ internal sealed class ModEntry : Mod
         {
             e.LoadFromModFile<Texture2D>("assets/filter.png", AssetLoadPriority.Low);
         }
+        else if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/filterinv.png"))
+        {
+            e.LoadFromModFile<Texture2D>("assets/filterinv.png", AssetLoadPriority.Low);
+        }
         else if (e.NameWithoutLocale.IsEquivalentTo($"{ModManifest.UniqueID}/drones.png"))
         {
             e.LoadFromModFile<Texture2D>("assets/drones.png", AssetLoadPriority.Low);
@@ -533,6 +555,9 @@ internal sealed class ModEntry : Mod
                 dict.Add("(Jok.Belt)Jok.Stardio.Belt2", $"(Jok.Belt)Jok.Stardio.Belt 5 336 3/what/(Jok.Belt)Jok.Stardio.Belt2 5/false/s farming 10/");
                 dict.Add("(Jok.Belt)Jok.Stardio.Belt3", $"(Jok.Belt)Jok.Stardio.Belt2 20 910 1/what/(Jok.Belt)Jok.Stardio.Belt3 20/false/s farming 10/");
                 
+                dict.Add("(Jok.Belt)Jok.Stardio.Belt32", $"(Jok.Belt)Jok.Stardio.Belt4 1/what/(Jok.Belt)Jok.Stardio.Belt3 1/false/s farming 10/");
+                dict.Add("(Jok.Belt)Jok.Stardio.Belt4", $"(Jok.Belt)Jok.Stardio.Belt3 1/what/(Jok.Belt)Jok.Stardio.Belt4 1/false/s farming 10/");
+                
                 dict.Add("(Jok.Belt)Jok.Stardio.Bridge", $"336 1 (Jok.Belt)Jok.Stardio.Belt 5/what/(Jok.Belt)Jok.Stardio.Bridge 1/false/s farming 5/");
                 dict.Add("(Jok.Belt)Jok.Stardio.Splitter", $"336 1 (Jok.Belt)Jok.Stardio.Belt 5/what/(Jok.Belt)Jok.Stardio.Splitter 1/false/s farming 5/");
 
@@ -540,6 +565,9 @@ internal sealed class ModEntry : Mod
                 dict.Add("Jok.Stardio.OutputChest", $"337 1 (Jok.Belt)Jok.Stardio.Splitter 2/what/Jok.Stardio.OutputChest 1/true/s farming 10/");
                 
                 dict.Add("(Jok.Belt)Jok.Stardio.Filter", $"787 1 (Jok.Belt)Jok.Stardio.Splitter 1 (Jok.Belt)Jok.Stardio.Bridge 1/what/(Jok.Belt)Jok.Stardio.Filter 1/true/s farming 7/" + I18n.Filter_Name());
+                
+                dict.Add("(Jok.Belt)Jok.Stardio.Filter2", $"(Jok.Belt)Jok.Stardio.FilterInv 1/what/(Jok.Belt)Jok.Stardio.Filter 1/true/s farming 7/" + I18n.Filter_Name());
+                dict.Add("(Jok.Belt)Jok.Stardio.FilterInv", $"(Jok.Belt)Jok.Stardio.Filter 1/what/(Jok.Belt)Jok.Stardio.FilterInv 1/true/s farming 7/" + I18n.Filterinv_Name());
                 
                 dict.Add("(Jok.Belt)Jok.Stardio.Warp", $"768 5 769 5 (BC)Jok.Stardio.OutputChest 1 (BC)Jok.Stardio.InputChest 1 (Jok.Belt)Jok.Stardio.Belt3 5/what/(Jok.Belt)Jok.Stardio.Warp 2/false/s farming 10/" + I18n.Warp_Name());
             });

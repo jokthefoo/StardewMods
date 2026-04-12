@@ -3,19 +3,25 @@
   "belt.description": "Moves items, can pull and push from chests and machines.",
 
   "belt2.name": "Fast Conveyor Belt",
-  "belt2.description": "Moves items twice as fast, can pull and push from chests and machines.",
+  "belt2.description": "Moves items twice as fast. Can pull and push from chests and machines. Also will pull from its sides as well.",
 
   "belt3.name": "Turbo Conveyor Belt",
-  "belt3.description": "Moves items four times as fast, can pull and push from chests and machines.",
+  "belt3.description": "Moves items four times as fast. Can pull and push from chests and machines. Also will pull from its sides as well.",
+  
+  "belt4.name": "Turbo Pushing Conveyor Belt",
+  "belt4.description": "Moves items four times as fast. Can pull and push from chests and machines. Also will push to its sides as well.",
 
   "bridge.name": "Bridge",
   "bridge.description": "Bridges across a vertical and horizontal belt.",
 
   "splitter.name": "Splitter",
   "splitter.description": "Splits items that come into it evenly to all belts coming out of it.",
-  
+
   "filter.name": "Filter",
   "filter.description": "If an item pushed into the Filter matches the filter, it passes forward. Otherwise, the item is output to the left or right. To set the Filter's item interact with the filter while holding an item. To remove the Filter's item interact with an empty hand.",
+
+  "filterinv.name": "Inverted Filter",
+  "filterinv.description": "If an item pushed into the Inverted Filter matches the filter, it passes to the left or right. Otherwise, the item is output to the front. To set the Filter's item interact with the filter while holding an item. To remove the Filter's item interact with an empty hand.",
 
   "inputchest.name": "Input Hub",
   "inputchest.description": "Place this inside a building to let belts to push items into the building. Items can then be pulled from the Input Hub by belts.",
