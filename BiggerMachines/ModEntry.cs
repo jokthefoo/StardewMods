@@ -24,6 +24,7 @@ internal sealed class ModEntry : Mod
     internal const string ModDataFadeBehindKey = "Jok.BiggerMachines.EnableTransparency"; // transparency when player is behind
     internal const string ModDataShadowKey = "Jok.BiggerMachines.DrawShadow"; // draws a shadow similar to building shadow
     internal const string ModDataChestKey = "Jok.BiggerMachines.IsChest"; // is a chest
+    internal const string ModDataMachineBubbleLocationKey = "Jok.BiggerMachines.MachineBubbleLocation"; // Custom location for the finished 
 
     /*********
      ** Public methods
@@ -261,7 +262,18 @@ internal sealed class ModEntry : Mod
                     }
                 }
 
-                BigMachinesList.Add(itemId, new BiggerMachineData(width, height, hasFading, drawShadow, isChest));
+                Vector2 machineBubbleLocation = new Vector2(0, 0);
+                if (bigCraftableData.CustomFields.TryGetValue(ModDataMachineBubbleLocationKey, out string? locationString))
+                {
+                    String[] locationArray = locationString.Split(",");
+
+                    if (float.TryParse(locationArray[0], out float locationX) && float.TryParse(locationArray[1], out float locationY))
+                    {
+                        machineBubbleLocation = new Vector2(locationX, locationY);
+                    }
+                }
+
+                BigMachinesList.Add(itemId, new BiggerMachineData(width, height, hasFading, drawShadow, isChest, machineBubbleLocation));
             }
         }
     }

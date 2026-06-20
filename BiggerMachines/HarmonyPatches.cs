@@ -587,19 +587,34 @@ internal static class HarmonyPatches
             return false;
         }
 
-        var bmOffset = new Vector2(16 * bigMachineData.Width, 0);
+        Vector2 bmOffset = new Vector2(16 * bigMachineData.Width, 0);
 
-        var base_sort = (y + 1) * 64 / 10000f + __instance.TileLocation.X / 50000f;
+        // If machine width is not dividable by 2 then place the white bubble on the center tile
+        if (bigMachineData.Width % 2 != 0) bmOffset.X = bigMachineData.Width / 2 + 64;
+
+        // When a custom location for the white bubble is given then use those coordinates
+        if (bigMachineData.MachineBubbleLocation.X != 0 || bigMachineData.MachineBubbleLocation.Y != 0)
+        {
+            // Place the start of the bubble on the left top pixel of the texture
+            bmOffset = new Vector2(-28, 14 - ((itemData.GetTexture().Height - bigMachineData.Height * 16) * 4));
+
+            // Add the custom location
+            bmOffset.X += bigMachineData.MachineBubbleLocation.X * 4f;
+            bmOffset.Y += bigMachineData.MachineBubbleLocation.Y * 4f;
+        }
+
+        float base_sort = (y + 1) * 64 / 10000f + __instance.TileLocation.X / 50000f;
 
         if (__instance.IsTapper() || __instance.QualifiedItemId.Equals("(BC)MushroomLog"))
         {
             base_sort += 0.02f;
         }
 
-        var yOffset = 4f * (float)Math.Round(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 250.0), 2);
+        // Will make the white bubble move up and down
+        float yOffset = 4f * (float)Math.Round(Math.Sin(Game1.currentGameTime.TotalGameTime.TotalMilliseconds / 250.0), 2);
+
         // White bubble
-        spriteBatch.Draw(Game1.mouseCursors, Game1.GlobalToLocal(Game1.viewport, new Vector2(x * 64 - 8, y * 64 - 96 - 16 + yOffset) + bmOffset), new Rectangle(141, 465, 20, 24), Color.White * 0.75f,
-            0f, Vector2.Zero, 4f, SpriteEffects.None, base_sort + 1E-06f);
+        spriteBatch.Draw(Game1.mouseCursors, Game1.GlobalToLocal(Game1.viewport, new Vector2(x * 64 - 8, y * 64 - 96 - 16 + yOffset) + bmOffset), new Rectangle(141, 465, 20, 24), Color.White * 0.75f, 0f, Vector2.Zero, 4f, SpriteEffects.None, base_sort + 1E-06f);
 
         if (__instance.heldObject.Value == null)
         {
@@ -612,11 +627,11 @@ internal static class HarmonyPatches
             return false;
         }
 
-        var heldItemData = ItemRegistry.GetDataOrErrorItem(__instance.heldObject.Value.QualifiedItemId);
-        spriteBatch.Draw(heldItemData.GetTexture(), Game1.GlobalToLocal(Game1.viewport, new Vector2(x * 64 + 32, y * 64 - 64 - 8 + yOffset) + bmOffset), heldItemData.GetSourceRect(),
-            Color.White * 0.75f, 0f, new Vector2(8f, 8f), 4f, SpriteEffects.None, base_sort + 1E-05f);
+        // Draw Item texture in bubble
+        ParsedItemData heldItemData = ItemRegistry.GetDataOrErrorItem(__instance.heldObject.Value.QualifiedItemId);
+        spriteBatch.Draw(heldItemData.GetTexture(), Game1.GlobalToLocal(Game1.viewport, new Vector2(x * 64 + 32, y * 64 - 64 - 8 + yOffset) + bmOffset), heldItemData.GetSourceRect(), Color.White * 0.75f, 0f, new Vector2(8f, 8f), 4f, SpriteEffects.None, base_sort + 1E-05f);
 
-        var drawType = StackDrawType.Hide;
+        StackDrawType drawType = StackDrawType.Hide;
 
         if (__instance.heldObject.Value.Stack > 1)
         {
@@ -627,8 +642,8 @@ internal static class HarmonyPatches
             drawType = StackDrawType.HideButShowQuality;
         }
 
-        __instance.heldObject.Value.DrawMenuIcons(spriteBatch, Game1.GlobalToLocal(Game1.viewport, new Vector2(x * 64, y * 64 - 64 - 32 + yOffset - 4f) + bmOffset), 1f, 1f, base_sort + 1.2E-05f,
-            drawType, Color.White);
+        // Draw quality star & stack size in bubble
+        __instance.heldObject.Value.DrawMenuIcons(spriteBatch, Game1.GlobalToLocal(Game1.viewport, new Vector2(x * 64, y * 64 - 64 - 32 + yOffset - 4f) + bmOffset), 1f, 1f, base_sort + 1.2E-05f, drawType, Color.White);
         return false;
     }
 
