@@ -234,7 +234,7 @@ public class FilterItem : IBeltPushing
                 
                 // Change filter type
                 currentFilter.Value += 1;
-                if (currentFilter.Value > 15)
+                if (currentFilter.Value > 16)
                 {
                     currentFilter.Value = 0;
                 }
